@@ -2,7 +2,7 @@
 
 `toys` is an experiment to create a JSON API for exploring Guix channels on the internets.
 
-Project page [here](https://sr.ht/~whereiseveryone/guixrus).
+Issue tracker is [here](https://todo.sr.ht/~whereiseveryone/toys).
 
 ## Contributing
 
