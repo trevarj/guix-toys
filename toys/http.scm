@@ -19,6 +19,7 @@
 
 (define-module (toys http)
   #:use-module (web request)
+  #:use-module (web response)
   #:use-module (web uri)
 
   #:export (handle-not-found
