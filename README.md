@@ -6,6 +6,23 @@ Issue tracker is [here](https://todo.sr.ht/~whereiseveryone/toys).
 
 The live instance can be found at [toys.whereis.みんな](https://toys.whereis.みんな/)
 
+## Usage
+
+Currently you can search for packages like this, for example:
+
+```sh
+https://toys.whereis.xn--q9jyb4c/packages?search=vis-lsp
+```
+
+You can query for services like this:
+
+```sh
+https://toys.whereis.xn--q9jyb4c/services?search=senpai
+```
+
+Stay tuned for instructions on how to join the channel webring. We first
+have to resolve [#2](https://todo.sr.ht/~whereiseveryone/toys/2).
+
 ## Contributing
 
 Send patches to ~whereiseveryone/toys@lists.sr.ht
