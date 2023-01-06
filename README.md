@@ -4,6 +4,8 @@
 
 Issue tracker is [here](https://todo.sr.ht/~whereiseveryone/toys).
 
+The live instance can be found at [toys.whereis.みんな](https://toys.whereis.みんな/)
+
 ## Contributing
 
 Send patches to ~whereiseveryone/toys@lists.sr.ht
