@@ -30,6 +30,10 @@ Send patches to ~whereiseveryone/toys@lists.sr.ht
 [Reach out](https://web.libera.chat/gamja/#whereiseveryone) if you would
 like to collaborate on this project.
 
+jgart and [unwox](https://git.sr.ht/~unwox) can review patches and merge them.
+
+You can subscribe to the mailing list by sending an email to ~whereiseveryone/list+subscribe@lists.sr.ht
+
 ## Communication
 
 Discussion regarding this project happens at `#whereiseveryone` on the Libera IRC network.
