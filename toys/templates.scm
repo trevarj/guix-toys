@@ -20,46 +20,157 @@
 (define-module (toys templates)
   #:use-module (srfi srfi-43)
 
-  #:export (index-template))
+  #:export (packages-template
+            services-template))
 
-(define (index-template items)
+(define %pages
+  '(((name . "Packages")
+     (href . "/"))
+    ((name . "Services")
+     (href . "/services"))))
+
+(define %title
+"       _            _    _        _         _
+      /\\ \\         /\\ \\ /\\ \\     /\\_\\      / /\\
+      \\_\\ \\       /  \\ \\\\ \\ \\   / / /     / /  \\
+      /\\__ \\     / /\\ \\ \\\\ \\ \\_/ / /     / / /\\ \\__
+     / /_ \\ \\   / / /\\ \\ \\\\ \\___/ /     / / /\\ \\___\\
+    / / /\\ \\ \\ / / /  \\ \\_\\\\ \\ \\_/      \\ \\ \\ \\/___/
+   / / /  \\/_// / /   / / / \\ \\ \\        \\ \\ \\
+  / / /      / / /   / / /   \\ \\ \\   _    \\ \\ \\
+ / / /      / / /___/ / /     \\ \\ \\ /_/\\__/ / /
+/_/ /      / / /____\\/ /       \\ \\_\\\\ \\/___/ /
+\\_\\/       \\/_________/         \\/_/ \\_____\\/
+")
+
+(define %styles
+  "
+  html {
+    line-height: 1.35;
+  }
+
+  .container {
+    max-width: 48rem;
+    margin: 1rem auto;
+  }
+
+  .muted {
+    color: #444444;
+  }
+
+  nav a {
+    color: blue;
+    font-size: 0.75rem;
+  }
+
+  nav a.active {
+    color: #444444;
+    text-decoration: none;
+    pointer-events: none;
+  }
+
+  .item {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed #bbbbbb;
+  }
+
+  pre {
+    margin-bottom: 2rem;
+  }
+
+  button {
+    margin-left: 0.25rem;
+  }
+
+  .item strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  ")
+
+(define (base-template body current)
   `(html
      (head
-       (title "Toys / Webring for GNU Guix channels"))
+       (title "Toys / Webring for GNU Guix channels")
+       (style ,%styles))
      (body
-       (h1 "Toys")
-       (form
-         (input (@ (type "search")
-                   (name "search")
-                   (required "required")
-                   (placeholder "Enter query")))
-         (button (@ (type "submit")) "Search"))
-       ,@(vector->list
-           (vector-map
-             (lambda (_ item) (package-template item))
-             items)))))
+       (div
+         (@ (class "container"))
+         (pre ,%title)
+         ,(menu-template %pages current)
+         (form
+           (input (@ (type "search")
+                     (name "search")
+                     (required "required")
+                     (placeholder "Enter query")))
+           (button (@ (type "submit")) "Search"))
+         ,@body))))
+
+(define (menu-template pages current)
+  `(nav
+     (@ (style "margin-bottom: 0.5rem; display: flex; gap: 0.75rem;"))
+     ,@(map
+         (lambda (item)
+           `(a
+              (@ (href ,(assoc-ref item 'href))
+                 (class ,(if (equal? (assoc-ref item 'href)
+                                     current)
+                           "active"
+                           "")))
+              ,(assoc-ref item 'name)))
+         pages)))
+
+(define (packages-template items)
+  (base-template
+    (vector->list
+      (vector-map
+        (lambda (_ item) (package-template item))
+        items))
+    "/"))
+
+(define (services-template items)
+  (base-template
+    (vector->list
+      (vector-map
+        (lambda (_ item) (package-template item))
+        items))
+    "/services"))
 
 (define (package-template package)
-  `(div (@ (style "margin-bottom: 1rem;"))
+  `(div (@ (class "item"))
      (strong ,(assoc-ref package "name"))
      (div
-       (span (@ (style "color: #555555;")) "Version: ")
+       (span (@ (class "muted")) "Version: ")
        ,(assoc-ref package "version"))
      (div
-       (span (@ (style "color: #555555;")) "Location: ")
+       (span (@ (class "muted")) "Location: ")
        ,(assoc-ref package "location"))
      (div
-       (span (@ (style "color: #555555;")) "Home page: ")
+       (span (@ (class "muted")) "Home page: ")
        ,(assoc-ref package "homepage"))
      (div
-       (span (@ (style "color: #555555;")) "License: ")
+       (span (@ (class "muted")) "License: ")
        ,(assoc-ref package "license"))
      (div
-       (span (@ (style "color: #555555;")) "Channel: ")
+       (span (@ (class "muted")) "Channel: ")
        ,(assoc-ref package "channel"))
      (div
-       (span (@ (style "color: #555555;")) "Synopsis: ")
+       (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
      (div
-       (span (@ (style "color: #555555;")) "Description: ")
+       (span (@ (class "muted")) "Description: ")
        (div ,(assoc-ref package "description")))))
+
+(define (service-template service)
+  `(div (@ (class "item"))
+     (strong ,(assoc-ref service "name"))
+     (div
+       (span (@ (class "muted")) "Location: ")
+       ,(assoc-ref service "location"))
+     (div
+       (span (@ (class "muted")) "Channel: ")
+       ,(assoc-ref service "channel"))
+     (div
+       (span (@ (class "muted")) "Description: ")
+       (div ,(assoc-ref service "description")))))

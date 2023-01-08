@@ -164,31 +164,47 @@ query parameter."
   (values '((content-type . (application/json)))
           (scm->json-string %all-channels)))
 
-(define (handle-index request request-body)
+(define (handle-index-page request request-body)
   "Returns the index page."
   (let ((query (request-query-parameter request
                                         "search")))
     (values '((content-type . (text/html)))
             (lambda (port)
               (sxml->xml
-                (index-template
+                (packages-template
                   (if query
                     (find-records-by-name query
                                           %all-packages)
                     #()))
                 port)))))
 
+(define (handle-services-page request request-body)
+  "Returns the services search page."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (values '((content-type . (text/html)))
+            (lambda (port)
+              (sxml->xml
+                (services-template
+                  (if query
+                    (find-records-by-name query
+                                          %all-service-types)
+                    #()))
+                port)))))
+
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
-         ((? equal? '("packages"))
+         ((? equal? '("api" "packages"))
           (handle-packages-search request request-body))
-         ((? equal? '("services"))
+         ((? equal? '("api" "services"))
           (handle-services-search request request-body))
-         ((? equal? '("channels"))
+         ((? equal? '("api" "channels"))
           (handle-channels-list request request-body))
          ((? equal? '())
-          (handle-index request request-body))
+          (handle-index-page request request-body))
+         ((? equal? '("services"))
+          (handle-services-page request request-body))
          (_ (handle-not-found))))
 
 (define (score-record record query)
