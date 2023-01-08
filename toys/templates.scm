@@ -107,22 +107,29 @@
 
 (define (base-template body current query)
   `(html
+     (@ (lang "en"))
      (head
        (title "Toys / Webring for GNU Guix channels")
-       (style ,%styles))
+       (style ,%styles)
+       (meta (@ (name "viewport")
+                (content "width=device-width,initial-scale=1")))
+       (meta (@ (name "charset")
+                (content "utf8"))))
      (body
        (div
          (@ (class "container"))
-         (pre ,%title)
-         ,(menu-template %pages current)
+         (header
+           (pre ,%title)
+           ,(menu-template %pages current))
          (form
            (input (@ (type "search")
+                     (aria-label "Search")
                      (name "search")
                      (required "required")
                      (value ,(or query ""))
                      (placeholder "Enter query")))
            (button (@ (type "submit")) "Search"))
-         ,@body))))
+         (main ,@body)))))
 
 (define (menu-template pages current)
   `(nav
