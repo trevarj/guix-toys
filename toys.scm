@@ -34,6 +34,7 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
   #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (json)
+  #:use-module (web request)
   #:use-module (web server))
 
 (define (debug msg)
@@ -174,8 +175,10 @@ QUERY."
                               (if (= score1 score2)
                                 (if (string=? name1
                                               name2)
-                                  (version>? version1
-                                            version2)
+                                  (and version1
+                                       version2
+                                       (version>? version1
+                                                  version2))
                                   (string>? name1
                                             name2))
                                 (< score1 score2))))))))))))
