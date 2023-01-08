@@ -19,6 +19,8 @@
 
 (define-module (toys templates)
   #:use-module (srfi srfi-43)
+  #:use-module (texinfo)
+  #:use-module (texinfo html)
 
   #:export (packages-template
             services-template))
@@ -89,7 +91,19 @@
     display: block;
     margin-bottom: 0.25rem;
   }
-  ")
+
+  .item .description p:first-child {
+    margin-top: 0;
+  }
+
+  .item .description p:last-child {
+    margin-bottom: 0;
+  }
+
+  code {
+    background-color: #efefef;
+  }
+")
 
 (define (base-template body current query)
   `(html
@@ -137,7 +151,7 @@
   (base-template
     (vector->list
       (vector-map
-        (lambda (_ item) (package-template item))
+        (lambda (_ item) (service-template item))
         items))
     "/services"
     query))
@@ -153,7 +167,10 @@
        ,(assoc-ref package "location"))
      (div
        (span (@ (class "muted")) "Home page: ")
-       ,(assoc-ref package "homepage"))
+       (a
+         (@ (href ,(assoc-ref package "homepage"))
+            (rel "nofollow"))
+         ,(assoc-ref package "homepage")))
      (div
        (span (@ (class "muted")) "License: ")
        ,(assoc-ref package "license"))
@@ -165,7 +182,10 @@
        ,(assoc-ref package "synopsis"))
      (div
        (span (@ (class "muted")) "Description: ")
-       (div ,(assoc-ref package "description")))))
+       (div (@ (class "description"))
+            ,(stexi->shtml
+               (texi-fragment->stexi
+                 (assoc-ref package "description")))))))
 
 (define (service-template service)
   `(div (@ (class "item"))
@@ -178,4 +198,7 @@
        ,(assoc-ref service "channel"))
      (div
        (span (@ (class "muted")) "Description: ")
-       (div ,(assoc-ref service "description")))))
+       (div (@ (class "description"))
+            ,(stexi->shtml
+               (texi-fragment->stexi
+                 (assoc-ref service "description")))))))
