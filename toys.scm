@@ -61,6 +61,16 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
            channels)
       ", ")))
 
+(define (channel->alist channel)
+  (let ((name (symbol->string (channel-name channel)))
+        (url (channel-url channel))
+        (branch (channel-branch channel))
+        (commit (channel-commit channel)))
+    `(("name" . ,name)
+      ("url" . ,url)
+      ("branch" . ,name)
+      ("commit" . ,commit))))
+
 (define (package->alist package)
   "Returns the view of the PACKAGE normalized for API response."
   (let ((name (package-name package))
@@ -94,6 +104,13 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
       ("location" . ,location)
       ("channel" . ,channel)
       ("description" . ,description))))
+
+(debug "Loading channels...")
+;; Storage for all channels extracted from channels.scm.
+(define %all-channels
+  (map
+    (lambda (item) (channel->alist item))
+    (all-channels)))
 
 ;; Storage for all packages extracted from %package-module-path.
 (debug "Loading packages...")
@@ -133,6 +150,12 @@ query parameter."
                                             %all-service-types))))
       (handle-not-found))))
 
+(define (handle-channels-list request request-body)
+  "Returns the list of channels defined in channels.scm."
+  (values '((content-type . (application/json)))
+          (scm->json-string
+            (apply vector %all-channels))))
+
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
@@ -140,6 +163,8 @@ query parameter."
           (handle-package-search request request-body))
          ((? equal? '("services"))
           (handle-service-search request request-body))
+         ((? equal? '("channels"))
+          (handle-channels-list request request-body))
          (_ (handle-not-found))))
 
 (define (score-record record query)

@@ -31,7 +31,8 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
 
-  #:export (all-packages
+  #:export (all-channels
+            all-packages
             all-service-types
             location-channels))
 
@@ -111,6 +112,12 @@ not be determined."
                      (manifest-entry-channel entry))))
             (current-profile-entries))
            '())))))
+
+ (define all-channels
+  (mlambda ()
+    "Returns the list of all channels defined in channels.scm."
+    (filter-map manifest-entry-channel
+                (current-profile-entries))))
 
 ;; List of all modules defined in %package-module-path.
 (define all-modules
