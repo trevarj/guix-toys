@@ -33,6 +33,7 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
   #:use-module (guix ui)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
+  #:use-module (srfi srfi-43)
   #:use-module (json)
   #:use-module (web request)
   #:use-module (web server))
@@ -108,61 +109,65 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
 (debug "Loading channels...")
 ;; Storage for all channels extracted from channels.scm.
 (define %all-channels
-  (map
-    (lambda (item) (channel->alist item))
-    (all-channels)))
+  (apply vector
+         (map
+           (lambda (item) (channel->alist item))
+           (all-channels))))
 
 ;; Storage for all packages extracted from %package-module-path.
 (debug "Loading packages...")
 (define %all-packages
-  (map
-    (lambda (item) (package->alist item))
-    (all-packages)))
+  (apply vector
+         (map
+           (lambda (item) (package->alist item))
+           (sort (all-packages)
+                 (lambda (a b)
+                   (string<? (package-name a)
+                             (package-name b)))))))
 
 ;; Storage for all service types extracted from %package-module-path.
 (debug "Loading service types...")
 (define %all-service-types
-  (map
-    (lambda (item) (service-type->alist item))
-    (all-service-types)))
+  (apply vector
+    (map
+      (lambda (item) (service-type->alist item))
+      (sort (all-service-types)
+            (lambda (a b)
+              (string<? (symbol->string (service-type-name a))
+                        (symbol->string (service-type-name b))))))))
 
-(define (handle-package-search request request-body)
-  "Returns the list of packages whose name contains a value from \"search\"
+(define (handle-packages-search request request-body)
+  "Returns the list of packagess whose name contains a value from \"search\"
 query parameter."
-  (let ((query (request-query-parameter request "search")))
-    (if query
-      (values '((content-type . (application/json)))
-              (scm->json-string
-                (apply vector
-                       (find-records-by-name query
-                                             %all-packages))))
-      (handle-not-found))))
+  (let* ((query (request-query-parameter request
+                                         "search")))
+    (paginated-response request
+                        (if query
+                          (find-records-by-name query %all-packages)
+                          %all-packages))))
 
-(define (handle-service-search request request-body)
+(define (handle-services-search request request-body)
   "Returns the list of services whose name contains a value from \"search\"
 query parameter."
-  (let ((query (request-query-parameter request "search")))
-    (if query
-      (values '((content-type . (application/json)))
-              (scm->json-string
-                (apply vector
-                      (find-records-by-name query
-                                            %all-service-types))))
-      (handle-not-found))))
+  (let* ((query (request-query-parameter request
+                                         "search")))
+    (paginated-response request
+                        (if query
+                          (find-records-by-name query %all-service-types)
+                          %all-service-types))))
 
 (define (handle-channels-list request request-body)
   "Returns the list of channels defined in channels.scm."
   (values '((content-type . (application/json)))
-          (scm->json-string
-            (apply vector %all-channels))))
+          (scm->json-string %all-channels)))
 
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
          ((? equal? '("packages"))
-          (handle-package-search request request-body))
+          (handle-packages-search request request-body))
          ((? equal? '("services"))
-          (handle-service-search request request-body))
+          (handle-services-search request request-body))
          ((? equal? '("channels"))
           (handle-channels-list request request-body))
          (_ (handle-not-found))))
@@ -179,34 +184,36 @@ field to QUERY."
                    (+ offset (string-length name)))))))
 
 (define (find-records-by-name query records)
-  "Returns the subset of RECORDS filtered and sorted by the relevance to
+  "Returns the subset of RECORDS vector filtered and sorted by the relevance to
 QUERY."
-  (map (lambda (record) (car record))
-    (let ((matches (filter (negate null?)
-                          (map (lambda (record)
-                                  (score-record record
-                                                query))
-                                records))))
-    (sort matches
-          (lambda (m1 m2)
-            (match m1
-                  ((record1 . score1)
-                    (match m2
-                          ((record2 . score2)
-                            (let ((name1 (assoc-ref record1 "name"))
-                                  (name2 (assoc-ref record2 "name"))
-                                  (version1 (assoc-ref record1 "version"))
-                                  (version2 (assoc-ref record2 "version")))
-                              (if (= score1 score2)
-                                (if (string=? name1
-                                              name2)
-                                  (and version1
-                                       version2
-                                       (version>? version1
-                                                  version2))
-                                  (string>? name1
-                                            name2))
-                                (< score1 score2))))))))))))
+  (apply vector
+    (map (lambda (record) (car record))
+         (let ((matches (filter (negate null?)
+                                (vector->list
+                                  (vector-map (lambda (_ record)
+                                                (score-record record
+                                                              query))
+                                              records)))))
+           (sort matches
+                 (lambda (m1 m2)
+                   (match m1
+                          ((record1 . score1)
+                           (match m2
+                                  ((record2 . score2)
+                                   (let ((name1 (assoc-ref record1 "name"))
+                                         (name2 (assoc-ref record2 "name"))
+                                         (version1 (assoc-ref record1 "version"))
+                                         (version2 (assoc-ref record2 "version")))
+                                     (if (= score1 score2)
+                                       (if (string=? name1
+                                                     name2)
+                                         (and version1
+                                              version2
+                                              (version>? version1
+                                                         version2))
+                                         (string>? name1
+                                                   name2))
+                                       (< score1 score2)))))))))))))
 
 ;; Run toys JSON API.
 (define (main args)

@@ -18,6 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (toys http)
+  #:use-module (json)
   #:use-module (web request)
   #:use-module (web response)
   #:use-module (web uri)
@@ -25,7 +26,8 @@
   #:export (handle-not-found
             request-path-components
             request-query-parameters
-            request-query-parameter))
+            request-query-parameter
+            paginated-response))
 
 (define (handle-not-found)
   "Returns the 404 response."
@@ -41,14 +43,42 @@
 (define (request-query-parameters request)
   "(A naive implementation that) Returns an alist of query values from the
 given REQUEST."
-  (map (lambda (param)
-         (let ((vals (string-split param #\=)))
-           (cons (car vals) (cadr vals))))
-       (string-split (uri-query (request-uri request))
-                     #\&)))
+  (let ((query (uri-query (request-uri request))))
+    (if query
+      (filter (negate null?)
+              (map (lambda (param)
+                     (let ((vals (string-split param #\=)))
+                       (cons (car vals) (cadr vals))))
+                   (string-split query #\&)))
+      '())))
 
 (define (request-query-parameter request param)
   "Returns value of the given query PARAM.  If there is no such value,
 returns #f."
   (assoc-ref (request-query-parameters request)
              param))
+
+(define (paginated-response request items)
+  "Returns paginated response for the given REQUEST with ITEMS vector splitted
+(according to \"page\" and \"limit\" query parameters) and encoded to JSON."
+  (let* ((total (vector-length items))
+         (limit (min 1000 (or (string->number
+                                (or (request-query-parameter request "limit")
+                                    ""))
+                              100)))
+         (pages (max 1 (ceiling (/ total limit))))
+         (page (min pages
+                    (or (string->number
+                          (or (request-query-parameter request "page")
+                              ""))
+                        1)))
+         (start (* (- page 1) limit))
+         (end (max start
+                   (min (+ start limit) total)))
+         (result (vector-copy items start end)))
+    (values `((content-type . (application/json))
+              (paginator-page . ,(number->string page))
+              (paginator-limit . ,(number->string limit))
+              (paginator-pages . ,(number->string pages))
+              (paginator-total . ,(number->string total)))
+            (scm->json-string result))))
