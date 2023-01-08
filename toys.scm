@@ -175,7 +175,8 @@ query parameter."
                   (if query
                     (find-records-by-name query
                                           %all-packages)
-                    #()))
+                    #())
+                  query)
                 port)))))
 
 (define (handle-services-page request request-body)
@@ -189,7 +190,8 @@ query parameter."
                   (if query
                     (find-records-by-name query
                                           %all-service-types)
-                    #()))
+                    #())
+                  query)
                 port)))))
 
 (define (toys-api request request-body)

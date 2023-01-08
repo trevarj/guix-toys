@@ -58,15 +58,17 @@
     color: #444444;
   }
 
+  nav {
+    font-size: 0.75rem;
+  }
+
   nav a {
     color: blue;
-    font-size: 0.75rem;
   }
 
   nav a.active {
     color: #444444;
     text-decoration: none;
-    pointer-events: none;
   }
 
   .item {
@@ -89,7 +91,7 @@
   }
   ")
 
-(define (base-template body current)
+(define (base-template body current query)
   `(html
      (head
        (title "Toys / Webring for GNU Guix channels")
@@ -103,13 +105,14 @@
            (input (@ (type "search")
                      (name "search")
                      (required "required")
+                     (value ,(or query ""))
                      (placeholder "Enter query")))
            (button (@ (type "submit")) "Search"))
          ,@body))))
 
 (define (menu-template pages current)
   `(nav
-     (@ (style "margin-bottom: 0.5rem; display: flex; gap: 0.75rem;"))
+     (@ (style "margin-bottom: 0.5rem; display: flex; gap: 0.5rem;"))
      ,@(map
          (lambda (item)
            `(a
@@ -121,21 +124,23 @@
               ,(assoc-ref item 'name)))
          pages)))
 
-(define (packages-template items)
+(define (packages-template items query)
   (base-template
     (vector->list
       (vector-map
         (lambda (_ item) (package-template item))
         items))
-    "/"))
+    "/"
+    query))
 
-(define (services-template items)
+(define (services-template items query)
   (base-template
     (vector->list
       (vector-map
         (lambda (_ item) (package-template item))
         items))
-    "/services"))
+    "/services"
+    query))
 
 (define (package-template package)
   `(div (@ (class "item"))
