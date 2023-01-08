@@ -25,6 +25,8 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
 (define-module (toys)
   #:use-module (toys http)
   #:use-module (toys discovery)
+  #:use-module (toys templates)
+
   #:use-module (gnu services)
   #:use-module (gnu services)
   #:use-module (guix channels)
@@ -33,8 +35,9 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
   #:use-module (guix ui)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
-  #:use-module (srfi srfi-43)
   #:use-module (json)
+  #:use-module (srfi srfi-43)
+  #:use-module (sxml simple)
   #:use-module (web request)
   #:use-module (web server))
 
@@ -139,8 +142,8 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
 (define (handle-packages-search request request-body)
   "Returns the list of packagess whose name contains a value from \"search\"
 query parameter."
-  (let* ((query (request-query-parameter request
-                                         "search")))
+  (let ((query (request-query-parameter request
+                                        "search")))
     (paginated-response request
                         (if query
                           (find-records-by-name query %all-packages)
@@ -149,8 +152,8 @@ query parameter."
 (define (handle-services-search request request-body)
   "Returns the list of services whose name contains a value from \"search\"
 query parameter."
-  (let* ((query (request-query-parameter request
-                                         "search")))
+  (let ((query (request-query-parameter request
+                                        "search")))
     (paginated-response request
                         (if query
                           (find-records-by-name query %all-service-types)
@@ -161,6 +164,20 @@ query parameter."
   (values '((content-type . (application/json)))
           (scm->json-string %all-channels)))
 
+(define (handle-index request request-body)
+  "Returns the index page."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (values '((content-type . (text/html)))
+            (lambda (port)
+              (sxml->xml
+                (index-template
+                  (if query
+                    (find-records-by-name query
+                                          %all-packages)
+                    #()))
+                port)))))
+
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
@@ -170,6 +187,8 @@ query parameter."
           (handle-services-search request request-body))
          ((? equal? '("channels"))
           (handle-channels-list request request-body))
+         ((? equal? '())
+          (handle-index request request-body))
          (_ (handle-not-found))))
 
 (define (score-record record query)
