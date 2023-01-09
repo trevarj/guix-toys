@@ -142,6 +142,7 @@
          (form
            (input (@ (type "search")
                      (aria-label "Search")
+                     (autofocus "autofocus")
                      (name "search")
                      (required "required")
                      (value ,(or query ""))
