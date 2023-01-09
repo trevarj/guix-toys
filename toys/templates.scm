@@ -195,7 +195,10 @@
        ,(assoc-ref package "license"))
      (div
        (span (@ (class "muted")) "Channel: ")
-       ,(assoc-ref package "channel"))
+       (a
+         (@ (href ,(string-append "/channels?search="
+                                  (assoc-ref package "channel"))))
+         ,(assoc-ref package "channel")))
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
@@ -216,7 +219,10 @@
        ,(assoc-ref service "location"))
      (div
        (span (@ (class "muted")) "Channel: ")
-       ,(assoc-ref service "channel"))
+       (a
+         (@ (href ,(string-append "/channels?search="
+                                  (assoc-ref service "channel"))))
+         ,(assoc-ref service "channel")))
      ,(if (assoc-ref service "description")
         `(div
           (span (@ (class "muted")) "Description: ")
