@@ -75,6 +75,20 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
       ("branch" . ,name)
       ("commit" . ,commit))))
 
+(define (normalize-inputs inputs)
+  (let ((input-packages (filter
+                          (lambda (p)
+                            (package? (cadr p)))
+                          inputs)))
+    (map
+      (lambda (input)
+        (define input-package (cadr input))
+        (string-append
+          (package-name input-package)
+          "@"
+          (package-version input-package)))
+      input-packages)))
+
 (define (package->alist package)
   "Returns the view of the PACKAGE normalized for API response."
   (let ((name (package-name package))
@@ -86,6 +100,9 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
         (homepage (package-home-page package))
         (license (license->string (package-license package)))
         (synopsis (package-synopsis package))
+        (inputs (apply vector
+                       (normalize-inputs
+                         (package-inputs package))))
         (description (package-description package)))
     `(("name" . ,name)
       ("version" . ,version)
@@ -94,6 +111,7 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
       ("homepage" . ,homepage)
       ("license" . ,license)
       ("synopsis" . ,synopsis)
+      ("inputs" . ,inputs)
       ("description" . ,description))))
 
 (define (service-type->alist service-type)

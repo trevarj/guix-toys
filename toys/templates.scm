@@ -35,7 +35,9 @@
     ((name . "Channels")
      (href . "/channels"))
     ((name . "Public symbols")
-     (href . "/symbols"))))
+     (href . "/symbols"))
+    ((name . "Source code")
+     (href . "https://git.sr.ht/~whereiseveryone/toys"))))
 
 (define %title
 "       _            _    _        _         _
@@ -55,6 +57,7 @@
   "
   html {
     line-height: 1.35;
+    font-family: monospace, sans-serif;
   }
 
   .container {
@@ -66,23 +69,32 @@
     color: #444444;
   }
 
-  nav {
+
+  .menu {
+    color: #444444;
+    display: flex;
     font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+    text-transform: lowercase;
   }
 
-  nav a {
+  .menu a {
     color: blue;
   }
 
-  nav a.active {
+  .menu a.active {
     color: #444444;
     text-decoration: none;
+  }
+
+  .menu a + a {
+    margin-left: 0.5rem;
   }
 
   .item {
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 1px dashed #bbbbbb;
+    border-bottom: 0.125rem dashed #eeeeee;
   }
 
   pre {
@@ -139,7 +151,8 @@
 
 (define (menu-template pages current)
   `(nav
-     (@ (style "margin-bottom: 0.5rem; display: flex; gap: 0.5rem;"))
+     (@ (class "menu"))
+      "'("
      ,@(map
          (lambda (item)
            `(a
@@ -149,7 +162,8 @@
                            "active"
                            "")))
               ,(assoc-ref item 'name)))
-         pages)))
+         pages)
+    ")"))
 
 (define (packages-template items query)
   (base-template
@@ -189,10 +203,15 @@
 
 (define (package-template package)
   `(div (@ (class "item"))
-     (strong ,(assoc-ref package "name"))
-     (div
-       (span (@ (class "muted")) "Version: ")
+     (strong
+       ,(assoc-ref package "name")
+       " "
        ,(assoc-ref package "version"))
+     ,(if (> (vector-length (assoc-ref package "inputs")) 0)
+        `(div
+           (span (@ (class "muted")) "Dependencies: ")
+           ,(inputs->links (assoc-ref package "inputs")))
+        "")
      (div
        (span (@ (class "muted")) "Location: ")
        ,(assoc-ref package "location"))
@@ -284,3 +303,15 @@
           (texi-fragment->stexi texi)))
       texi)
     ""))
+
+(define (inputs->links inputs)
+  (vector->list
+    (vector-map
+      (lambda (_ input)
+        `(span
+           (a
+             (@ (href ,(string-append "/?search="
+                                      (car (string-split input #\@)))))
+             ,input)
+           " "))
+      inputs)))
