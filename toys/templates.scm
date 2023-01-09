@@ -53,11 +53,20 @@
 \\_\\/       \\/_________/         \\/_/ \\_____\\/
 ")
 
+(define %empty-results-art
+"                              _     _
+                             ( \\---/ )
+                              ) . . (
+________________________,--._(___Y___)_,--._______________________ hjw
+                        `--'           `--'
+")
+
 (define %styles
   "
   html {
     line-height: 1.35;
     font-family: monospace, sans-serif;
+    font-size: 0.875rem;
   }
 
   .container {
@@ -69,13 +78,16 @@
     color: #444444;
   }
 
-
   .menu {
     color: #444444;
     display: flex;
-    font-size: 0.75rem;
     margin-bottom: 0.5rem;
     text-transform: lowercase;
+    margin-bottom: 0.75rem;
+  }
+
+  main {
+    margin-top: 2rem;
   }
 
   .menu a {
@@ -94,10 +106,10 @@
   .item {
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 0.125rem dashed #eeeeee;
+    border-bottom: 0.1875rem dashed #eeeeee;
   }
 
-  pre {
+  header pre {
     margin-bottom: 2rem;
   }
 
@@ -166,41 +178,47 @@
          pages)
     ")"))
 
+(define (base-items-template path items query normalizer)
+  "Returns base template for search pages."
+    (base-template
+      (if (and (string? query)
+               (= (vector-length items) 0)
+               (> (string-length query) 0))
+        `("Nothing found, try another query!"
+          (pre ,%empty-results-art)
+          (small (@ (class "muted"))
+                 "Art by Hayley Jane Wakenshaw"))
+        (vector->list
+          (vector-map
+            (lambda (_ item)
+              (normalizer item))
+            items)))
+      path
+      query))
+
 (define (packages-template items query)
-  (base-template
-    (vector->list
-      (vector-map
-        (lambda (_ item) (package-template item))
-        items))
-    "/"
-    query))
+  (base-items-template "/"
+                       items
+                       query
+                       package-template))
 
 (define (services-template items query)
-  (base-template
-    (vector->list
-      (vector-map
-        (lambda (_ item) (service-template item))
-        items))
-    "/services"
-    query))
+  (base-items-template "/services"
+                       items
+                       query
+                       service-template))
 
 (define (channels-template items query)
-  (base-template
-    (vector->list
-      (vector-map
-        (lambda (_ item) (channel-template item))
-        items))
-    "/channels"
-    query))
+  (base-items-template "/channels"
+                       items
+                       query
+                       channel-template))
 
 (define (symbols-template items query)
-  (base-template
-    (vector->list
-      (vector-map
-        (lambda (_ item) (symbol-template item))
-        items))
-    "/symbols"
-    query))
+  (base-items-template "/symbols"
+                       items
+                       query
+                       symbol-template))
 
 (define (package-template package)
   `(div (@ (class "item"))
