@@ -194,6 +194,21 @@ query parameter."
                   query)
                 port)))))
 
+(define (handle-channels-page request request-body)
+  "Returns the channels search page."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (values '((content-type . (text/html)))
+            (lambda (port)
+              (sxml->xml
+                (channels-template
+                  (if query
+                    (find-records-by-name query
+                                          %all-channels)
+                    %all-channels)
+                  query)
+                port)))))
+
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
@@ -207,6 +222,8 @@ query parameter."
           (handle-index-page request request-body))
          ((? equal? '("services"))
           (handle-services-page request request-body))
+         ((? equal? '("channels"))
+          (handle-channels-page request request-body))
          (_ (handle-not-found))))
 
 (define (score-record record query)

@@ -23,13 +23,16 @@
   #:use-module (texinfo html)
 
   #:export (packages-template
-            services-template))
+            services-template
+            channels-template))
 
 (define %pages
   '(((name . "Packages")
      (href . "/"))
     ((name . "Services")
-     (href . "/services"))))
+     (href . "/services"))
+    ((name . "Channels")
+     (href . "/channels"))))
 
 (define %title
 "       _            _    _        _         _
@@ -163,6 +166,15 @@
     "/services"
     query))
 
+(define (channels-template items query)
+  (base-template
+    (vector->list
+      (vector-map
+        (lambda (_ item) (channel-template item))
+        items))
+    "/channels"
+    query))
+
 (define (package-template package)
   `(div (@ (class "item"))
      (strong ,(assoc-ref package "name"))
@@ -213,9 +225,19 @@
                   (texi-fragment->stexi
                     (assoc-ref service "description")))))
         "")))
+
+(define (channel-template channel)
+  `(div (@ (class "item"))
+     (strong ,(assoc-ref channel "name"))
      (div
-       (span (@ (class "muted")) "Description: ")
-       (div (@ (class "description"))
-            ,(stexi->shtml
-               (texi-fragment->stexi
-                 (assoc-ref service "description")))))))
+       (span (@ (class "muted")) "URL: ")
+       (a
+         (@ (href ,(assoc-ref channel "url"))
+            (rel "nofollow"))
+         ,(assoc-ref channel "url")))
+     (div
+       (span (@ (class "muted")) "Branch: ")
+       ,(assoc-ref channel "branch"))
+     (div
+       (span (@ (class "muted")) "Commit: ")
+       ,(assoc-ref channel "commit"))))
