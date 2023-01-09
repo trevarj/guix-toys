@@ -34,6 +34,7 @@
   #:export (all-channels
             all-packages
             all-service-types
+            all-public-symbols
             location-channels))
 
 (define %current-profile
@@ -143,3 +144,17 @@ not be determined."
                                 result))
                         '()
                         (all-modules))))
+
+(define all-public-symbols
+  (mlambda ()
+    "Returns the list of all public (exported) symbols defined in
+%package-module-path."
+    (guix:fold-module-public-variables*
+      (lambda (module symbol variable result)
+        (cons*
+          `(("name" . ,(symbol->string symbol))
+            ("module" . ,module)
+            ("variable" . ,variable))
+          result))
+      '()
+      (all-modules))))

@@ -24,6 +24,7 @@
 
   #:export (packages-template
             services-template
+            symbols-template
             channels-template))
 
 (define %pages
@@ -32,7 +33,9 @@
     ((name . "Services")
      (href . "/services"))
     ((name . "Channels")
-     (href . "/channels"))))
+     (href . "/channels"))
+    ((name . "Public symbols")
+     (href . "/symbols"))))
 
 (define %title
 "       _            _    _        _         _
@@ -175,6 +178,15 @@
     "/channels"
     query))
 
+(define (symbols-template items query)
+  (base-template
+    (vector->list
+      (vector-map
+        (lambda (_ item) (symbol-template item))
+        items))
+    "/symbols"
+    query))
+
 (define (package-template package)
   `(div (@ (class "item"))
      (strong ,(assoc-ref package "name"))
@@ -247,3 +259,15 @@
      (div
        (span (@ (class "muted")) "Commit: ")
        ,(assoc-ref channel "commit"))))
+
+(define (symbol-template symbol)
+  `(div (@ (class "item"))
+     (strong ,(assoc-ref symbol "name"))
+     (div
+       (span (@ (class "muted")) "Module: ")
+       "("
+       ,(string-join
+          (map
+            (lambda (part) (symbol->string part))
+            (module-name (assoc-ref symbol "module"))))
+       ")")))

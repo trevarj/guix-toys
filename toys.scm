@@ -139,6 +139,15 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
               (string<? (symbol->string (service-type-name a))
                         (symbol->string (service-type-name b))))))))
 
+;; Storage for all service types extracted from %package-module-path.
+(debug "Loading public symbols...")
+(define %all-public-symbols
+  (apply vector
+    (sort (all-public-symbols)
+      (lambda (a b)
+        (string<? (assoc-ref a "name"))
+                  (assoc-ref b "name")))))
+
 (define (handle-packages-search request request-body)
   "Returns the list of packagess whose name contains a value from \"search\"
 query parameter."
@@ -163,6 +172,26 @@ query parameter."
   "Returns the list of channels defined in channels.scm."
   (values '((content-type . (application/json)))
           (scm->json-string %all-channels)))
+
+(define (handle-symbols-list request request-body)
+  "Returns the list of all public (exported) symbols defined in
+%package-module-path."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (paginated-response
+      request
+      ;; XXX: Additional processing since we do not store normalized view
+      ;; in %all-public-symbols.
+      (vector-map
+        (lambda (_ symbol)
+          `(("name" . ,(assoc-ref symbol "name"))
+            ("module" . ,(string-join
+                           (map
+                             (lambda (part) (symbol->string part))
+                             (module-name (assoc-ref symbol "module")))))))
+        (if query
+          (find-records-by-name query %all-public-symbols)
+          %all-public-symbols)))))
 
 (define (handle-index-page request request-body)
   "Returns the index page."
@@ -209,6 +238,21 @@ query parameter."
                   query)
                 port)))))
 
+(define (handle-symbols-page request request-body)
+  "Returns the symbols search page."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (values '((content-type . (text/html)))
+            (lambda (port)
+              (sxml->xml
+                (symbols-template
+                  (if query
+                    (find-records-by-name query
+                                          %all-public-symbols)
+                    #())
+                  query)
+                port)))))
+
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
@@ -218,12 +262,16 @@ query parameter."
           (handle-services-search request request-body))
          ((? equal? '("api" "channels"))
           (handle-channels-list request request-body))
+         ((? equal? '("api" "symbols"))
+          (handle-symbols-list request request-body))
          ((? equal? '())
           (handle-index-page request request-body))
          ((? equal? '("services"))
           (handle-services-page request request-body))
          ((? equal? '("channels"))
           (handle-channels-page request request-body))
+         ((? equal? '("symbols"))
+          (handle-symbols-page request request-body))
          (_ (handle-not-found))))
 
 (define (score-record record query)
