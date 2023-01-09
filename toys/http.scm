@@ -48,7 +48,9 @@ given REQUEST."
       (filter (negate null?)
               (map (lambda (param)
                      (let ((vals (string-split param #\=)))
-                       (cons (car vals) (cadr vals))))
+                       (cons
+                         (uri-decode (car vals))
+                         (uri-decode (cadr vals)))))
                    (string-split query #\&)))
       '())))
 
