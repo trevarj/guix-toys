@@ -188,7 +188,8 @@ query parameter."
             ("module" . ,(string-join
                            (map
                              (lambda (part) (symbol->string part))
-                             (module-name (assoc-ref symbol "module")))))))
+                             (module-name (assoc-ref symbol "module")))))
+            ("doc" . ,(assoc-ref symbol "doc"))))
         (if query
           (find-records-by-name query %all-public-symbols)
           %all-public-symbols)))))

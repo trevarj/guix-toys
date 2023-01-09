@@ -266,11 +266,21 @@
           (map
             (lambda (part) (symbol->string part))
             (module-name (assoc-ref symbol "module"))))
-       ")")))
+       ")")
+     ,(if (and (assoc-ref symbol "doc")
+               (> (string-length (assoc-ref symbol "doc"))
+                  0))
+        `(div
+          (span (@ (class "muted")) "Documentation: ")
+          (div (@ (class "description"))
+               ,(texi->html (assoc-ref symbol "doc"))))
+        "")))
 
 (define (texi->html texi)
-  (or
-    (false-if-exception
-      (stexi->shtml
-        (texi-fragment->stexi texi)))
-    texi))
+  (if (> (string-length texi) 0)
+    (or
+      (false-if-exception
+        (stexi->shtml
+          (texi-fragment->stexi texi)))
+      texi)
+    ""))

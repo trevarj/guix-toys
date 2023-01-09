@@ -154,7 +154,12 @@ not be determined."
         (cons*
           `(("name" . ,(symbol->string symbol))
             ("module" . ,module)
-            ("variable" . ,variable))
+            ("variable" . ,variable)
+            ("doc" . ,(or (and
+                            (variable-bound? variable)
+                            (procedure? (variable-ref variable))
+                            (procedure-documentation (variable-ref variable)))
+                          "")))
           result))
       '()
       (all-modules))))
