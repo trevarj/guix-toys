@@ -1,4 +1,4 @@
-(list 
+(cons*
   (channel
     (name 'guixrus)
     (url "https://git.sr.ht/~whereiseveryone/guixrus")
