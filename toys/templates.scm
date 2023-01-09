@@ -218,10 +218,8 @@
         `(div
           (span (@ (class "muted")) "Description: ")
           (div (@ (class "description"))
-               ,(stexi->shtml
-                  (texi-fragment->stexi
-                    (assoc-ref package "description")))))
-        "")))
+               ,(texi->html (assoc-ref package "description")))
+        ""))))
 
 (define (service-template service)
   `(div (@ (class "item"))
@@ -239,10 +237,8 @@
         `(div
           (span (@ (class "muted")) "Description: ")
           (div (@ (class "description"))
-               ,(stexi->shtml
-                  (texi-fragment->stexi
-                    (assoc-ref service "description")))))
-        "")))
+               ,(texi->html (assoc-ref service "description")))
+        ""))))
 
 (define (channel-template channel)
   `(div (@ (class "item"))
@@ -271,3 +267,10 @@
             (lambda (part) (symbol->string part))
             (module-name (assoc-ref symbol "module"))))
        ")")))
+
+(define (texi->html texi)
+  (or
+    (false-if-exception
+      (stexi->shtml
+        (texi-fragment->stexi texi)))
+    texi))
