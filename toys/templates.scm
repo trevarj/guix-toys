@@ -187,12 +187,14 @@
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
-     (div
-       (span (@ (class "muted")) "Description: ")
-       (div (@ (class "description"))
-            ,(stexi->shtml
-               (texi-fragment->stexi
-                 (assoc-ref package "description")))))))
+     ,(if (assoc-ref package "description")
+        `(div
+          (span (@ (class "muted")) "Description: ")
+          (div (@ (class "description"))
+               ,(stexi->shtml
+                  (texi-fragment->stexi
+                    (assoc-ref package "description")))))
+        "")))
 
 (define (service-template service)
   `(div (@ (class "item"))
@@ -203,6 +205,14 @@
      (div
        (span (@ (class "muted")) "Channel: ")
        ,(assoc-ref service "channel"))
+     ,(if (assoc-ref service "description")
+        `(div
+          (span (@ (class "muted")) "Description: ")
+          (div (@ (class "description"))
+               ,(stexi->shtml
+                  (texi-fragment->stexi
+                    (assoc-ref service "description")))))
+        "")))
      (div
        (span (@ (class "muted")) "Description: ")
        (div (@ (class "description"))
