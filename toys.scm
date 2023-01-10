@@ -72,7 +72,7 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
         (commit (channel-commit channel)))
     `(("name" . ,name)
       ("url" . ,url)
-      ("branch" . ,name)
+      ("branch" . ,branch)
       ("commit" . ,commit))))
 
 (define (normalize-inputs inputs)
