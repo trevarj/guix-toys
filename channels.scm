@@ -39,6 +39,14 @@
       (openpgp-fingerprint
        "2841 9AC6 5038 7440 C7E9  2FFA 2208 D209 58C1 DEB0"))))
   (channel
+    (name 'rg)
+    (url "https://git.sr.ht/~raghavgururajan/guix-channel")
+    (introduction
+      (make-channel-introduction
+       "b56a4dabe12bfb1eed80467f48d389b32137cb60"
+        (openpgp-fingerprint
+         "CD2D 5EAA A98C CB37 DA91  D6B0 5F58 1664 7F8B E551"))))
+  (channel
     (name 'unwox)
     (url "https://git.sr.ht/~unwox/guix-pkgs")
     (introduction
