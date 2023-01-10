@@ -8,9 +8,9 @@ The live instance can be found at [toys.whereis.みんな](https://toys.whereis.
 
 ## join
 
-If you'd like to joing the channel webring just send a patch to
-~whereiseveryone/toys@lists.sr.ht adding your channel as an entry in the
-`channels.scm` file.
+If you'd like to join our channel webring send a patch to
+~whereiseveryone/toys@lists.sr.ht adding your channel as an entry in
+[channels.scm](https://git.sr.ht/~whereiseveryone/toys/tree/master/item/channels.scm).
 
 ## contribute
 
