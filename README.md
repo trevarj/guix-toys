@@ -6,24 +6,13 @@ Issue tracker is [here](https://todo.sr.ht/~whereiseveryone/toys).
 
 The live instance can be found at [toys.whereis.みんな](https://toys.whereis.みんな/)
 
-## Usage
+## join
 
-Currently you can search for packages like this, for example:
+If you'd like to joing the channel webring just send a patch to
+~whereiseveryone/toys@lists.sr.ht adding your channel as an entry in the
+`channels.scm` file.
 
-```sh
-https://toys.whereis.xn--q9jyb4c/packages?search=vis-lsp
-```
-
-You can query for services like this:
-
-```sh
-https://toys.whereis.xn--q9jyb4c/services?search=senpai
-```
-
-Stay tuned for instructions on how to join the channel webring. We first
-have to resolve [#2](https://todo.sr.ht/~whereiseveryone/toys/2).
-
-## Contributing
+## contribute
 
 Send patches to ~whereiseveryone/toys@lists.sr.ht
 
@@ -34,7 +23,7 @@ jgart and [unwox](https://git.sr.ht/~unwox) can review patches and merge them.
 
 You can subscribe to the mailing list by sending an email to ~whereiseveryone/list+subscribe@lists.sr.ht
 
-## Communication
+## chat
 
 Discussion regarding this project happens at `#whereiseveryone` on the Libera IRC network.
 
