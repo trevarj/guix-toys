@@ -16,12 +16,11 @@ If you'd like to joing the channel webring just send a patch to
 
 Send patches to ~whereiseveryone/toys@lists.sr.ht
 
-[Reach out](https://web.libera.chat/gamja/#whereiseveryone) if you would
-like to collaborate on this project.
-
 jgart and [unwox](https://git.sr.ht/~unwox) can review patches and merge them.
 
-You can subscribe to the mailing list by sending an email to ~whereiseveryone/list+subscribe@lists.sr.ht
+See the
+[good-first-issue](https://todo.sr.ht/~whereiseveryone/toys?search=label%3Agood-first-issue)
+tags if you're looking for how to get started contributing.
 
 ## chat
 
