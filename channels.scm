@@ -47,6 +47,15 @@
         (openpgp-fingerprint
          "CD2D 5EAA A98C CB37 DA91  D6B0 5F58 1664 7F8B E551"))))
   (channel
+    (name 'rosenthal)
+    (url "https://github.com/rakino/rosenthal")
+    (branch "trunk")
+    (introduction
+      (make-channel-introduction
+        "7677db76330121a901604dfbad19077893865f35"
+        (openpgp-fingerprint
+          "13E7 6CD6 E649 C28C 3385  4DF5 5E5A A665 6149 17F7"))))
+  (channel
     (name 'unwox)
     (url "https://git.sr.ht/~unwox/guix-pkgs")
     (introduction
