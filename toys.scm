@@ -134,8 +134,8 @@ CHANNEL-NAME via Web."
         ((equal? forge "github")
          (format #f
                  "~a/blob/~a/~a#L~d"
-                 ref
                  base-url
+                 ref
                  file
                  line))
         (else #f))

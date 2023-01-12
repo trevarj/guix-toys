@@ -21,12 +21,12 @@
     `((forge . "github")
       (channel . ,(channel
                     (name 'druix)
-                    (url "https://github.com/drewc/druix.git")
+                    (url "https://github.com/drewc/druix")
                     (branch "main"))))
     `((forge . "github")
       (channel . ,(channel
                     (name 'flat)
-                    (url "https://github.com/flatwhatson/guix-channel.git")
+                    (url "https://github.com/flatwhatson/guix-channel")
                     (introduction
                       (make-channel-introduction
                         "33f86a4b48205c0dc19d7c036c85393f0766f806"
@@ -35,7 +35,7 @@
     `((forge . "gitlab")
       (channel . ,(channel
                     (name 'guix-hpc)
-                    (url "https://gitlab.inria.fr/guix-hpc/guix-hpc.git"))))
+                    (url "https://gitlab.inria.fr/guix-hpc/guix-hpc"))))
     `((forge . "sourcehut")
       (channel . ,(channel
                     (name 'rde)
@@ -84,7 +84,7 @@
     `((forge . "github")
       (channel . ,(channel
                     (name 'guix-science)
-                    (url "https://github.com/guix-science/guix-science.git")
+                    (url "https://github.com/guix-science/guix-science")
                     (introduction
                       (make-channel-introduction
                         "b1fe5aaff3ab48e798a4cce02f0212bc91f423dc"
@@ -103,7 +103,7 @@
     `((forge . "github")
       (channel . ,(channel
                     (name 'crypto)
-                    (url "https://github.com/attila-lendvai/guix-crypto.git")
+                    (url "https://github.com/attila-lendvai/guix-crypto")
                     (branch "main")
                     (introduction
                       (make-channel-introduction
