@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
+exec guile -L . -e 'main' -s "$0" "$@"
 !#
 ;;; GNU Guix --- Functional package management for GNU
 ;;;
@@ -22,24 +22,24 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (toys)
-  #:use-module (toys http)
-  #:use-module (toys discovery)
-  #:use-module (toys templates)
+(use-modules (toys http)
+             (toys discovery)
+             (toys templates)
 
-  #:use-module (gnu services)
-  #:use-module (gnu services)
-  #:use-module (guix channels)
-  #:use-module (guix licenses)
-  #:use-module (guix packages)
-  #:use-module (guix ui)
-  #:use-module (guix utils)
-  #:use-module (ice-9 match)
-  #:use-module (json)
-  #:use-module (srfi srfi-43)
-  #:use-module (sxml simple)
-  #:use-module (web request)
-  #:use-module (web server))
+             (gnu services)
+             (gnu services)
+             (guix channels)
+             (guix licenses)
+             (guix packages)
+             (guix ui)
+             (guix utils)
+             (ice-9 match)
+             (json)
+             (srfi srfi-1)
+             (srfi srfi-43)
+             (sxml simple)
+             (web request)
+             (web server))
 
 (define (debug msg)
   "Prints the debug MSG to stdout."
@@ -65,15 +65,96 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
            channels)
       ", ")))
 
-(define (channel->alist channel)
-  (let ((name (symbol->string (channel-name channel)))
-        (url (channel-url channel))
-        (branch (channel-branch channel))
-        (commit (channel-commit channel)))
+(define (channel->alist channel commit)
+  "Returns the view of the CHANNEL normalized for API response. Accepts both
+native guix channels and toys wrapper with additional data."
+  (let* ((chan (if (channel? channel)
+                 channel
+                 (assoc-ref channel 'channel)))
+         (name (symbol->string (channel-name chan)))
+         (url (channel-url chan))
+         (forge (or (assoc-ref channel 'forge)
+                    ""))
+         (branch (channel-branch chan)))
     `(("name" . ,name)
       ("url" . ,url)
       ("branch" . ,branch)
+      ("forge" . ,forge)
       ("commit" . ,commit))))
+
+(define (channel-record-by-name name)
+  "Returns a channel with specified NAME from %all-channels.  If none found,
+returns #f."
+  (find
+    (lambda (item)
+      (string=? (assoc-ref item "name")
+                name))
+    (vector->list %all-channels)))
+
+(define (location->url location channel-name)
+  "Returns the URL for accessing specified LOCATION from channel with
+CHANNEL-NAME via Web."
+  (let* ((channel (channel-record-by-name channel-name))
+         (file (location-file location))
+         (line (location-line location))
+         ; Extract ref from "commit" field and reference it in resulting URL
+         (ref (or (assoc-ref channel "commit")
+                  (assoc-ref channel "branch")
+                  "master"))
+         (forge (and channel
+                     (assoc-ref channel "forge")))
+         (base-url (if (equal? channel-name "guix")
+                     "https://git.savannah.gnu.org/cgit/guix.git"
+                     (and channel
+                        (assoc-ref channel "url")))))
+    (if (and base-url
+             forge)
+      (cond
+        ((equal? forge "cgit")
+         (format #f
+                 "~a/tree/~a?id=~a#n~d"
+                 base-url
+                 file
+                 ref
+                 line))
+        ((equal? forge "sourcehut")
+         (format #f
+                 "~a/tree/~a/item/~a#L~d"
+                 base-url
+                 ref
+                 file
+                 line))
+        ((equal? forge "gitlab")
+         (format #f
+                 "~a/-/blob/~a/~a#L~d"
+                 base-url
+                 ref
+                 file
+                 line))
+        ((equal? forge "github")
+         (format #f
+                 "~a/blob/~a/~a#L~d"
+                 ref
+                 base-url
+                 file
+                 line))
+        (else #f))
+      #f)))
+
+(define (location->alist location)
+  (let* ((channels (location-channels location))
+         (file (location-file location))
+         ; (module (string-append "("
+         ;                        (string-join 
+         ;                          (string-split file #\/)
+         ;                          " ")
+         ;                        ")"))
+         (channel (channels->string channels))
+         (url (location->url location channel)))
+    `(("channel" . ,channel)
+      ; ("module"  . ,module)
+      ("file"    . ,file)
+      ("url"     . ,url))))
 
 (define (normalize-inputs inputs)
   (let ((input-packages (filter
@@ -93,21 +174,19 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
   "Returns the view of the PACKAGE normalized for API response."
   (let ((name (package-name package))
         (version (package-version package))
-        (location (location->string (package-location package)))
-        (channel (channels->string
-                   (location-channels
-                     (package-location package))))
+        (location (location->alist (package-location package)))
         (homepage (package-home-page package))
         (license (license->string (package-license package)))
         (synopsis (package-synopsis package))
-        (inputs (apply vector
-                       (normalize-inputs
-                         (package-inputs package))))
+        (inputs (or (false-if-exception
+                      (apply vector
+                             (normalize-inputs
+                               (package-inputs package))))
+                    #()))
         (description (package-description package)))
     `(("name" . ,name)
       ("version" . ,version)
       ("location" . ,location)
-      ("channel" . ,channel)
       ("homepage" . ,homepage)
       ("license" . ,license)
       ("synopsis" . ,synopsis)
@@ -117,23 +196,44 @@ exec guile -L . -e '(@@ (toys) main)' -s "$0" "$@"
 (define (service-type->alist service-type)
   "Returns the view of the SERVICE-TYPE normalized for API response."
   (let ((name (symbol->string (service-type-name service-type)))
-        (location (location->string (service-type-location service-type)))
-        (channel (channels->string
-                   (location-channels
-                     (service-type-location service-type))))
+        (location (location->alist
+                    (service-type-location service-type)))
         (description (service-type-description service-type)))
     `(("name" . ,name)
       ("location" . ,location)
-      ("channel" . ,channel)
       ("description" . ,description))))
 
 (debug "Loading channels...")
 ;; Storage for all channels extracted from channels.scm.
 (define %all-channels
-  (apply vector
-         (map
-           (lambda (item) (channel->alist item))
-           (all-channels))))
+  (let* ((_ (load %current-channels))
+         (guix-channels (all-channels))
+         (toys-channels (and (defined? 'toys-channels)
+                             toys-channels))
+         (channels (or toys-channels
+                       guix-channels
+                       '()))
+         (channel-name* (lambda (channel)
+                          (channel-name
+                            (if (channel? channel)
+                              channel
+                              ;; our custom wrapper with additional data
+                              (assoc-ref channel 'channel)))))
+         (find-commit (lambda (name)
+                        (channel-commit
+                          (find
+                            (lambda (item)
+                              (equal? (channel-name item)
+                                      name))
+                            guix-channels)))))
+    (apply vector
+           (map
+             (lambda (item)
+               (channel->alist item
+                               ;; extract channel commit data from current profile
+                               (find-commit
+                                 (channel-name* item))))
+             channels))))
 
 ;; Storage for all packages extracted from %package-module-path.
 (debug "Loading packages...")

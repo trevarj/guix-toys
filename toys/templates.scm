@@ -231,9 +231,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
            (span (@ (class "muted")) "Dependencies: ")
            ,(inputs->links (assoc-ref package "inputs")))
         "")
-     (div
-       (span (@ (class "muted")) "Location: ")
-       ,(assoc-ref package "location"))
+     ,(location->channel (assoc-ref package
+                                    "location"))
+     ,(location->link (assoc-ref package
+                                 "location"))
      (div
        (span (@ (class "muted")) "Home page: ")
        (a
@@ -243,12 +244,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
      (div
        (span (@ (class "muted")) "License: ")
        ,(assoc-ref package "license"))
-     (div
-       (span (@ (class "muted")) "Channel: ")
-       (a
-         (@ (href ,(string-append "/channels?search="
-                                  (assoc-ref package "channel"))))
-         ,(assoc-ref package "channel")))
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
@@ -262,15 +257,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (service-template service)
   `(div (@ (class "item"))
      (strong ,(assoc-ref service "name"))
-     (div
-       (span (@ (class "muted")) "Location: ")
-       ,(assoc-ref service "location"))
-     (div
-       (span (@ (class "muted")) "Channel: ")
-       (a
-         (@ (href ,(string-append "/channels?search="
-                                  (assoc-ref service "channel"))))
-         ,(assoc-ref service "channel")))
+     ,(location->channel (assoc-ref service
+                                    "location"))
+     ,(location->link (assoc-ref service
+                                 "location"))
      ,(if (assoc-ref service "description")
         `(div
           (span (@ (class "muted")) "Description: ")
@@ -334,3 +324,23 @@ ________________________,--._(___Y___)_,--._______________________ hjw
              ,input)
            " "))
       inputs)))
+
+(define (location->link location)
+  (let ((url (assoc-ref location "url"))
+        (file (assoc-ref location "file")))
+    `(div
+      (span (@ (class "muted")) "Location: ")
+      (a (@ (href ,url)
+            (rel "nofollow"))
+         ,file))))
+
+(define (location->channel location)
+  (let ((channel (assoc-ref location
+                            "channel")))
+     `(div
+        (span (@ (class "muted")) "Channel: ")
+        (a
+          (@ (href ,(string-append "/channels?search="
+                                   channel))
+             (rel "nofollow"))
+          ,channel))))

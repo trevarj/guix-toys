@@ -31,7 +31,9 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
 
-  #:export (all-channels
+  #:export (%current-profile
+            %current-channels
+            all-channels
             all-packages
             all-service-types
             all-public-symbols
@@ -40,6 +42,10 @@
 (define %current-profile
   (string-append (getenv "HOME")
                  "/.config/guix/current"))
+
+(define %current-channels
+  (string-append (getenv "HOME")
+                 "/.config/guix/channels.scm"))
 
 ;; These are slightly modified copies of Guix functions with redefined scope:
 ;; by default current-profile from (guix describe) checks if running process is
