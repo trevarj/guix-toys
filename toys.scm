@@ -335,20 +335,35 @@ Web."
 (define (score-record record query)
   "Returns the (RECORD . score) pair where score is relevancy of the \"name\"
 field to QUERY."
-  (let ((name (assoc-ref record "name")))
-    (match (string-contains-ci name query)
-           ((? eq? #f)
-            '())
-           (offset
-             (cons record
-                   (+ offset (string-length name)))))))
+  (let ((name (assoc-ref record "name"))
+        (tokens (string-split query #\space))
+        (append-score (lambda (pair carry)
+                        (if (null? carry)
+                          pair
+                          `(,(car carry) . ,(+ (cdr pair)
+                                               (cdr carry)))))))
+    (fold
+      (lambda (token carry)
+        (if (eq? carry 'stop)
+          'stop
+          (match (string-contains-ci name token)
+                 ((? eq? #f)
+                  'stop)
+                 (offset
+                   (append-score
+                     (cons record
+                           (+ offset
+                              (string-length name)))
+                     carry)))))
+      '()
+      tokens)))
 
 (define (find-records-by-name query records)
   "Returns the subset of RECORDS vector filtered and sorted by the relevance to
 QUERY."
   (apply vector
     (map (lambda (record) (car record))
-         (let ((matches (filter (negate null?)
+         (let ((matches (filter pair?
                                 (vector->list
                                   (vector-map (lambda (_ record)
                                                 (score-record record
