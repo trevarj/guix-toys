@@ -290,6 +290,14 @@ ________________________,--._(___Y___)_,--._______________________ hjw
      (div
        (span (@ (class "muted")) "Module: ")
        ,(assoc-ref symbol "module"))
+     ,(if (and (assoc-ref symbol "signature")
+               (> (string-length (assoc-ref symbol "signature"))
+                  0))
+          `(div
+            (span (@ (class "muted")) "Signature: ")
+            (div (@ (class "description"))
+                 ,(texi->html (assoc-ref symbol "signature"))))
+          "")
      ,(if (and (assoc-ref symbol "doc")
                (> (string-length (assoc-ref symbol "doc"))
                   0))
