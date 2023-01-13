@@ -27,7 +27,6 @@ exec guile -L . -e 'main' -s "$0" "$@"
              (toys templates)
 
              (gnu services)
-             (gnu services)
              (guix channels)
              (guix licenses)
              (guix packages)
@@ -70,7 +69,12 @@ exec guile -L . -e 'main' -s "$0" "$@"
       ""
       (license-name license))))
 
+;;
+;; CHANNELS
+;;
+
 (define (channels->string channels)
+  "Returns names for the given CHANNELS delimited by comma."
   (if (null? channels)
     "guix"
     (string-join
@@ -107,6 +111,42 @@ returns #f."
       (string=? (assoc-ref item "name")
                 name))
     (vector->list %all-channels)))
+
+(debug "Loading channels...")
+;; Storage for all channels extracted from channels.scm.
+(define %all-channels
+  (let* ((_ (load %current-channels))
+         (guix-channels (all-channels))
+         (toys-channels (and (defined? 'toys-boxes)
+                             toys-boxes))
+         (channels (or toys-channels
+                       guix-channels
+                       '()))
+         (channel-name* (lambda (channel)
+                          (channel-name
+                            (if (channel? channel)
+                              channel
+                              (toys-box-channel channel)))))
+         (find-commit (lambda (name)
+                        (channel-commit
+                          ;; TODO: check for #f.
+                          (find
+                            (lambda (item)
+                              (equal? (channel-name item)
+                                      name))
+                            guix-channels)))))
+    (apply vector
+           (map
+             (lambda (item)
+               (channel->alist item
+                               ;; Extract channel commit data from current profile.
+                               (find-commit
+                                 (channel-name* item))))
+             channels))))
+
+;;
+;; LOCATIONS
+;;
 
 (define (location->url location channel)
   "Returns the URL for accessing specified LOCATION from CHANNEL record via
@@ -166,6 +206,7 @@ Web."
       #f)))
 
 (define (location->alist location)
+  "Returns normalized view of the LOCATION."
   (let* ((channels (location-channels location))
          (file (location-file location))
          (module (string-append "("
@@ -184,7 +225,13 @@ Web."
       ("file"    . ,file)
       ("url"     . ,url))))
 
+
+;;
+;; PACKAGES
+;;
+
 (define (normalize-inputs inputs)
+  "Returns normalized view of the INPUTS with their versions."
   (let ((input-packages (filter
                           (lambda (p)
                             (package? (cadr p)))
@@ -221,48 +268,6 @@ Web."
       ("inputs" . ,inputs)
       ("description" . ,description))))
 
-(define (service-type->alist service-type)
-  "Returns the view of the SERVICE-TYPE normalized for API response."
-  (let ((name (symbol->string (service-type-name service-type)))
-        (location (location->alist
-                    (service-type-location service-type)))
-        (description (service-type-description service-type)))
-    `(("name" . ,name)
-      ("location" . ,location)
-      ("description" . ,description))))
-
-(debug "Loading channels...")
-;; Storage for all channels extracted from channels.scm.
-(define %all-channels
-  (let* ((_ (load %current-channels))
-         (guix-channels (all-channels))
-         (toys-channels (and (defined? 'toys-boxes)
-                             toys-boxes))
-         (channels (or toys-channels
-                       guix-channels
-                       '()))
-         (channel-name* (lambda (channel)
-                          (channel-name
-                            (if (channel? channel)
-                              channel
-                              (toys-box-channel channel)))))
-         (find-commit (lambda (name)
-                        (channel-commit
-                          ;; TODO: check for #f.
-                          (find
-                            (lambda (item)
-                              (equal? (channel-name item)
-                                      name))
-                            guix-channels)))))
-    (apply vector
-           (map
-             (lambda (item)
-               (channel->alist item
-                               ;; Extract channel commit data from current profile.
-                               (find-commit
-                                 (channel-name* item))))
-             channels))))
-
 ;; Storage for all packages extracted from %package-module-path.
 (debug "Loading packages...")
 (define %all-packages
@@ -273,6 +278,20 @@ Web."
                  (lambda (a b)
                    (string<? (package-name a)
                              (package-name b)))))))
+
+;;
+;; SERVICES
+;;
+
+(define (service-type->alist service-type)
+  "Returns the view of the SERVICE-TYPE normalized for API response."
+  (let ((name (symbol->string (service-type-name service-type)))
+        (location (location->alist
+                    (service-type-location service-type)))
+        (description (service-type-description service-type)))
+    `(("name" . ,name)
+      ("location" . ,location)
+      ("description" . ,description))))
 
 ;; Storage for all service types extracted from %package-module-path.
 (debug "Loading service types...")
@@ -285,141 +304,33 @@ Web."
               (string<? (symbol->string (service-type-name a))
                         (symbol->string (service-type-name b))))))))
 
+;;
+;; PUBLIC SYMBOLS
+;;
+
 ;; Storage for all service types extracted from %package-module-path.
 (debug "Loading public symbols...")
 (define %all-public-symbols
   (apply vector
-    (sort (all-public-symbols)
-      (lambda (a b)
-        (string<? (assoc-ref a "name"))
-                  (assoc-ref b "name")))))
-
-(define (handle-packages-search request request-body)
-  "Returns the list of packagess whose name contains a value from \"search\"
-query parameter."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (paginated-response request
-                        (if query
-                          (find-records-by-name query %all-packages)
-                          %all-packages))))
-
-(define (handle-services-search request request-body)
-  "Returns the list of services whose name contains a value from \"search\"
-query parameter."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (paginated-response request
-                        (if query
-                          (find-records-by-name query %all-service-types)
-                          %all-service-types))))
-
-(define (handle-channels-list request request-body)
-  "Returns the list of channels defined in channels.scm."
-  (values '((content-type . (application/json)))
-          (scm->json-string %all-channels)))
-
-(define (handle-symbols-list request request-body)
-  "Returns the list of all public (exported) symbols defined in
-%package-module-path."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (paginated-response
-      request
-      ;; XXX: Additional processing since we do not store normalized view
-      ;; in %all-public-symbols.
-      (vector-map
-        (lambda (_ symbol)
-          `(("name" . ,(assoc-ref symbol "name"))
-            ("module" . ,(string-join
+    (map
+      (lambda (symbol)
+        `(("name" . ,(assoc-ref symbol "name"))
+          ("module" . ,(string-append
+                         "("
+                         (string-join
                            (map
                              (lambda (part) (symbol->string part))
-                             (module-name (assoc-ref symbol "module")))))
-            ("doc" . ,(assoc-ref symbol "doc"))))
-        (if query
-          (find-records-by-name query %all-public-symbols)
-          %all-public-symbols)))))
+                             (module-name (assoc-ref symbol "module"))))
+                         ")"))
+          ("doc" . ,(assoc-ref symbol "doc"))))
+      (sort (all-public-symbols)
+        (lambda (a b)
+          (string<? (assoc-ref a "name"))
+                    (assoc-ref b "name"))))))
 
-(define (handle-index-page request request-body)
-  "Returns the index page."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (values '((content-type . (text/html)))
-            (lambda (port)
-              (sxml->xml
-                (packages-template
-                  (if query
-                    (find-records-by-name query
-                                          %all-packages)
-                    #())
-                  query)
-                port)))))
-
-(define (handle-services-page request request-body)
-  "Returns the services search page."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (values '((content-type . (text/html)))
-            (lambda (port)
-              (sxml->xml
-                (services-template
-                  (if query
-                    (find-records-by-name query
-                                          %all-service-types)
-                    #())
-                  query)
-                port)))))
-
-(define (handle-channels-page request request-body)
-  "Returns the channels search page."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (values '((content-type . (text/html)))
-            (lambda (port)
-              (sxml->xml
-                (channels-template
-                  (if query
-                    (find-records-by-name query
-                                          %all-channels)
-                    %all-channels)
-                  query)
-                port)))))
-
-(define (handle-symbols-page request request-body)
-  "Returns the symbols search page."
-  (let ((query (request-query-parameter request
-                                        "search")))
-    (values '((content-type . (text/html)))
-            (lambda (port)
-              (sxml->xml
-                (symbols-template
-                  (if query
-                    (find-records-by-name query
-                                          %all-public-symbols)
-                    #())
-                  query)
-                port)))))
-
-(define (toys-api request request-body)
-  "Routes and handles incoming HTTP requests."
-  (match (request-path-components request)
-         ((? equal? '("api" "packages"))
-          (handle-packages-search request request-body))
-         ((? equal? '("api" "services"))
-          (handle-services-search request request-body))
-         ((? equal? '("api" "channels"))
-          (handle-channels-list request request-body))
-         ((? equal? '("api" "symbols"))
-          (handle-symbols-list request request-body))
-         ((? equal? '())
-          (handle-index-page request request-body))
-         ((? equal? '("services"))
-          (handle-services-page request request-body))
-         ((? equal? '("channels"))
-          (handle-channels-page request request-body))
-         ((? equal? '("symbols"))
-          (handle-symbols-page request request-body))
-         (_ (handle-not-found))))
+;;
+;; RECORDS
+;;
 
 (define (score-record record query)
   "Returns the (RECORD . score) pair where score is relevancy of the \"name\"
@@ -463,6 +374,123 @@ QUERY."
                                          (string>? name1
                                                    name2))
                                        (< score1 score2)))))))))))))
+
+;;
+;; API
+;;
+
+(define (handle-api-search request request-body records)
+  "Handles generic API request for RECORDS with pagination and search
+functionality."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (paginated-response request
+                        (if query
+                          (find-records-by-name query records)
+                          records))))
+
+(define (handle-api-packages-search request request-body)
+  "Returns the list of packagess whose name contains a value from \"search\"
+query parameter."
+  (handle-api-search request
+                     request-body
+                     %all-packages))
+
+(define (handle-api-services-search request request-body)
+  "Returns the list of services whose name contains a value from \"search\"
+query parameter."
+  (handle-api-search request
+                     request-body
+                     %all-service-types))
+
+(define (handle-api-channels-list request request-body)
+  "Returns the list of channels defined in channels.scm."
+  (handle-api-search request
+                     request-body
+                     %all-channels))
+
+(define (handle-api-symbols-list request request-body)
+  "Returns the list of all public (exported) symbols defined in
+%package-module-path."
+  (handle-api-search request
+                     request-body
+                     %all-public-symbols))
+
+;;
+;; HTML pages
+;;
+
+(define (handle-search-page request request-body records template)
+  "Handles generic search page request for RECORDS using TEMPLATE."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (values '((content-type . (text/html)))
+            (lambda (port)
+              (sxml->xml
+                (template
+                  (if query
+                    (find-records-by-name query
+                                          records)
+                    #())
+                  query)
+                port)))))
+
+(define (handle-index-page request request-body)
+  "Returns the index page."
+  (handle-search-page request
+                      request-body
+                      %all-packages
+                      packages-template))
+
+(define (handle-services-page request request-body)
+  "Returns the services search page."
+  (handle-search-page request
+                      request-body
+                      %all-service-types
+                      services-template))
+
+(define (handle-channels-page request request-body)
+  "Returns the channels search page."
+  (let ((query (request-query-parameter request
+                                        "search")))
+    (values '((content-type . (text/html)))
+            (lambda (port)
+              (sxml->xml
+                (channels-template
+                  (if query
+                    (find-records-by-name query
+                                          %all-channels)
+                    %all-channels)
+                  query)
+                port)))))
+
+(define (handle-symbols-page request request-body)
+  "Returns the symbols search page."
+  (handle-search-page request
+                      request-body
+                      %all-public-symbols
+                      symbols-template))
+
+(define (toys-api request request-body)
+  "Routes and handles incoming HTTP requests."
+  (match (request-path-components request)
+         ((? equal? '("api" "packages"))
+          (handle-api-packages-search request request-body))
+         ((? equal? '("api" "services"))
+          (handle-api-services-search request request-body))
+         ((? equal? '("api" "channels"))
+          (handle-api-channels-list request request-body))
+         ((? equal? '("api" "symbols"))
+          (handle-api-symbols-list request request-body))
+         ((? equal? '())
+          (handle-index-page request request-body))
+         ((? equal? '("services"))
+          (handle-services-page request request-body))
+         ((? equal? '("channels"))
+          (handle-channels-page request request-body))
+         ((? equal? '("symbols"))
+          (handle-symbols-page request request-body))
+         (_ (handle-not-found))))
 
 ;; Run toys JSON API.
 (define (main args)

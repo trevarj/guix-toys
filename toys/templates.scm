@@ -289,12 +289,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
      (strong ,(assoc-ref symbol "name"))
      (div
        (span (@ (class "muted")) "Module: ")
-       "("
-       ,(string-join
-          (map
-            (lambda (part) (symbol->string part))
-            (module-name (assoc-ref symbol "module"))))
-       ")")
+       ,(assoc-ref symbol "module"))
      ,(if (and (assoc-ref symbol "doc")
                (> (string-length (assoc-ref symbol "doc"))
                   0))

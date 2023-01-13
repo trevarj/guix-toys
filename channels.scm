@@ -174,7 +174,7 @@
 (define (toys-boxes->channels channels)
   (map
     (lambda (channel)
-      (toys-boxes-channel channel))
+      (toys-box-channel channel))
     channels))
 
 (toys-boxes->channels toys-boxes)
