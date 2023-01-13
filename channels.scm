@@ -1,14 +1,17 @@
 (use-modules (guix records))
 
-;; Toys channel wrapper for storing additional data such as "description",
-;; "forge" and etc.
+;; Guix channel wrapper with additional data.
 (define-record-type* <toys-box>
   toys-box make-toys-box
   toys-box?
 
-  (channel toys-box-channel)    ; channel
-  (forge toys-box-forge         ; string | #f
-         (default #f)))
+  (channel toys-box-channel)        ; channel
+  (forge toys-box-forge             ; string | #f
+        (default #f))
+  ;; directory in repository where source code for channel is situated
+  ;; TODO: parse from .guix-channel file?
+  (directory toys-box-directory     ; string | #f
+             (default #f)))
 
 (define toys-boxes
   (list
@@ -55,6 +58,7 @@
                  (url "https://gitlab.inria.fr/guix-hpc/guix-hpc"))))
     (toys-box
       (forge "sourcehut")
+      (directory "src")
       (channel (channel
                  (name 'rde)
                  (url "https://git.sr.ht/~abcdw/rde")
@@ -95,6 +99,7 @@
                        "D088 4467 87F7 CBB2 AE08  BE6D D075 F59A 4805 49C3"))))))
     (toys-box
       (forge "gitlab")
+      (directory "modules")
       (channel (channel
                  (name 'guix-past)
                  (url "https://gitlab.inria.fr/guix-hpc/guix-past")

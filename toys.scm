@@ -47,9 +47,13 @@ exec guile -L . -e 'main' -s "$0" "$@"
   toys-box make-toys-box
   toys-box?
 
-  (channel toys-box-channel)   ; channel
-  (forge toys-box-forge        ; string | #f
-        (default #f)))
+  (channel toys-box-channel)        ; channel
+  (forge toys-box-forge             ; string | #f
+        (default #f))
+  ;; directory in repository where source code for channel is situated
+  ;; TODO: parse from .guix-channel file?
+  (directory toys-box-directory     ; string | #f
+             (default #f)))
 
 (define (debug msg)
   "Prints the debug MSG to stdout."
@@ -85,11 +89,14 @@ native guix channels and toys wrapper with additional data."
          (url (channel-url chan))
          (forge (or (toys-box-forge channel)
                     ""))
+         (directory (or (toys-box-directory channel)
+                        ""))
          (branch (channel-branch chan)))
     `(("name" . ,name)
       ("url" . ,url)
       ("branch" . ,branch)
       ("forge" . ,forge)
+      ("directory" . ,directory)
       ("commit" . ,commit))))
 
 (define (channel-record-by-name name)
@@ -104,9 +111,16 @@ returns #f."
 (define (location->url location channel)
   "Returns the URL for accessing specified LOCATION from CHANNEL record via
 Web."
-  (let* ((file (location-file location))
+  (let* ((directory (string-trim
+                      (or (assoc-ref channel "directory")
+                          "")
+                      #\/))
          (line (location-line location))
-         ; Extract ref from "commit" field and reference it in resulting URL
+         (file (string-trim
+                 (string-append directory
+                                "/"
+                                (location-file location))
+                 #\/))
          (ref (or (assoc-ref channel "commit")
                   (assoc-ref channel "branch")
                   "master"))
