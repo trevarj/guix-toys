@@ -154,16 +154,19 @@ Web."
 (define (location->alist location)
   (let* ((channels (location-channels location))
          (file (location-file location))
-         ; (module (string-append "("
-         ;                        (string-join 
-         ;                          (string-split file #\/)
-         ;                          " ")
-         ;                        ")"))
+         (module (string-append "("
+                                (string-join 
+                                  (string-split
+                                    ;; drop .scm suffix
+                                    (string-drop-right file
+                                                       4) #\/)
+                                  " ")
+                                ")"))
          (channel (channels->string channels))
          (url (location->url location
                              (channel-record-by-name channel))))
     `(("channel" . ,channel)
-      ; ("module"  . ,module)
+      ("module"  . ,module)
       ("file"    . ,file)
       ("url"     . ,url))))
 
