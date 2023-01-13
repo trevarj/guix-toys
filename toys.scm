@@ -31,6 +31,7 @@ exec guile -L . -e 'main' -s "$0" "$@"
              (guix channels)
              (guix licenses)
              (guix packages)
+             (guix records)
              (guix ui)
              (guix utils)
              (ice-9 match)
@@ -40,6 +41,15 @@ exec guile -L . -e 'main' -s "$0" "$@"
              (sxml simple)
              (web request)
              (web server))
+
+;; Guix channel wrapper with additional data.
+(define-record-type* <toys-box>
+  toys-box make-toys-box
+  toys-box?
+
+  (channel toys-box-channel)   ; channel
+  (forge toys-box-forge        ; string | #f
+        (default #f)))
 
 (define (debug msg)
   "Prints the debug MSG to stdout."
@@ -70,10 +80,10 @@ exec guile -L . -e 'main' -s "$0" "$@"
 native guix channels and toys wrapper with additional data."
   (let* ((chan (if (channel? channel)
                  channel
-                 (assoc-ref channel 'channel)))
+                 (toys-box-channel channel)))
          (name (symbol->string (channel-name chan)))
          (url (channel-url chan))
-         (forge (or (assoc-ref channel 'forge)
+         (forge (or (toys-box-forge channel)
                     ""))
          (branch (channel-branch chan)))
     `(("name" . ,name)
@@ -91,11 +101,10 @@ returns #f."
                 name))
     (vector->list %all-channels)))
 
-(define (location->url location channel-name)
-  "Returns the URL for accessing specified LOCATION from channel with
-CHANNEL-NAME via Web."
-  (let* ((channel (channel-record-by-name channel-name))
-         (file (location-file location))
+(define (location->url location channel)
+  "Returns the URL for accessing specified LOCATION from CHANNEL record via
+Web."
+  (let* ((file (location-file location))
          (line (location-line location))
          ; Extract ref from "commit" field and reference it in resulting URL
          (ref (or (assoc-ref channel "commit")
@@ -103,7 +112,8 @@ CHANNEL-NAME via Web."
                   "master"))
          (forge (and channel
                      (assoc-ref channel "forge")))
-         (base-url (if (equal? channel-name "guix")
+         (base-url (if (equal? (assoc-ref channel "name")
+                               "guix")
                      "https://git.savannah.gnu.org/cgit/guix.git"
                      (and channel
                         (assoc-ref channel "url")))))
@@ -150,7 +160,8 @@ CHANNEL-NAME via Web."
          ;                          " ")
          ;                        ")"))
          (channel (channels->string channels))
-         (url (location->url location channel)))
+         (url (location->url location
+                             (channel-record-by-name channel))))
     `(("channel" . ,channel)
       ; ("module"  . ,module)
       ("file"    . ,file)
@@ -208,8 +219,8 @@ CHANNEL-NAME via Web."
 (define %all-channels
   (let* ((_ (load %current-channels))
          (guix-channels (all-channels))
-         (toys-channels (and (defined? 'toys-channels)
-                             toys-channels))
+         (toys-channels (and (defined? 'toys-boxes)
+                             toys-boxes))
          (channels (or toys-channels
                        guix-channels
                        '()))
@@ -217,10 +228,10 @@ CHANNEL-NAME via Web."
                           (channel-name
                             (if (channel? channel)
                               channel
-                              ;; our custom wrapper with additional data
-                              (assoc-ref channel 'channel)))))
+                              (toys-box-channel channel)))))
          (find-commit (lambda (name)
                         (channel-commit
+                          ;; TODO: check for #f.
                           (find
                             (lambda (item)
                               (equal? (channel-name item)
@@ -230,7 +241,7 @@ CHANNEL-NAME via Web."
            (map
              (lambda (item)
                (channel->alist item
-                               ;; extract channel commit data from current profile
+                               ;; Extract channel commit data from current profile.
                                (find-commit
                                  (channel-name* item))))
              channels))))
