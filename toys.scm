@@ -83,19 +83,17 @@ exec guile -L . -e 'main' -s "$0" "$@"
            channels)
       ", ")))
 
-(define (channel->alist channel commit)
+(define (toys-box->alist toys-box commit)
   "Returns the view of the CHANNEL normalized for API response. Accepts both
 native guix channels and toys wrapper with additional data."
-  (let* ((chan (if (channel? channel)
-                 channel
-                 (toys-box-channel channel)))
-         (name (symbol->string (channel-name chan)))
-         (url (channel-url chan))
-         (forge (or (toys-box-forge channel)
+  (let* ((channel (toys-box-channel toys-box))
+         (name (symbol->string (channel-name channel)))
+         (url (channel-url channel))
+         (branch (channel-branch channel))
+         (forge (or (toys-box-forge toys-box)
                     ""))
-         (directory (or (toys-box-directory channel)
-                        ""))
-         (branch (channel-branch chan)))
+         (directory (or (toys-box-directory toys-box)
+                        "")))
     `(("name" . ,name)
       ("url" . ,url)
       ("branch" . ,branch)
@@ -116,32 +114,35 @@ returns #f."
 ;; Storage for all channels extracted from channels.scm.
 (define %all-channels
   (let* ((_ (load %current-channels))
-         (guix-channels (all-channels))
+         (guix-channels (map
+                          (lambda (channel)
+                            (toys-box
+                              (channel channel)))
+                          (all-channels)))
          (toys-channels (and (defined? 'toys-boxes)
                              toys-boxes))
          (channels (or toys-channels
                        guix-channels
                        '()))
-         (channel-name* (lambda (channel)
+         (toys-box-name (lambda (channel)
                           (channel-name
-                            (if (channel? channel)
-                              channel
-                              (toys-box-channel channel)))))
+                            (toys-box-channel channel))))
          (find-commit (lambda (name)
                         (channel-commit
                           ;; TODO: check for #f.
-                          (find
-                            (lambda (item)
-                              (equal? (channel-name item)
-                                      name))
-                            guix-channels)))))
+                          (toys-box-channel
+                            (find
+                              (lambda (item)
+                                (equal? (toys-box-name item)
+                                        name))
+                              guix-channels))))))
     (apply vector
            (map
              (lambda (item)
-               (channel->alist item
-                               ;; Extract channel commit data from current profile.
-                               (find-commit
-                                 (channel-name* item))))
+               (toys-box->alist item
+                                ;; Extract channel commit data from current profile.
+                                (find-commit
+                                  (toys-box-name item))))
              channels))))
 
 ;;
@@ -224,7 +225,6 @@ Web."
       ("module"  . ,module)
       ("file"    . ,file)
       ("url"     . ,url))))
-
 
 ;;
 ;; PACKAGES
