@@ -26,6 +26,7 @@
   #:use-module (guix packages)
   #:use-module (guix profiles)
   #:use-module (guix store)
+  #:use-module (guix ui)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
@@ -129,7 +130,10 @@ not be determined."
 ;; List of all modules defined in %package-module-path.
 (define all-modules
   (mlambda ()
-    (guix:all-modules (%package-module-path))))
+    (guix:all-modules (%package-module-path)
+                      #:warn (lambda (file module args)
+                               (format #t "WARNING: could't load ~a: ~a~%"
+                                       module args)))))
 
 (define all-packages
   (mlambda ()
