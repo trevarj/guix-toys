@@ -77,13 +77,6 @@ when applicable."
   ;; name or a pair whose car is a directory and whose cdr is a sub-directory
   ;; to narrow the search.
   (let* ((channels-scm _ (package-path-entries)))
-    ;; Automatically add channels and items from $GUIX_PACKAGE_PATH to Guile's
-    ;; search path.  For historical reasons, $GUIX_PACKAGE_PATH goes to the
-    ;; front; channels go to the back so that they don't override Guix' own
-    ;; modules.
-    (set! %load-path
-      (append %load-path channels-scm))
-
     (make-parameter
      (append %default-package-module-path
              channels-scm))))
