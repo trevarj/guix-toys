@@ -326,11 +326,17 @@ Web."
                              (module-name (assoc-ref symbol "module")))
                            1
                            1))
-               ;; TODO: strip unimportant bits from signature string
                (signature (or (and
                                 variable-procedure?
                                 (format #f "~a" (variable-ref variable)))
                               ""))
+               (stripped-signature (if (> (string-length signature) 0)
+                                     (string-drop  ; drop "#<procedure "
+                                       (string-drop-right  ; drop ">"
+                                         signature
+                                         1)
+                                       12) 
+                                     ""))
                (doc (or (and
                           variable-procedure?
                           (procedure-documentation (variable-ref variable)))
@@ -338,7 +344,7 @@ Web."
           `(("name" . ,(symbol->string (assoc-ref symbol "name")))
             ("location" . ,(location->alist location))
             ("doc" . ,doc)
-            ("signature" . ,signature))))
+            ("signature" . ,stripped-signature))))
       (sort (all-public-symbols)
         (lambda (a b)
           (string<? (assoc-ref a "name"))

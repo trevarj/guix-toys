@@ -290,19 +290,13 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
 (define (symbol-template symbol)
   `(div (@ (class "item"))
-     (strong ,(assoc-ref symbol "name"))
+     (strong ,(if (> (string-length (assoc-ref symbol "signature")) 0)
+                (assoc-ref symbol "signature")
+                (assoc-ref symbol "name")))
      ,(location->channel (assoc-ref symbol
                                     "location"))
      ,(location->link (assoc-ref symbol
                                  "location"))
-     ,(if (and (assoc-ref symbol "signature")
-               (> (string-length (assoc-ref symbol "signature"))
-                  0))
-          `(div
-            (span (@ (class "muted")) "Signature: ")
-            (div (@ (class "description"))
-                 ,(texi->html (assoc-ref symbol "signature"))))
-          "")
      ,(if (and (assoc-ref symbol "doc")
                (> (string-length (assoc-ref symbol "doc"))
                   0))
