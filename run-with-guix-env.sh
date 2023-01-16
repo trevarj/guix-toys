@@ -1,5 +1,8 @@
 #!/usr/bin/env sh
 
+# TODO: check for guix command existence
+
+# XXX: is there a better way of doing it?
 # Extracts %load-path-like variables from "guix" command and transforms them
 # into PATH format.
 function extractvar () {

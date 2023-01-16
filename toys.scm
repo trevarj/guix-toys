@@ -30,6 +30,7 @@ exec guile -L . -e 'main' -s "$0" "$@"
              (guix channels)
              (guix licenses)
              (guix packages)
+             (guix diagnostics)
              (guix records)
              (guix ui)
              (guix utils)
@@ -69,9 +70,9 @@ exec guile -L . -e 'main' -s "$0" "$@"
       ""
       (license-name license))))
 
-;;
-;; CHANNELS
-;;
+;;;
+;;; Channels
+;;;
 
 (define (channels->string channels)
   "Returns names for the given CHANNELS delimited by comma."
@@ -145,9 +146,9 @@ returns #f."
                                   (toys-box-name item))))
              channels))))
 
-;;
-;; LOCATIONS
-;;
+;;;
+;;; Locations
+;;;
 
 (define (location->url location channel)
   "Returns the URL for accessing specified LOCATION from CHANNEL record via
@@ -226,9 +227,9 @@ Web."
       ("file"    . ,file)
       ("url"     . ,url))))
 
-;;
-;; PACKAGES
-;;
+;;;
+;;; Packages
+;;;
 
 (define (normalize-inputs inputs)
   "Returns normalized view of the INPUTS with their versions."
@@ -279,9 +280,9 @@ Web."
                    (string<? (package-name a)
                              (package-name b)))))))
 
-;;
-;; SERVICES
-;;
+;;;
+;;; Services
+;;;
 
 (define (service-type->alist service-type)
   "Returns the view of the SERVICE-TYPE normalized for API response."
@@ -304,9 +305,9 @@ Web."
               (string<? (symbol->string (service-type-name a))
                         (symbol->string (service-type-name b))))))))
 
-;;
-;; PUBLIC SYMBOLS
-;;
+;;;
+;;; Public symbols
+;;;
 
 ;; Storage for all service types extracted from %package-module-path.
 (debug "Loading public symbols...")
@@ -314,24 +315,43 @@ Web."
   (apply vector
     (map
       (lambda (symbol)
-        `(("name" . ,(assoc-ref symbol "name"))
-          ("module" . ,(string-append
-                         "("
-                         (string-join
-                           (map
-                             (lambda (part) (symbol->string part))
-                             (module-name (assoc-ref symbol "module"))))
-                         ")"))
-          ("doc" . ,(assoc-ref symbol "doc"))
-          ("signature" . ,(assoc-ref symbol "signature"))))
+        (let* ((variable (assoc-ref symbol "variable"))
+               (variable-procedure? (and (variable-bound? variable)
+                                         (procedure? (variable-ref variable))))
+               (location (and (supports-source-properties? variable)
+                              (source-properties->location
+                                (source-properties variable))))
+               ;; TODO: strip unimportant bits from signature string
+               (signature (or (and
+                          variable-procedure?
+                          (format #f "~a" (variable-ref variable)))
+                        ""))
+               (doc (or (and
+                                variable-procedure?
+                                (procedure-documentation (variable-ref variable)))
+                              "")))
+          `(("name" . ,(symbol->string (assoc-ref symbol "name")))
+            ("location" . ,(if location
+                             (location->alist location)
+                             '()))
+            ;; XXX: remove when "location" field is fixed
+            ("module" . ,(string-append
+                           "("
+                           (string-join
+                             (map
+                               (lambda (part) (symbol->string part))
+                               (module-name (assoc-ref symbol "module"))))
+                           ")"))
+             ("doc" . ,doc)
+             ("signature" . ,signature))))
       (sort (all-public-symbols)
         (lambda (a b)
           (string<? (assoc-ref a "name"))
                     (assoc-ref b "name"))))))
 
-;;
-;; RECORDS
-;;
+;;;
+;;; Records
+;;;
 
 (define (score-record record query)
   "Returns the (RECORD . score) pair where score is relevancy of the \"name\"
@@ -391,9 +411,9 @@ QUERY."
                                                    name2))
                                        (< score1 score2)))))))))))))
 
-;;
-;; API
-;;
+;;;
+;;; API
+;;;
 
 (define (handle-api-search request request-body records)
   "Handles generic API request for RECORDS with pagination and search
@@ -432,9 +452,9 @@ query parameter."
                      request-body
                      %all-public-symbols))
 
-;;
-;; HTML pages
-;;
+;;;
+;;; HTML pages
+;;;
 
 (define (handle-search-page request request-body records template)
   "Handles generic search page request for RECORDS using TEMPLATE."

@@ -148,20 +148,10 @@ not be determined."
 %package-module-path."
     (guix:fold-module-public-variables*
       (lambda (module symbol variable result)
-        (let ((variable-procedure? (and (variable-bound? variable)
-                                        (procedure? (variable-ref variable)))))
-          (cons*
-           `(("name" . ,(symbol->string symbol))
-             ("module" . ,module)
-             ("variable" . ,variable)
-             ("doc" . ,(or (and
-                             variable-procedure?
-                             (procedure-documentation (variable-ref variable)))
-                           ""))
-             ("signature" . ,(or (and
-                                   variable-procedure?
-                                   (format #f "~a" (variable-ref variable)))
-                                 "")))
-           result)))
+        (cons
+          `(("name" . ,symbol)
+            ("module" . ,module)
+            ("variable" . ,variable))
+          result))
       '()
       (all-modules))))
