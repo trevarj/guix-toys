@@ -103,6 +103,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     margin-left: 0.5rem;
   }
 
+  form input {
+    width: 18.75rem;
+  }
+
   .item {
     margin-bottom: 1rem;
     padding-bottom: 1rem;
