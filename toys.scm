@@ -28,9 +28,10 @@ exec guile -L . -e 'main' -s "$0" "$@"
 
              (gnu services)
              (guix channels)
-             (guix licenses)
-             (guix packages)
              (guix diagnostics)
+             (guix licenses)
+             (guix modules)
+             (guix packages)
              (guix records)
              (guix ui)
              (guix utils)
@@ -318,32 +319,26 @@ Web."
         (let* ((variable (assoc-ref symbol "variable"))
                (variable-procedure? (and (variable-bound? variable)
                                          (procedure? (variable-ref variable))))
-               (location (and (supports-source-properties? variable)
-                              (source-properties->location
-                                (source-properties variable))))
+               ;; TODO: figure out if it's possible to extract lineno and
+               ;; column from variable. For now set both to 1
+               (location (location
+                           (module-name->file-name
+                             (module-name (assoc-ref symbol "module")))
+                           1
+                           1))
                ;; TODO: strip unimportant bits from signature string
                (signature (or (and
-                          variable-procedure?
-                          (format #f "~a" (variable-ref variable)))
-                        ""))
-               (doc (or (and
                                 variable-procedure?
-                                (procedure-documentation (variable-ref variable)))
-                              "")))
+                                (format #f "~a" (variable-ref variable)))
+                              ""))
+               (doc (or (and
+                          variable-procedure?
+                          (procedure-documentation (variable-ref variable)))
+                        "")))
           `(("name" . ,(symbol->string (assoc-ref symbol "name")))
-            ("location" . ,(if location
-                             (location->alist location)
-                             '()))
-            ;; XXX: remove when "location" field is fixed
-            ("module" . ,(string-append
-                           "("
-                           (string-join
-                             (map
-                               (lambda (part) (symbol->string part))
-                               (module-name (assoc-ref symbol "module"))))
-                           ")"))
-             ("doc" . ,doc)
-             ("signature" . ,signature))))
+            ("location" . ,(location->alist location))
+            ("doc" . ,doc)
+            ("signature" . ,signature))))
       (sort (all-public-symbols)
         (lambda (a b)
           (string<? (assoc-ref a "name"))

@@ -291,9 +291,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (symbol-template symbol)
   `(div (@ (class "item"))
      (strong ,(assoc-ref symbol "name"))
-     (div
-       (span (@ (class "muted")) "Module: ")
-       ,(assoc-ref symbol "module"))
+     ,(location->channel (assoc-ref symbol
+                                    "location"))
+     ,(location->link (assoc-ref symbol
+                                 "location"))
      ,(if (and (assoc-ref symbol "signature")
                (> (string-length (assoc-ref symbol "signature"))
                   0))
