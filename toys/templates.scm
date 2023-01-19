@@ -81,6 +81,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   .menu {
     color: #444444;
     display: flex;
+    flex-wrap: wrap;
     margin-bottom: 0.5rem;
     text-transform: lowercase;
     margin-bottom: 0.75rem;
@@ -103,14 +104,20 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     margin-left: 0.5rem;
   }
 
+  form {
+    display: flex;
+  }
+
   form input {
-    width: 18.75rem;
+    max-width: 18.75rem;
+    width: 100%;
   }
 
   .item {
     margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 0.1875rem dashed #eeeeee;
+    word-break: break-word;
   }
 
   header pre {
@@ -136,6 +143,16 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
   code {
     background-color: #efefef;
+  }
+
+  @media (max-width: 32rem) {
+    header pre {
+      font-size: 0.75rem;
+    }
+
+    .not-found {
+      display: none;
+    }
   }
 ")
 
@@ -189,9 +206,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                (= (vector-length items) 0)
                (> (string-length query) 0))
         `("Nothing found, try another query!"
-          (pre ,%empty-results-art)
-          (small (@ (class "muted"))
-                 "Art by Hayley Jane Wakenshaw"))
+          (div (@ (class "not-found"))
+               (pre ,%empty-results-art)
+               (small (@ (class "muted"))
+                      "Art by Hayley Jane Wakenshaw")))
         (vector->list
           (vector-map
             (lambda (_ item)
