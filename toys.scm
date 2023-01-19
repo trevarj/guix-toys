@@ -131,7 +131,7 @@ returns #f."
                             (toys-box-channel channel))))
          (find-commit (lambda (name)
                         (channel-commit
-                          ;; TODO: check for #f.
+                          ;; TODO: check for #f
                           (toys-box-channel
                             (find
                               (lambda (item)

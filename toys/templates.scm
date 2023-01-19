@@ -247,7 +247,11 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          ,(assoc-ref package "homepage")))
      (div
        (span (@ (class "muted")) "License: ")
-       ,(assoc-ref package "license"))
+       ,(assoc-ref package "license")
+       ,(if (equal? (assoc-ref package "license") "Nonfree")
+          '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
+                 "⚠")
+          '()))
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
