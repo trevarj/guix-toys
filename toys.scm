@@ -357,13 +357,18 @@ Web."
 (define (score-record record query)
   "Returns the (RECORD . score) pair where score is relevancy of the \"name\"
 field to QUERY."
-  (let ((name (assoc-ref record "name"))
-        (tokens (string-split query #\space))
-        (append-score (lambda (pair carry)
-                        (if (null? carry)
-                          pair
-                          `(,(car carry) . ,(+ (cdr pair)
-                                               (cdr carry)))))))
+  (let* ((version (assoc-ref record "version"))
+         (name (if version
+                 (string-append (assoc-ref record "name")
+                                "@"
+                                version)
+                 (assoc-ref record "name")))
+         (tokens (string-split query #\space))
+         (append-score (lambda (pair carry)
+                         (if (null? carry)
+                           pair
+                           `(,(car carry) . ,(+ (cdr pair)
+                                                (cdr carry)))))))
     (fold
       (lambda (token carry)
         (if (eq? carry 'stop)
