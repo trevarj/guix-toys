@@ -260,6 +260,11 @@ Web."
                              (normalize-inputs
                                (package-inputs package))))
                     #()))
+        (propagated-inputs (or (false-if-exception
+                                 (apply vector
+                                        (normalize-inputs
+                                          (package-propagated-inputs package))))
+                               #()))
         (description (package-description package)))
     `(("name" . ,name)
       ("version" . ,version)
@@ -268,6 +273,7 @@ Web."
       ("license" . ,license)
       ("synopsis" . ,synopsis)
       ("inputs" . ,inputs)
+      ("propagatedInputs" . ,propagated-inputs)
       ("description" . ,description))))
 
 ;; Storage for all packages extracted from %package-module-path.

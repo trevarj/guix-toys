@@ -253,6 +253,11 @@ ________________________,--._(___Y___)_,--._______________________ hjw
            (span (@ (class "muted")) "Dependencies: ")
            ,(inputs->links (assoc-ref package "inputs")))
         "")
+     ,(if (> (vector-length (assoc-ref package "propagatedInputs")) 0)
+        `(div
+           (span (@ (class "muted")) "Propagated dependencies: ")
+           ,(inputs->links (assoc-ref package "propagatedInputs")))
+        "")
      ,(location->channel (assoc-ref package
                                     "location"))
      ,(location->link (assoc-ref package
