@@ -410,8 +410,8 @@ QUERY."
                                           (version1 (assoc-ref record1 "version"))
                                           (version2 (assoc-ref record2 "version")))
                                      (if (= score1 score2)
-                                       (and (< len1 len2)
-                                            (string<? name1 name2)
+                                       (and (<= len1 len2)
+                                            (string<=? name1 name2)
                                             (and version1
                                                  version2
                                                  (version>? version1
