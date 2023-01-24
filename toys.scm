@@ -328,6 +328,7 @@ Web."
                            1))
                (signature (or (and
                                 variable-procedure?
+                                (procedure-name (variable-ref variable))
                                 (format #f "~a" (variable-ref variable)))
                               ""))
                (stripped-signature (if (> (string-length signature) 0)
