@@ -379,8 +379,7 @@ field to QUERY."
                  (offset
                    (append-score
                      (cons record
-                           (+ offset
-                              (string-length name)))
+                           offset)
                      carry)))))
       '()
       tokens)))
@@ -402,19 +401,19 @@ QUERY."
                           ((record1 . score1)
                            (match m2
                                   ((record2 . score2)
-                                   (let ((name1 (assoc-ref record1 "name"))
-                                         (name2 (assoc-ref record2 "name"))
-                                         (version1 (assoc-ref record1 "version"))
-                                         (version2 (assoc-ref record2 "version")))
+                                   (let* ((name1 (assoc-ref record1 "name"))
+                                          (name2 (assoc-ref record2 "name"))
+                                          (len1 (string-length name1))
+                                          (len2 (string-length name2))
+                                          (version1 (assoc-ref record1 "version"))
+                                          (version2 (assoc-ref record2 "version")))
                                      (if (= score1 score2)
-                                       (if (string=? name1
-                                                     name2)
-                                         (and version1
-                                              version2
-                                              (version>? version1
-                                                         version2))
-                                         (string>? name1
-                                                   name2))
+                                       (and (< len1 len2)
+                                            (string<? name1 name2)
+                                            (and version1
+                                                 version2
+                                                 (version<? version1
+                                                            version2)))
                                        (< score1 score2)))))))))))))
 
 ;;;
