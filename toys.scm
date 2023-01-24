@@ -367,8 +367,9 @@ field to QUERY."
          (append-score (lambda (pair carry)
                          (if (null? carry)
                            pair
-                           `(,(car carry) . ,(+ (cdr pair)
-                                                (cdr carry)))))))
+                           (cons (car carry)
+                                 (+ (cdr pair)
+                                    (cdr carry)))))))
     (fold
       (lambda (token carry)
         (if (eq? carry 'stop)
@@ -412,7 +413,7 @@ QUERY."
                                             (string<? name1 name2)
                                             (and version1
                                                  version2
-                                                 (version<? version1
+                                                 (version>? version1
                                                             version2)))
                                        (< score1 score2)))))))))))))
 
