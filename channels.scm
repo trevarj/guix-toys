@@ -168,6 +168,17 @@
                      (openpgp-fingerprint
                        "13E7 6CD6 E649 C28C 3385  4DF5 5E5A A665 6149 17F7"))))))
     (toys-box
+      (forge "sourcehut")
+      (channel (channel
+                 (name 'waggle)
+                 (url "https://git.sr.ht/~lunabee/waggle")
+                 (branch "trunk")
+                 (introduction
+                   (make-channel-introduction
+                     "4ffb1fd3b89f80bac196d597edf6789dd843fe48"
+                     (openpgp-fingerprint
+                       "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
