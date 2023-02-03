@@ -124,6 +124,13 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     margin-bottom: 2rem;
   }
 
+  .code {
+    background-color: #efefef;
+    display: block;
+    overflow-x: scroll;
+    padding: 0.5rem;
+  }
+
   button {
     margin-left: 0.25rem;
   }
@@ -143,6 +150,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
   code {
     background-color: #efefef;
+    padding: 0.25rem;
   }
 
   @media (max-width: 32rem) {
@@ -177,7 +185,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                      (aria-label "Search")
                      (autofocus "autofocus")
                      (name "search")
-                     (required "required")
                      (value ,(or query ""))
                      (placeholder "Enter query")))
            (button (@ (type "submit")) "Search"))
@@ -199,48 +206,82 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          pages)
     ")"))
 
-(define (base-items-template path items query normalizer)
+(define (base-items-template path items query normalizer placeholder)
   "Returns base template for search pages."
     (base-template
-      (if (and (string? query)
-               (= (vector-length items) 0)
-               (> (string-length query) 0))
-        `("Nothing found, try another query!"
-          (div (@ (class "not-found"))
-               (pre ,%empty-results-art)
-               (small (@ (class "muted"))
-                      "Art by Hayley Jane Wakenshaw")))
-        (vector->list
-          (vector-map
-            (lambda (_ item)
-              (normalizer item))
-            items)))
+      (if (and (or (not (string? query))
+                   (= (string-length query) 0))
+               (= (vector-length items) 0))
+        placeholder
+        (if (and (string? query)
+                (> (string-length query) 0)
+                (= (vector-length items) 0))
+          `("Nothing found, try another query!"
+            (div (@ (class "not-found"))
+                (pre ,%empty-results-art)
+                (small (@ (class "muted"))
+                        "Art by Hayley Jane Wakenshaw")))
+          (vector->list
+            (vector-map
+              (lambda (_ item)
+                (normalizer item))
+              items))))
       path
       query))
+
+(define (placeholder-template method)
+ `((p "Enter the query into the form above. "
+      ,@(if (equal? method "/api/packages")
+          '("You can look for specific version of a package by using "
+            (code "@") " symbol like this: "
+            (code "gcc@10") ".")
+          '()))
+   (p "API method:")
+   (pre (@ (class "code"))
+        "GET " ,method "?search=hello&page=1&limit=20")
+   (p "where "
+      (code "search")
+      " is your query, "
+      (code "page")
+      " is a page number and "
+      (code "limit")
+      " is a number of items on a single page. "
+      "Pagination information (such as a number of pages and etc) is returned
+      in response headers. ")
+   "If you'd like to join our channel webring send a patch to "
+   (a (@ (href "mailto:~whereiseveryone/toys@lists.sr.ht"))
+      "~whereiseveryone/toys@lists.sr.ht")
+   " adding your channel as an entry in "
+   (a (@ (href "https://git.sr.ht/~whereiseveryone/toys/tree/master/item/channels.scm"))
+      "channels.scm") "."))
 
 (define (packages-template items query)
   (base-items-template "/"
                        items
                        query
-                       package-template))
+                       package-template
+                       (placeholder-template "/api/packages")))
 
 (define (services-template items query)
   (base-items-template "/services"
                        items
                        query
-                       service-template))
+                       service-template
+                       (placeholder-template "/api/services")))
 
 (define (channels-template items query)
   (base-items-template "/channels"
                        items
                        query
-                       channel-template))
+                       channel-template
+                       (placeholder-template "/api/channels")))
 
 (define (symbols-template items query)
   (base-items-template "/symbols"
                        items
                        query
-                       symbol-template))
+                       symbol-template
+                       (placeholder-template "/api/symbols")))
 
 (define (package-template package)
   `(div (@ (class "item"))
