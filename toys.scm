@@ -472,13 +472,14 @@ query parameter."
 
 (define (handle-search-page request request-body records template)
   "Handles generic search page request for RECORDS using TEMPLATE."
-  (let ((query (request-query-parameter request
-                                        "search")))
+  (let ((query (string-trim-both
+                 (or (request-query-parameter request "search")
+                     ""))))
     (values '((content-type . (text/html)))
             (lambda (port)
               (sxml->xml
                 (template
-                  (if query
+                  (if (not (zero? (string-length query)))
                     (find-records-by-name query
                                           records)
                     #())
