@@ -64,7 +64,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define %styles
   "
   html {
-    line-height: 1.35;
+    line-height: 1.45;
     font-family: monospace, sans-serif;
     font-size: 0.875rem;
   }
@@ -116,8 +116,12 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   .item {
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 0.1875rem dashed #eeeeee;
+    border-bottom: 0.0625rem solid #e0e0e0;
     word-break: break-word;
+  }
+
+  .item:last-child {
+    border-bottom: 0;
   }
 
   header pre {
