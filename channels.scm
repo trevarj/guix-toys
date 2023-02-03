@@ -194,11 +194,12 @@
       (channel (channel
                  (name 'pantherx)
                  (url "https://channels.pantherx.org/git/pantherx-extra.git")
+                 (branch "rolling")
                  (introduction
                    (make-channel-introduction
                      "c2e987e516630b1288e716c98ef1a42f65a61599"
                      (openpgp-fingerprint
-                       "2C9B 882C 7E22 0B10 145B  9E50 0831 3F33 9213 9E68"))))))
+                       "1D3D BDEA 1901 34B0 6EA4  F1A3 7455 810B 3197 AD3D"))))))
     (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
