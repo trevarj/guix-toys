@@ -190,16 +190,6 @@
                      (openpgp-fingerprint
                        "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
     (toys-box
-      (forge "gitlab")
-      (channel (channel
-                 (name 'pantherx)
-                 (url "https://channels.pantherx.org/git/pantherx-extra.git")
-                 (introduction
-                   (make-channel-introduction
-                     "c2e987e516630b1288e716c98ef1a42f65a61599"
-                     (openpgp-fingerprint
-                       "2C9B 882C 7E22 0B10 145B  9E50 0831 3F33 9213 9E68"))))))
-    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
