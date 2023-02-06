@@ -160,7 +160,7 @@
      (forge "gitea")
      (channel (channel
                (name 'juix)
-               (url "https://git.trees.st/Marie-Joseph/juix.git")
+               (url "https://git.trees.st/Marie-Joseph/juix")
                (branch "main")
                (introduction
                 (make-channel-introduction
@@ -193,7 +193,7 @@
       (forge "gitlab")
       (channel (channel
                   (name 'guix-android)
-                  (url "https://framagit.org/tyreunom/guix-android.git")
+                  (url "https://framagit.org/tyreunom/guix-android")
                   (introduction
                     (make-channel-introduction
                       "d031d039b1e5473b030fa0f272f693b469d0ac0e"
