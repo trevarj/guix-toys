@@ -190,6 +190,16 @@
                      (openpgp-fingerprint
                        "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
     (toys-box
+      (forge "gitlab")
+      (channnel (channel
+                  (name 'guix-android)
+                  (url "https://framagit.org/tyreunom/guix-android.git")
+                  (introduction
+                    (make-channel-introduction
+                      "d031d039b1e5473b030fa0f272f693b469d0ac0e"
+                      (openpgp-fingerprint
+                        "1EFB 0909 1F17 D28C CBF9 B13A 53D4 57B2 D636 EE82"))))))
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
