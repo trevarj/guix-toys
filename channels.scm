@@ -191,7 +191,7 @@
                        "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
     (toys-box
       (forge "gitlab")
-      (channnel (channel
+      (channel (channel
                   (name 'guix-android)
                   (url "https://framagit.org/tyreunom/guix-android.git")
                   (introduction
