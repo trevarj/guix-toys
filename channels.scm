@@ -200,6 +200,13 @@
                       (openpgp-fingerprint
                         "1EFB 0909 1F17 D28C CBF9 B13A 53D4 57B2 D636 EE82"))))))
     (toys-box
+      (forge "github")
+      (channel (channel
+                 (name 'bin-buix)
+                 (url "https://github.com/ieugen/bin-guix")
+                 (branch "main"))))
+
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
