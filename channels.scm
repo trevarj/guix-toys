@@ -205,7 +205,6 @@
                  (name 'bin-buix)
                  (url "https://github.com/ieugen/bin-guix")
                  (branch "main"))))
-
     (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
