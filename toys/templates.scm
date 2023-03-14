@@ -157,6 +157,12 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     padding: 0.25rem;
   }
 
+  footer {
+    font-style: italic;
+    color: gray;
+    margin-top: 1rem;
+  }
+
   @media (max-width: 32rem) {
     header pre {
       font-size: 0.75rem;
@@ -168,7 +174,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 ")
 
-(define (base-template body current query)
+(define (base-template body current query last-updated-at)
   `(html
      (@ (lang "en"))
      (head
@@ -192,7 +198,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                      (value ,(or query ""))
                      (placeholder "Enter query")))
            (button (@ (type "submit")) "Search"))
-         (main ,@body)))))
+         (main ,@body)
+         (footer
+           "Last updated at: "
+           ,last-updated-at)))))
 
 (define (menu-template pages current)
   `(nav
@@ -210,7 +219,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          pages)
     ")"))
 
-(define (base-items-template path items query normalizer placeholder)
+(define (base-items-template path items query normalizer placeholder last-updated-at)
   "Returns base template for search pages."
     (base-template
       (if (and (or (not (string? query))
@@ -231,7 +240,8 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                 (normalizer item))
               items))))
       path
-      query))
+      query
+      last-updated-at))
 
 (define (placeholder-template method)
  `((p "Enter the query into the form above. "
@@ -259,33 +269,37 @@ ________________________,--._(___Y___)_,--._______________________ hjw
    (a (@ (href "https://git.sr.ht/~whereiseveryone/toys/tree/master/item/channels.scm"))
       "channels.scm") "."))
 
-(define (packages-template items query)
+(define (packages-template items query last-updated-at)
   (base-items-template "/"
                        items
                        query
                        package-template
-                       (placeholder-template "/api/packages")))
+                       (placeholder-template "/api/packages")
+                       last-updated-at))
 
-(define (services-template items query)
+(define (services-template items query last-updated-at)
   (base-items-template "/services"
                        items
                        query
                        service-template
-                       (placeholder-template "/api/services")))
+                       (placeholder-template "/api/services")
+                       last-updated-at))
 
-(define (channels-template items query)
+(define (channels-template items query last-updated-at)
   (base-items-template "/channels"
                        items
                        query
                        channel-template
-                       (placeholder-template "/api/channels")))
+                       (placeholder-template "/api/channels")
+                       last-updated-at))
 
-(define (symbols-template items query)
+(define (symbols-template items query last-updated-at)
   (base-items-template "/symbols"
                        items
                        query
                        symbol-template
-                       (placeholder-template "/api/symbols")))
+                       (placeholder-template "/api/symbols")
+                       last-updated-at))
 
 (define (package-template package)
   `(div (@ (class "item"))

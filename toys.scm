@@ -38,10 +38,14 @@ exec guile -L . -e 'main' -s "$0" "$@"
              (ice-9 match)
              (json)
              (srfi srfi-1)
+             (srfi srfi-19)
              (srfi srfi-43)
              (sxml simple)
              (web request)
              (web server))
+
+(define %last-updated-at
+  (date->string (current-date 0) "~4"))
 
 ;; Guix channel wrapper with additional data.
 (define-record-type* <toys-box>
@@ -483,7 +487,8 @@ query parameter."
                     (find-records-by-name query
                                           records)
                     #())
-                  query)
+                  query
+                  %last-updated-at)
                 port)))))
 
 (define (handle-index-page request request-body)
@@ -512,7 +517,8 @@ query parameter."
                     (find-records-by-name query
                                           %all-channels)
                     %all-channels)
-                  query)
+                  query
+                  %last-updated-at)
                 port)))))
 
 (define (handle-symbols-page request request-body)
