@@ -329,11 +329,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          ,(assoc-ref package "homepage")))
      (div
        (span (@ (class "muted")) "License: ")
-       ,(assoc-ref package "license")
-       ,(if (equal? (assoc-ref package "license") "Nonfree")
-          '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
-                 "⚠")
-          '()))
+       ,@(license->sxml (assoc-ref package "license")))
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
@@ -432,3 +428,17 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                                    channel))
              (rel "nofollow"))
           ,channel))))
+
+(define (license->sxml license)
+  (vector->list
+    (vector-map
+      (lambda (_ item)
+        `((a (@ (href ,(assoc-ref item "uri")))
+            ,(assoc-ref item "name"))
+          ;; warn if license is nonfree
+          ,(if (equal? (assoc-ref item "name") "Nonfree")
+             '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
+                    "⚠")
+             '())
+          " "))
+      license)))

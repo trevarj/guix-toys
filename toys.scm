@@ -64,16 +64,16 @@ exec guile -L . -e 'main' -s "$0" "$@"
   "Prints the debug MSG to stdout."
   (display (string-append "% " msg "\n")))
 
-(define (license->string license)
-  (if (list? license)
-    (string-join
-      (map (lambda (item)
-             (license-name item))
+(define (license->list license)
+  (let ((normalize (lambda (item)
+                     `(("name" . ,(license-name item))
+                       ("uri" . ,(license-uri item))))))
+    (if (list? license)
+      (map normalize
            license)
-      ", ")
-    (if (eq? license #f)
-      ""
-      (license-name license))))
+      (if license
+        (list (normalize license))
+        '()))))
 
 ;;;
 ;;; Channels
@@ -257,7 +257,8 @@ Web."
         (version (package-version package))
         (location (location->alist (package-location package)))
         (homepage (package-home-page package))
-        (license (license->string (package-license package)))
+        (license (list->vector
+                   (license->list (package-license package))))
         (synopsis (package-synopsis package))
         (inputs (or (false-if-exception
                       (apply vector
@@ -285,7 +286,7 @@ Web."
 (define %all-packages
   (apply vector
          (map
-           (lambda (item) (package->alist item))
+           package->alist
            (sort (all-packages)
                  (lambda (a b)
                    (string<? (package-name a)
