@@ -78,17 +78,18 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     color: #444444;
   }
 
+  main {
+    margin-top: 2rem;
+  }
+
   .menu {
     color: #444444;
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.375rem;
     text-transform: lowercase;
     margin-bottom: 0.75rem;
-  }
-
-  main {
-    margin-top: 2rem;
+    gap: 0.375rem 0.75rem;
   }
 
   .menu a {
@@ -98,10 +99,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   .menu a.active {
     color: #444444;
     text-decoration: none;
-  }
-
-  .menu a + a {
-    margin-left: 0.5rem;
   }
 
   form {
@@ -206,7 +203,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (menu-template pages current)
   `(nav
      (@ (class "menu"))
-      "'("
      ,@(map
          (lambda (item)
            `(a
@@ -216,8 +212,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                            "active"
                            "")))
               ,(assoc-ref item 'name)))
-         pages)
-    ")"))
+         pages)))
 
 (define (base-items-template path items query normalizer placeholder last-updated-at)
   "Returns base template for search pages."
