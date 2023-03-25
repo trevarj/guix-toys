@@ -217,6 +217,13 @@
                   ref
                   file
                   line))
+         ((equal? forge "gitea")
+          (format #f
+                  "~a/src/commit/~a/~a#L~d"
+                  base-url
+                  file
+                  ref
+                  line))
          (else #f))
        #f)))
 
