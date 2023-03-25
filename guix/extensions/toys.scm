@@ -221,8 +221,8 @@
           (format #f
                   "~a/src/commit/~a/~a#L~d"
                   base-url
-                  file
                   ref
+                  file
                   line))
          (else #f))
        #f)))
