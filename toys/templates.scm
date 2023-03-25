@@ -152,6 +152,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   code {
     background-color: #efefef;
     padding: 0.25rem;
+    white-space: nowrap;
   }
 
   footer {
@@ -411,7 +412,9 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       (span (@ (class "muted")) "Location: ")
       (a (@ (href ,url)
             (rel "nofollow"))
-         ,file))))
+         ,file)
+      " "
+      (code ,(assoc-ref location "module")))))
 
 (define (location->channel location)
   (let ((channel (assoc-ref location
