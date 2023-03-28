@@ -303,6 +303,13 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        ,(assoc-ref package "name")
        " "
        ,(assoc-ref package "version"))
+     ,(if (equal? (assoc-ref (assoc-ref package "location")
+                             "channel")
+                  "guix")
+        `(div
+           (span (@ (class "muted")) "Repology: ")
+           ,(repology-badge (assoc-ref package "name")))
+        "")
      ,(if (> (vector-length (assoc-ref package "inputs")) 0)
         `(div
            (span (@ (class "muted")) "Dependencies: ")
@@ -440,3 +447,13 @@ ________________________,--._(___Y___)_,--._______________________ hjw
              '())
           " "))
       license)))
+
+(define (repology-badge package-name)
+  `((a (@ (href ,(string-append "https://repology.org/project/"
+                               package-name
+                               "/versions"))
+          (style "vertical-align: bottom;"))
+       (img (@ (src ,(string-append "https://repology.org/badge/version-for-repo/gnuguix/"
+                                   package-name
+                                   ".svg?header="))
+               (alt ,(string-append package-name " version")))))))
