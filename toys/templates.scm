@@ -308,7 +308,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                   "guix")
         `(div
            (span (@ (class "muted")) "Repology: ")
-           ,(repology-badge (assoc-ref package "name")))
+           "provided: "
+           ,(repology-badge package)
+           ", latest known "
+           ,(repology-latest-badge package))
         "")
      ,(if (> (vector-length (assoc-ref package "inputs")) 0)
         `(div
@@ -448,12 +451,26 @@ ________________________,--._(___Y___)_,--._______________________ hjw
           " "))
       license)))
 
-(define (repology-badge package-name)
-  `((a (@ (href ,(string-append "https://repology.org/project/"
-                               package-name
-                               "/versions"))
-          (style "vertical-align: bottom;"))
-       (img (@ (src ,(string-append "https://repology.org/badge/version-for-repo/gnuguix/"
-                                   package-name
-                                   ".svg?header="))
-               (alt ,(string-append package-name " version")))))))
+(define (repology-badge package)
+  (let ((name (assoc-ref package "name")))
+    `((a (@ (href ,(string-append "https://repology.org/project/"
+                                  name
+                                  "/versions#gnuguix"))
+            (style "vertical-align: bottom;"))
+         (img (@ (src ,(string-append "https://repology.org/badge/version-for-repo/gnuguix/"
+                                      name
+                                      ".svg?header="))
+                 (alt ,(string-append name " version"))))))))
+
+(define (repology-latest-badge package)
+  (let ((name (assoc-ref package "name"))
+        (version (assoc-ref package "version")))
+    `((a (@ (href ,(string-append "https://repology.org/project/"
+                                  name
+                                  "/versions#gnuguix"))
+            (style "vertical-align: bottom;"))
+         (img (@ (src ,(string-append "https://repology.org/badge/latest-versions/"
+                                      name
+                                      ".svg?header=&minversion="
+                                      version))
+                 (alt ,(string-append "Latest packaged version:" version))))))))
