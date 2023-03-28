@@ -29,3 +29,11 @@ Discussion regarding this project happens at `#whereiseveryone` on the Libera IR
 * IRC users can connect to `irc.libera.chat/#whereiseveryone`
 * XMPP users can connect to `#whereiseveryone%irc.libera.chat@irc.cheogram.com`
 * Matrix users can connect to `#libera_#whereiseveryone:matrix.org`
+
+## development
+
+To run the server from local checkout use
+
+```sh
+GUILE_LOAD_PATH="$PWD:$GUILE_LOAD_PATH" GUIX_EXTENSIONS_PATH="$PWD/guix/extensions/" guix toys
+```
