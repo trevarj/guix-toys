@@ -117,10 +117,7 @@ not be determined."
 ;; List of all modules defined in %package-module-path.
 (define all-modules
   (mlambda ()
-    (guix:all-modules (%package-module-path)
-                      #:warn (lambda (file module args)
-                               (format #t "WARNING: could't load ~a: ~a~%"
-                                       module args)))))
+    (guix:all-modules (%package-module-path))))
 
 (define all-packages
   (mlambda ()
