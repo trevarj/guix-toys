@@ -92,13 +92,8 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     gap: 0.375rem 0.75rem;
   }
 
-  .menu a {
+  a {
     color: blue;
-  }
-
-  .menu a.active {
-    color: #444444;
-    text-decoration: none;
   }
 
   form {
@@ -128,7 +123,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   .code {
     background-color: #efefef;
     display: block;
-    overflow-x: scroll;
+    overflow-x: auto;
     padding: 0.5rem;
   }
 
@@ -168,6 +163,31 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
     .not-found {
       display: none;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    html {
+      background: #222222;
+      color: white;
+    }
+
+    code,
+    .code {
+      background-color: #444444;
+    }
+
+    a {
+      color: #a2c6ff;
+    }
+
+    .muted {
+      color: #999999;
+      text-decoration: none;
+    }
+
+    .item {
+      border-bottom: 0.0625rem solid #444444;
     }
   }
 ")
@@ -210,7 +230,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
               (@ (href ,(assoc-ref item 'href))
                  (class ,(if (equal? (assoc-ref item 'href)
                                      current)
-                           "active"
+                           "muted"
                            "")))
               ,(assoc-ref item 'name)))
          pages)))
