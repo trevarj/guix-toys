@@ -206,6 +206,17 @@
                  (url "https://github.com/ieugen/bin-guix")
                  (branch "main"))))
     (toys-box
+     (forge "github")
+     (channel (channel
+               (name 'engstrand)
+               (url "https://github.com/engstrand-config/guix-dotfiles")
+               (branch "main")
+               (introduction
+                (make-channel-introduction
+                 "005c42a980c895e0853b821494534d67c7b85e91"
+                 (openpgp-fingerprint
+                  "C9BE B8A0 4458 FDDF 1268 1B39 029D 8EB7 7E18 D68C"))))))
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
