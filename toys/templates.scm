@@ -394,7 +394,15 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        ,(assoc-ref channel "branch"))
      (div
        (span (@ (class "muted")) "Commit: ")
-       ,(assoc-ref channel "commit"))))
+       ,(assoc-ref channel "commit"))
+     (div
+       (span (@ (class "muted")) "Packages: ")
+       ,(assoc-ref (assoc-ref channel "stats")
+                   "packages"))
+     (div
+       (span (@ (class "muted")) "Services: ")
+       ,(assoc-ref (assoc-ref channel "stats")
+                   "services"))))
 
 (define (symbol-template symbol)
   `(div (@ (class "item"))

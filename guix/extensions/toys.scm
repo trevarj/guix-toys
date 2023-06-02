@@ -87,6 +87,26 @@
 ;;; Channels
 ;;;
 
+(define (count-packages channel)
+  (length
+    (filter
+      (lambda (package)
+        (equal?
+          (channels->string
+            (location-channels (package-location package)))
+          (symbol->string (channel-name channel))))
+      (all-packages))))
+
+(define (count-services channel)
+  (length
+    (filter
+      (lambda (package)
+        (equal?
+          (channels->string
+            (location-channels (service-type-location package)))
+          (symbol->string (channel-name channel))))
+      (all-service-types))))
+
 (define (channels->string channels)
   "Returns names for the given CHANNELS delimited by comma."
   (if (null? channels)
@@ -106,6 +126,8 @@ native guix channels and toys wrapper with additional data."
          (branch (channel-branch channel))
          (forge (or (toys-box-forge toys-box)
                     ""))
+         (packages-count (count-packages channel))
+         (services-count (count-services channel))
          (directory (or (toys-box-directory toys-box)
                         "")))
     `(("name" . ,name)
@@ -113,6 +135,8 @@ native guix channels and toys wrapper with additional data."
       ("branch" . ,branch)
       ("forge" . ,forge)
       ("directory" . ,directory)
+      ("stats" . (("packages" . ,packages-count)
+                  ("services" . ,services-count)))
       ("commit" . ,commit))))
 
 (define (channel-record-by-name name)
