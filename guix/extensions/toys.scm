@@ -100,10 +100,10 @@
 (define (count-services channel)
   (length
     (filter
-      (lambda (package)
+      (lambda (service)
         (equal?
           (channels->string
-            (location-channels (service-type-location package)))
+            (location-channels (service-type-location service)))
           (symbol->string (channel-name channel))))
       (all-service-types))))
 
