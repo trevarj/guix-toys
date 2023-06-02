@@ -23,72 +23,51 @@
   #:use-module (guix channels)
   #:use-module ((guix discovery) #:prefix guix:)
   #:use-module (guix memoization)
+  #:use-module (guix describe)
   #:use-module (guix packages)
   #:use-module (guix profiles)
   #:use-module (guix store)
-  #:use-module (guix ui)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
 
-  #:export (%current-profile
-            %current-channels
+  #:export (%current-channels
             all-channels
             all-packages
+            all-modules
             all-service-types
             all-public-symbols
             location-channels))
-
-(define %current-profile
-  (string-append (getenv "HOME")
-                 "/.config/guix/current"))
 
 (define %current-channels
   (string-append (getenv "HOME")
                  "/.config/guix/channels.scm"))
 
-;; These are slightly modified copies of Guix functions with redefined scope:
-;; by default current-profile from (guix describe) checks if running process is
-;; guix command and if not returns #f.  Without proper profile scoping Guix API
-;; will not return information on additional channels that may be installed on
-;; the user's system.
+;; Copied from (gnu packages).
+(define %distro-root-directory
+  ;; Absolute file name of the module hierarchy.  Since (gnu packages …) might
+  ;; live in a directory different from (guix), try to get the best match.
+  (letrec-syntax ((dirname* (syntax-rules ()
+                              ((_ file)
+                               (dirname file))
+                              ((_ file head tail ...)
+                               (dirname (dirname* file tail ...)))))
+                  (try      (syntax-rules ()
+                              ((_ (file things ...) rest ...)
+                               (match (search-path %load-path file)
+                                 (#f
+                                  (try rest ...))
+                                 (absolute
+                                  (dirname* absolute things ...))))
+                              ((_)
+                               #f))))
+    (try ("gnu/packages/base.scm" gnu/ packages/)
+         ("gnu/packages.scm"      gnu/)
+         ("guix.scm"))))
 
-;; XXX: is there a better way to override current-profile function?
-
-;; (guix describe)
-(define (package-path-entries)
-  "Return two values: the list of package path entries to be added to the
-package search path, and the list to be added to %LOAD-COMPILED-PATH.  These
-entries are taken from the 'guix pull' profile the calling process lives in,
-when applicable."
-  (unzip2 (map (lambda (entry)
-                 (list (string-append (manifest-entry-item entry)
-                                      "/share/guile/site/"
-                                      (effective-version))
-                       (string-append (manifest-entry-item entry)
-                                      "/lib/guile/" (effective-version)
-                                      "/site-ccache")))
-               (manifest-entries (profile-manifest %current-profile)))))
-
-;; (gnu packages)
-(define %package-module-path
-  ;; Search path for package modules.  Each item must be either a directory
-  ;; name or a pair whose car is a directory and whose cdr is a sub-directory
-  ;; to narrow the search.
-  (let* ((channels-scm _ (package-path-entries)))
-    (make-parameter
-     (append %default-package-module-path
-             channels-scm))))
-
-;; (guix describe)
-(define current-profile-entries
-  (mlambda ()
-    "Return the list of entries in the 'guix pull' profile the calling process
-lives in, or the empty list if this is not applicable."
-    (let ((manifest (profile-manifest %current-profile)))
-      (manifest-entries manifest))))
-
+;; Copied from (guix discovery) and modified to work with any location instead
+;; of only packages.
 (define (location-channels location)
   "Return the list of channels providing LOCATION or an empty list if it could
 not be determined."
@@ -108,16 +87,18 @@ not be determined."
             (current-profile-entries))
            '())))))
 
- (define all-channels
+(define all-channels
   (mlambda ()
     "Returns the list of all channels defined in channels.scm."
     (filter-map manifest-entry-channel
                 (current-profile-entries))))
 
-;; List of all modules defined in %package-module-path.
+;; List of all modules in Guix and installed channels.
 (define all-modules
   (mlambda ()
-    (guix:all-modules (%package-module-path))))
+    (guix:all-modules
+      (cons* %distro-root-directory
+             (%package-module-path)))))
 
 (define all-packages
   (mlambda ()
