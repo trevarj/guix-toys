@@ -213,7 +213,7 @@
     (toys-box
       (forge "github")
       (channel (channel
-                 (name 'bin-buix)
+                 (name 'bin-guix)
                  (url "https://github.com/ieugen/bin-guix")
                  (branch "main"))))
     (toys-box
