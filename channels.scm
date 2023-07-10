@@ -217,6 +217,11 @@
                  (url "https://github.com/ieugen/bin-guix")
                  (branch "main"))))
     (toys-box
+      (forge "sourcehut")
+      (channel (channel
+                 (name 'sokolov)
+                 (url "https://git.sr.ht/~sokolov/channel"))))
+    (toys-box
      (forge "github")
      (channel (channel
                (name 'engstrand)
