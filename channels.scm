@@ -222,6 +222,11 @@
                  (name 'sokolov)
                  (url "https://git.sr.ht/~sokolov/channel"))))
     (toys-box
+      (forge "github")
+      (channel (channel
+                 (name 'tassos-guix)
+                 (url "https://github.com/Tass0sm/tassos-guix"))))
+    (toys-box
      (forge "github")
      (channel (channel
                (name 'engstrand)
