@@ -229,6 +229,11 @@
     (toys-box
      (forge "github")
      (channel (channel
+               (name 'sheepfold)
+               (url "https://github.com/dochang/sheepfold"))))
+    (toys-box
+     (forge "github")
+     (channel (channel
                (name 'engstrand)
                (url "https://github.com/engstrand-config/guix-dotfiles")
                (branch "main")
