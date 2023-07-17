@@ -243,6 +243,12 @@
                  (openpgp-fingerprint
                   "C9BE B8A0 4458 FDDF 1268 1B39 029D 8EB7 7E18 D68C"))))))
     (toys-box
+      (forge "sourcehut")
+      (channel (channel
+                 (name 'mobilizon-reshare)
+                 (url "https://git.sr.ht/~fishinthecalculator/mobilizon-reshare-guix")
+                 (branch "main"))))
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
