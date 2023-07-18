@@ -217,6 +217,12 @@
                  (url "https://github.com/ieugen/bin-guix")
                  (branch "main"))))
     (toys-box
+      (forge "github")
+      (channel (channel
+                 (name 'rust-next)
+                 (url "https://github.com/umanwizard/guix-rust-next")
+                 (branch "master"))))
+    (toys-box
       (forge "sourcehut")
       (channel (channel
                  (name 'sokolov)
