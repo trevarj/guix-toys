@@ -255,6 +255,12 @@
                  (url "https://git.sr.ht/~fishinthecalculator/mobilizon-reshare-guix")
                  (branch "main"))))
     (toys-box
+      (forge "github")
+      (channel (channel
+                 (name 'th)
+                 (url "https://github.com/TinHead/th-guix-channel")
+                 (branch "main"))))
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
