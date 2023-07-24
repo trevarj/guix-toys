@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;;
-;;; Copyright © 2022 unwox <me@unwox.com>
+;;; Copyright © 2022, 2023 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -240,21 +240,20 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     (base-template
       (if (and (or (not (string? query))
                    (= (string-length query) 0))
-               (= (vector-length items) 0))
+               (= (length items) 0))
         placeholder
         (if (and (string? query)
                 (> (string-length query) 0)
-                (= (vector-length items) 0))
+                (= (length items) 0))
           `("Nothing found, try another query!"
             (div (@ (class "not-found"))
                 (pre ,%empty-results-art)
                 (small (@ (class "muted"))
                         "Art by Hayley Jane Wakenshaw")))
-          (vector->list
-            (vector-map
-              (lambda (_ item)
-                (normalizer item))
-              items))))
+          (map
+            (lambda (item)
+              (normalizer item))
+            items)))
       path
       query
       last-updated-at))
@@ -323,8 +322,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        ,(assoc-ref package "name")
        " "
        ,(assoc-ref package "version"))
-     ,(if (equal? (assoc-ref (assoc-ref package "location")
-                             "channel")
+     ,(if (equal? (assoc-ref package "channel")
                   "guix")
         `(div
            (span (@ (class "muted")) "Repology: ")
@@ -333,20 +331,18 @@ ________________________,--._(___Y___)_,--._______________________ hjw
            ", latest known "
            ,(repology-latest-badge package))
         "")
-     ,(if (> (vector-length (assoc-ref package "inputs")) 0)
+     ,(if (> (length (assoc-ref package "inputs")) 0)
         `(div
            (span (@ (class "muted")) "Dependencies: ")
            ,(inputs->links (assoc-ref package "inputs")))
         "")
-     ,(if (> (vector-length (assoc-ref package "propagatedInputs")) 0)
+     ,(if (> (length (assoc-ref package "propagated-inputs")) 0)
         `(div
            (span (@ (class "muted")) "Propagated dependencies: ")
-           ,(inputs->links (assoc-ref package "propagatedInputs")))
+           ,(inputs->links (assoc-ref package "propagated-inputs")))
         "")
-     ,(location->channel (assoc-ref package
-                                    "location"))
-     ,(location->link (assoc-ref package
-                                 "location"))
+     ,(channel->html (assoc-ref package "channel"))
+     ,(symbol-link package)
      (div
        (span (@ (class "muted")) "Home page: ")
        (a
@@ -354,8 +350,8 @@ ________________________,--._(___Y___)_,--._______________________ hjw
             (rel "nofollow"))
          ,(assoc-ref package "homepage")))
      (div
-       (span (@ (class "muted")) "License: ")
-       ,@(license->sxml (assoc-ref package "license")))
+       (span (@ (class "muted")) "Licenses: ")
+       ,@(license->sxml (assoc-ref package "licenses")))
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
@@ -369,10 +365,8 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (service-template service)
   `(div (@ (class "item"))
      (strong ,(assoc-ref service "name"))
-     ,(location->channel (assoc-ref service
-                                    "location"))
-     ,(location->link (assoc-ref service
-                                 "location"))
+     ,(channel->html (assoc-ref service "channel"))
+     ,(symbol-link service)
      ,(if (assoc-ref service "description")
         `(div
           (span (@ (class "muted")) "Description: ")
@@ -391,28 +385,26 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          ,(assoc-ref channel "url")))
      (div
        (span (@ (class "muted")) "Branch: ")
-       ,(assoc-ref channel "branch"))
-     (div
-       (span (@ (class "muted")) "Commit: ")
-       ,(assoc-ref channel "commit"))
-     (div
-       (span (@ (class "muted")) "Packages: ")
-       ,(assoc-ref (assoc-ref channel "stats")
-                   "packages"))
-     (div
-       (span (@ (class "muted")) "Services: ")
-       ,(assoc-ref (assoc-ref channel "stats")
-                   "services"))))
+       ,(assoc-ref channel "branch"))))
+     ; (div
+     ;   (span (@ (class "muted")) "Commit: ")
+     ;   ,(assoc-ref channel "commit"))))
+     ; (div
+     ;   (span (@ (class "muted")) "Packages: ")
+     ;   ,(assoc-ref (assoc-ref channel "stats")
+     ;               "packages"))
+     ; (div
+     ;   (span (@ (class "muted")) "Services: ")
+     ;   ,(assoc-ref (assoc-ref channel "stats")
+     ;               "services"))))
 
 (define (symbol-template symbol)
   `(div (@ (class "item"))
      (strong ,(if (> (string-length (assoc-ref symbol "signature")) 0)
                 (assoc-ref symbol "signature")
                 (assoc-ref symbol "name")))
-     ,(location->channel (assoc-ref symbol
-                                    "location"))
-     ,(location->link (assoc-ref symbol
-                                 "location"))
+     ,(channel->html (assoc-ref symbol "channel"))
+     ,(symbol-link symbol)
      ,(if (and (assoc-ref symbol "doc")
                (> (string-length (assoc-ref symbol "doc"))
                   0))
@@ -432,52 +424,48 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     ""))
 
 (define (inputs->links inputs)
-  (vector->list
-    (vector-map
-      (lambda (_ input)
-        `(span
-           (a
-             (@ (href ,(string-append "/?search="
-                                      (car (string-split input #\@)))))
-             ,input)
-           " "))
-      inputs)))
+  (map
+    (lambda (input)
+      `(span
+         (a
+           (@ (href ,(string-append "/?search="
+                                    (car (string-split input #\@)))))
+           ,input)
+         " "))
+    inputs))
 
-(define (location->link location)
-  (let ((url (assoc-ref location "url"))
-        (file (assoc-ref location "file")))
+(define (symbol-link symbol)
+  (let ((url (assoc-ref symbol "url"))
+        (file (assoc-ref symbol "file")))
     `(div
       (span (@ (class "muted")) "Location: ")
       (a (@ (href ,url)
             (rel "nofollow"))
          ,file)
       " "
-      (code ,(assoc-ref location "module")))))
+      (code "(" ,(assoc-ref symbol "module") ")"))))
 
-(define (location->channel location)
-  (let ((channel (assoc-ref location
-                            "channel")))
-     `(div
-        (span (@ (class "muted")) "Channel: ")
-        (a
-          (@ (href ,(string-append "/channels?search="
-                                   channel))
-             (rel "nofollow"))
-          ,channel))))
+(define (channel->html channel)
+  `(div
+    (span (@ (class "muted")) "Channel: ")
+    (a
+      (@ (href ,(string-append "/channels?search="
+                                channel))
+          (rel "nofollow"))
+      ,channel)))
 
 (define (license->sxml license)
-  (vector->list
-    (vector-map
-      (lambda (_ item)
-        `((a (@ (href ,(assoc-ref item "uri")))
-            ,(assoc-ref item "name"))
-          ;; warn if license is nonfree
-          ,(if (equal? (assoc-ref item "name") "Nonfree")
-             '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
-                    "⚠")
-             '())
-          " "))
-      license)))
+  (map
+    (lambda (item)
+      `((a (@ (href ,(assoc-ref item "uri")))
+           ,(assoc-ref item "name"))
+        ;; warn if license is nonfree
+        ,(if (equal? (assoc-ref item "name") "Nonfree")
+           '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
+                  "⚠")
+           '())
+        " "))
+    license))
 
 (define (repology-badge package)
   (let ((name (assoc-ref package "name")))

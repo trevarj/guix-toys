@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;;
-;;; Copyright © 2022 unwox <me@unwox.com>
+;;; Copyright © 2022, 2023 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -57,8 +57,13 @@ given REQUEST."
 (define (request-query-parameter request param)
   "Returns value of the given query PARAM.  If there is no such value,
 returns #f."
-  (assoc-ref (request-query-parameters request)
-             param))
+  (let ((value
+          (assoc-ref (request-query-parameters request)
+                     param)))
+    (if (and value
+             (not (string-null? value)))
+      value
+      #f)))
 
 (define (paginated-response request items)
   "Returns paginated response for the given REQUEST with ITEMS vector splitted

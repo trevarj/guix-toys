@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;;
-;;; Copyright © 2022 unwox <me@unwox.com>
+;;; Copyright © 2022, 2023 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -21,115 +21,108 @@
   #:use-module (gnu packages)
   #:use-module (gnu services)
   #:use-module (guix channels)
-  #:use-module ((guix discovery) #:prefix guix:)
-  #:use-module (guix memoization)
+  #:use-module (guix discovery)
   #:use-module (guix describe)
+  #:use-module (guix git)
+  #:use-module (guix memoization)
   #:use-module (guix packages)
   #:use-module (guix profiles)
+  #:use-module (guix records)
   #:use-module (guix store)
+  #:use-module (guix ui)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
 
   #:export (%current-channels
-            all-channels
-            all-packages
-            all-modules
-            all-service-types
-            all-public-symbols
-            location-channels))
+            fetch-boxes
+            fold-public-symbols
+
+            toys-box
+            toys-box-channel
+            toys-box-forge
+            toys-box-directory))
+
+;; Guix channel wrapper with additional data.
+(define-record-type* <toys-box>
+  toys-box make-toys-box
+  toys-box?
+
+  (channel toys-box-channel)        ; channel
+  (forge toys-box-forge             ; string | #f
+        (default #f))
+  ;; directory in repository where source code for channel is situated
+  ;; TODO: parse from .guix-channel file?
+  (directory toys-box-directory     ; string | #f
+             (default #f)))
 
 (define %current-channels
   (string-append (getenv "HOME")
                  "/.config/guix/channels.scm"))
 
-;; Copied from (gnu packages).
-(define %distro-root-directory
-  ;; Absolute file name of the module hierarchy.  Since (gnu packages …) might
-  ;; live in a directory different from (guix), try to get the best match.
-  (letrec-syntax ((dirname* (syntax-rules ()
-                              ((_ file)
-                               (dirname file))
-                              ((_ file head tail ...)
-                               (dirname (dirname* file tail ...)))))
-                  (try      (syntax-rules ()
-                              ((_ (file things ...) rest ...)
-                               (match (search-path %load-path file)
-                                 (#f
-                                  (try rest ...))
-                                 (absolute
-                                  (dirname* absolute things ...))))
-                              ((_)
-                               #f))))
-    (try ("gnu/packages/base.scm" gnu/ packages/)
-         ("gnu/packages.scm"      gnu/)
-         ("guix.scm"))))
+(define (fetch-boxes file)
+  (define toy-boxes (primitive-load file))
+  (map
+    (lambda (box)
+      (let*
+        ((channel (toys-box-channel box))
+         (url  (channel-url channel))
+         (name (channel-name channel))
+         (ref  (or (channel-commit channel)
+                   (channel-branch channel)
+                   "master")))
+        (format #t "Fetching ~a...\n" url)
+        `((box . ,box)
+          (dir . ,(string-append
+                    (update-cached-checkout
+                      url
+                      #:ref `(branch . ,ref)
+                      #:recursive? #t)
+                    "/"
+                    (or (toys-box-directory box)
+                        ""))))))
+    toy-boxes))
 
-;; Copied from (guix discovery) and modified to work with any location instead
-;; of only packages.
-(define (location-channels location)
-  "Return the list of channels providing LOCATION or an empty list if it could
-not be determined."
-  (match (and=> location location-file)
-    (#f '())
-    (file
-     (let ((file (if (string-prefix? "/" file)
-                     file
-                     (search-path %load-path file))))
-       (if (and file
-                (string-prefix? (%store-prefix) file))
-           (filter-map
-            (lambda (entry)
-              (let ((item (manifest-entry-item entry)))
-                (and (string-prefix? item file)
-                     (manifest-entry-channel entry))))
-            (current-profile-entries))
-           '())))))
+(define (fold-public-symbols kons knil boxes)
+  (define old-load-path %load-path)
+  (set! %load-path
+    (append
+      (map
+        (lambda (box-wrapper)
+          (assoc-ref box-wrapper 'dir))
+        ;; filter out guix
+        (filter
+          (lambda (box-wrapper)
+            (not (equal? 'guix
+                    (channel-name
+                      (toys-box-channel (assoc-ref box-wrapper 'box))))))
+          boxes))
+      %load-path))
 
-(define all-channels
-  (mlambda ()
-    "Returns the list of all channels defined in channels.scm."
-    (filter-map manifest-entry-channel
-                (current-profile-entries))))
-
-;; List of all modules in Guix and installed channels.
-(define all-modules
-  (mlambda ()
-    (guix:all-modules
-      (cons* %distro-root-directory
-             (%package-module-path)))))
-
-(define all-packages
-  (mlambda ()
-    "Returns the list of all packages defined in %package-module-path."
-    (fold-packages (lambda (package result)
-                    (if (package-superseded package)
-                      result
-                      (cons package
-                            result)))
-                  '()
-                  (all-modules))))
-
-(define all-service-types
-  (mlambda ()
-    "Returns the list of all service types defined in %package-module-path."
-    (fold-service-types (lambda (service-type result)
-                          (cons service-type
-                                result))
-                        '()
-                        (all-modules))))
-
-(define all-public-symbols
-  (mlambda ()
-    "Returns the list of all public (exported) symbols defined in
-%package-module-path."
-    (guix:fold-module-public-variables*
-      (lambda (module symbol variable result)
-        (cons
-          `(("name" . ,symbol)
-            ("module" . ,module)
-            ("variable" . ,variable))
-          result))
+  (define public-symbols
+    (fold
+      (lambda (box-wrapper result)
+        (format #t "Scanning ~a...\n"
+                (symbol->string
+                  (channel-name
+                    (toys-box-channel (assoc-ref box-wrapper 'box)))))
+        (let*
+          ((box (assoc-ref box-wrapper 'box))
+           (dir (assoc-ref box-wrapper 'dir))
+           (modules (scheme-modules
+                       dir
+                       #:warn warn-about-load-error)))
+          (append
+            (fold-module-public-variables*
+              (lambda (module symbol variable result)
+                (apply kons
+                       (list box module symbol variable result)))
+              knil
+              modules)
+            result)))
       '()
-      (all-modules))))
+      boxes))
+
+  (set! %load-path old-load-path)
+  public-symbols)
