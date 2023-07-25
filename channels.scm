@@ -261,6 +261,17 @@
                  (url "https://github.com/TinHead/th-guix-channel")
                  (branch "main"))))
     (toys-box
+     (forge "sourcehut")
+     (channel (channel
+               (name 'atlas)
+               (url "https://git.sr.ht/~michal_atlas/guix-channel")
+               (branch "master")
+               (introduction
+                (make-channel-introduction
+                 "f0e838427c2d9c495202f1ad36cfcae86e3ed6af"
+                 (openpgp-fingerprint
+                  "D451 85A2 755D AF83 1F1C  3DC6 3EFB F2BB BB29 B99E"))))))
+    (toys-box
       (forge "cgit")
       (channel %default-guix-channel))))
 
