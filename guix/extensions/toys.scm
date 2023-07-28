@@ -218,7 +218,7 @@
 ;;; Locations
 ;;;
 
-(define (location->url location box)
+(define (location->url file lineno box)
   "Returns the URL for accessing specified LOCATION from CHANNEL record via
 Web."
   (let* ((directory (string-trim
@@ -226,11 +226,9 @@ Web."
                           "")
                       #\/))
          (channel (toys-box-channel box))
-         (line (location-line location))
-         (file (string-trim
-                 (string-append directory
-                                "/"
-                                (location-file location))
+         (file (string-trim-both
+                 (format #f "~a/~a"
+                         directory file)
                  #\/))
          (ref (or (channel-commit channel)
                   (channel-branch channel)
@@ -247,19 +245,19 @@ Web."
       (cond
         ((equal? forge "cgit")
          (format #f "~a/tree/~a?id=~a#n~d"
-                 base-url file ref line))
+                 base-url file ref lineno))
         ((equal? forge "sourcehut")
          (format #f "~a/tree/~a/item/~a#L~d"
-                 base-url ref file line))
+                 base-url ref file lineno))
         ((equal? forge "gitlab")
          (format #f "~a/-/blob/~a/~a#L~d"
-                 base-url ref file line))
+                 base-url ref file lineno))
         ((equal? forge "github")
          (format #f "~a/blob/~a/~a#L~d"
-                 base-url ref file line))
+                 base-url ref file lineno))
         ((equal? forge "gitea")
          (format #f "~a/src/commit/~a/~a#L~d"
-                 base-url ref file line))
+                 base-url ref file lineno))
         (else #f))
       #f)))
 
@@ -308,7 +306,7 @@ Web."
           (symbol->string (channel-name (toys-box-channel box))) ;; channel
           _module-name
           file
-          (location->url location box)
+          (location->url file (location-line location) box)
           doc
           stripped-signature)))
 
@@ -352,7 +350,7 @@ Web."
           (symbol->string (channel-name (toys-box-channel box))) ;; channel
           _module-name
           file
-          (location->url location box)
+          (location->url file (location-line location) box)
           description)))
 
 (define (insert-service-type db box module service-type)
@@ -414,7 +412,7 @@ Web."
           (symbol->string (channel-name (toys-box-channel box)))
           _module-name
           file
-          (location->url location box)
+          (location->url file (location-line location) box)
           version
           homepage
           licenses
