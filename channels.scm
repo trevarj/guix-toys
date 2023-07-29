@@ -265,5 +265,11 @@
                (url "https://codeberg.org/Parnikkapore/guix-ngapsh-unsigned")
                (branch "main"))))
   (toys-box
+    (forge "github")
+    (channel (channel
+            (name 'hui)
+            (url "https://github.com/newluhux/guix-hui")
+            (branch "master"))))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
