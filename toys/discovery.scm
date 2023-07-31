@@ -35,8 +35,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-71)
 
-  #:export (%current-channels
-            fetch-boxes
+  #:export (fetch-boxes
             fold-public-symbols
 
             toys-box
@@ -52,26 +51,27 @@
   (channel toys-box-channel)        ; channel
   (forge toys-box-forge             ; string | #f
         (default #f))
-  ;; directory in repository where source code for channel is situated
+  ;; subdirectory in repository where source code for channel is situated
   ;; TODO: parse from .guix-channel file?
   (directory toys-box-directory     ; string | #f
              (default #f)))
 
-(define %current-channels
-  (string-append (getenv "HOME")
-                 "/.config/guix/channels.scm"))
-
 (define (fetch-boxes file)
+  "Locally checkout boxes specified in FILE.  Previous checkouts are cached."
   (define toy-boxes (primitive-load file))
   (map
     (lambda (box)
       (let*
-        ((channel (toys-box-channel box))
-         (url  (channel-url channel))
-         (name (channel-name channel))
-         (ref  (or (channel-commit channel)
-                   (channel-branch channel)
-                   "master")))
+        ((channel
+           (toys-box-channel box))
+         (url
+           (channel-url channel))
+         (name
+           (channel-name channel))
+         (ref
+           (or (channel-commit channel)
+               (channel-branch channel)
+               "master")))
         (format #t "Fetching ~a...\n" url)
         `((box . ,box)
           (dir . ,(string-append
@@ -85,13 +85,15 @@
     toy-boxes))
 
 (define (fold-public-symbols kons knil boxes)
-  (define old-load-path %load-path)
+  "Apply KONS to the list of public symbols found in BOXES.  KNIL is an initial
+value to append results to." (define old-load-path %load-path)
   (set! %load-path
     (append
       (map
         (lambda (box-wrapper)
           (assoc-ref box-wrapper 'dir))
-        ;; filter out guix
+        ;; Filter out guix channel, it is scanned just fine without proper
+        ;; importing.
         (filter
           (lambda (box-wrapper)
             (not (equal? 'guix
@@ -110,6 +112,8 @@
         (let*
           ((box (assoc-ref box-wrapper 'box))
            (dir (assoc-ref box-wrapper 'dir))
+           ;; FIXME: this leaks memory, there should be a way to remove modules
+           ;; after they are resolve-interface'd and scanned.
            (modules (scheme-modules
                        dir
                        #:warn warn-about-load-error)))

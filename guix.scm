@@ -1,2 +1,1 @@
-(specifications->manifest (list "guile-sqlite3"
-                                "sqlite"))
+(specifications->manifest (list "guile-json" "guile-sqlite3" "sqlite"))

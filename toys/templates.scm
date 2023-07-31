@@ -217,7 +217,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                      (placeholder "Enter query")))
            (button (@ (type "submit")) "Search"))
          (main ,@body)
-         (footer
+         #;(footer
            "Last updated at: "
            ,last-updated-at)))))
 
@@ -334,14 +334,14 @@ ________________________,--._(___Y___)_,--._______________________ hjw
      ,(if (> (length (assoc-ref package "inputs")) 0)
         `(div
            (span (@ (class "muted")) "Dependencies: ")
-           ,(inputs->links (assoc-ref package "inputs")))
+           ,(symbol-inputs (assoc-ref package "inputs")))
         "")
      ,(if (> (length (assoc-ref package "propagated-inputs")) 0)
         `(div
            (span (@ (class "muted")) "Propagated dependencies: ")
-           ,(inputs->links (assoc-ref package "propagated-inputs")))
+           ,(symbol-inputs (assoc-ref package "propagated-inputs")))
         "")
-     ,(channel->html (assoc-ref package "channel"))
+     ,(symbol-channel (assoc-ref package "channel"))
      ,(symbol-link package)
      (div
        (span (@ (class "muted")) "Home page: ")
@@ -351,7 +351,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          ,(assoc-ref package "homepage")))
      (div
        (span (@ (class "muted")) "Licenses: ")
-       ,@(license->sxml (assoc-ref package "licenses")))
+       ,@(symbol-licenses (assoc-ref package "licenses")))
      (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
@@ -365,7 +365,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (service-template service)
   `(div (@ (class "item"))
      (strong ,(assoc-ref service "name"))
-     ,(channel->html (assoc-ref service "channel"))
+     ,(symbol-channel (assoc-ref service "channel"))
      ,(symbol-link service)
      ,(if (assoc-ref service "description")
         `(div
@@ -403,7 +403,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
      (strong ,(if (> (string-length (assoc-ref symbol "signature")) 0)
                 (assoc-ref symbol "signature")
                 (assoc-ref symbol "name")))
-     ,(channel->html (assoc-ref symbol "channel"))
+     ,(symbol-channel (assoc-ref symbol "channel"))
      ,(symbol-link symbol)
      ,(if (and (assoc-ref symbol "doc")
                (> (string-length (assoc-ref symbol "doc"))
@@ -414,16 +414,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                ,(texi->html (assoc-ref symbol "doc"))))
         "")))
 
-(define (texi->html texi)
-  (if (> (string-length texi) 0)
-    (or
-      (false-if-exception
-        (stexi->shtml
-          (texi-fragment->stexi texi)))
-      texi)
-    ""))
-
-(define (inputs->links inputs)
+(define (symbol-inputs inputs)
   (map
     (lambda (input)
       `(span
@@ -445,7 +436,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       " "
       (code "(" ,(assoc-ref symbol "module") ")"))))
 
-(define (channel->html channel)
+(define (symbol-channel channel)
   `(div
     (span (@ (class "muted")) "Channel: ")
     (a
@@ -454,7 +445,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
           (rel "nofollow"))
       ,channel)))
 
-(define (license->sxml license)
+(define (symbol-licenses license)
   (map
     (lambda (item)
       `((a (@ (href ,(assoc-ref item "uri")))
@@ -490,3 +481,12 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                                       ".svg?header=&minversion="
                                       version))
                  (alt ,(string-append "Latest packaged version:" version))))))))
+
+(define (texi->html texi)
+  (if (> (string-length texi) 0)
+    (or
+      (false-if-exception
+        (stexi->shtml
+          (texi-fragment->stexi texi)))
+      texi)
+    ""))

@@ -60,6 +60,10 @@
      (debug "Listening on :8080")
      (run-server toys-api))))
 
+(define (debug msg)
+  "Prints the debug MSG to stdout."
+  (display (string-append "% " msg "\n")))
+
 (define %db-directory
   (string-append (cache-directory #:ensure? #t)
                  "/toys"))
@@ -74,11 +78,13 @@
   (date->string (current-date 0) "~4"))
 
 (define (db-execute-stmt stmt data)
+ "Binds DATA to the STMT and then executes it."
  (apply sqlite-bind-arguments
         (cons stmt data))
  (sqlite-fold cons '() stmt))
 
 (define (init-db db)
+  "Initializes database schema."
   (sqlite-exec
     db
     "PRAGMA foreign_keys = ON;
@@ -134,6 +140,8 @@
     "))
 
 (define (pull-data db boxes)
+  "Removes existing data about symbols from DB and then pulls new data
+  from BOXES into it."
   (sqlite-exec db "BEGIN")
   (sqlite-exec db "DELETE FROM search")
   (sqlite-exec db "DELETE FROM boxes")
@@ -155,9 +163,12 @@
                 "INSERT INTO search
                 (name, description, fk, `table`)
                 VALUES (?, ?, ?, ?)"))
-            (dir (assoc-ref wrapper 'dir))
-            (box (assoc-ref wrapper 'box))
-            (channel (toys-box-channel box)))
+            (dir
+              (assoc-ref wrapper 'dir))
+            (box
+              (assoc-ref wrapper 'box))
+            (channel
+              (toys-box-channel box)))
         (define id
           (vector-ref
             (car
@@ -218,9 +229,8 @@
 ;;; Locations
 ;;;
 
-(define (location->url file lineno box)
-  "Returns the URL for accessing specified LOCATION from CHANNEL record via
-Web."
+(define (location->url box file lineno)
+  "Returns the URL for accessing specified BOX, FILE and LINENO via Web."
   (let* ((directory (string-trim
                       (or (toys-box-directory box)
                           "")
@@ -240,8 +250,7 @@ Web."
                      "https://git.savannah.gnu.org/cgit/guix.git"
                      (and channel
                           (channel-url channel)))))
-    (if (and base-url
-             forge)
+    (if (and base-url forge)
       (cond
         ((equal? forge "cgit")
          (format #f "~a/tree/~a?id=~a#n~d"
@@ -261,7 +270,8 @@ Web."
         (else #f))
       #f)))
 
-(define (license->list license)
+(define (serialize-license license)
+  "Formats LICENSE for database storage."
   (let ((normalize (lambda (item)
                      (format #f "[~a](~a)"
                              (license-name item)
@@ -275,42 +285,55 @@ Web."
 
 
 (define (serialize-public-symbol module box symbol variable)
-  (let* ((variable-procedure? (and (variable-bound? variable)
-                                  (procedure? (variable-ref variable))))
-         (_module-name (string-join
-                         (map
-                           symbol->string
-                           (module-name module))
-                         " "))
-         (file (module-name->file-name (module-name module)))
-         ;; TODO: figure out if it's possible to extract lineno and
-         ;; column from variable. For now set both to 1
-         (location (location file 1 1))
-         (signature (or (and
-                         variable-procedure?
-                         (procedure-name (variable-ref variable))
-                         (format #f "~a" (variable-ref variable)))
-                       ""))
-         (stripped-signature (if (> (string-length signature) 0)
-                               (string-drop  ; drop "#<procedure "
-                                 (string-drop-right  ; drop ">"
-                                   signature
-                                   1)
-                                 12)
-                               ""))
-         (doc (or (and
-                   variable-procedure?
-                   (procedure-documentation (variable-ref variable)))
-                 "")))
-    (list (symbol->string symbol) ;; name
-          (symbol->string (channel-name (toys-box-channel box))) ;; channel
-          _module-name
+  "Serializes VARIABLE for database storage."
+  (let* ((variable-procedure?
+           (and (variable-bound? variable)
+                (procedure? (variable-ref variable))))
+         (mod-name
+           (string-join
+             (map
+               symbol->string
+               (module-name module))
+             " "))
+         (name
+           (symbol->string symbol))
+         (channel-name
+           (symbol->string (channel-name (toys-box-channel box))))
+         (file
+           (module-name->file-name (module-name module)))
+         (url
+           ;; TODO: figure out if it's possible to extract lineno from variable.
+           ;; For now set it to 1.
+           (location->url box file 1))
+         (signature
+           (or (and
+                 variable-procedure?
+                 (procedure-name (variable-ref variable))
+                 (format #f "~a" (variable-ref variable)))
+               ""))
+         (stripped-signature
+           (if (> (string-length signature) 0)
+             (string-drop  ; drop "#<procedure "
+               (string-drop-right  ; drop ">"
+                 signature
+                 1)
+               12)
+             ""))
+         (doc
+           (or (and
+                 variable-procedure?
+                 (procedure-documentation (variable-ref variable)))
+               "")))
+    (list name
+          channel-name
+          mod-name
           file
-          (location->url file (location-line location) box)
+          url
           doc
           stripped-signature)))
 
 (define (insert-public-symbol db module box symbol variable)
+  "Serializes and inserts VARIABLE and corresponding search row into the DB."
   (let* ((stmt
            (sqlite-prepare
              db
@@ -338,22 +361,35 @@ Web."
             "public_symbols"))))
 
 (define (serialize-service-type box module service-type)
-  (let* ((_module-name (string-join
-                         (map
-                           symbol->string
-                           (module-name module))
-                         " "))
-         (file (module-name->file-name (module-name module)))
-         (location (service-type-location service-type))
-         (description (service-type-description service-type)))
-    (list (symbol->string (service-type-name service-type)) ;; name
-          (symbol->string (channel-name (toys-box-channel box))) ;; channel
-          _module-name
+  "Serializes SERVICE-TYPE for database storage."
+  (let* ((mod-name
+           (string-join
+             (map
+               symbol->string
+               (module-name module))
+             " "))
+         (name
+           (symbol->string (service-type-name service-type)))
+         (channel-name
+           (symbol->string (channel-name (toys-box-channel box))))
+         (file
+           (module-name->file-name (module-name module)))
+         (location
+           (service-type-location service-type))
+         (url
+           (location->url box file (location-line location)))
+         (description
+           (service-type-description service-type)))
+    (list name
+          channel-name
+          mod-name
           file
-          (location->url file (location-line location) box)
+          url
           description)))
 
 (define (insert-service-type db box module service-type)
+  "Serializes and inserts SERVICE-TYPE and corresponding search row
+into the DB."
   (let* ((stmt
            (sqlite-prepare
              db
@@ -381,38 +417,54 @@ Web."
             "service_types"))))
 
 (define (serialize-package box module package)
-  (let ((name (package-name package))
-        (version (package-version package))
-        (_module-name (string-join
-                        (map
-                          symbol->string
-                          (module-name module))
-                        " "))
-        (file (module-name->file-name (module-name module)))
-        (location (package-location package))
-        (homepage (package-home-page package))
-        (licenses (string-join
-                    (license->list (package-license package))
-                    "|"))
-        (synopsis (package-synopsis package))
-        (inputs (or (false-if-exception
-                      (string-join
-                        (normalize-inputs
-                          (package-inputs package))
-                        "|"))
-                    ""))
-        (propagated-inputs (or (false-if-exception
-                                 (string-join
-                                   (normalize-inputs
-                                     (package-propagated-inputs package))
-                                   "|"))
-                               ""))
-        (description (package-description package)))
+  "Serializes PACKAGE for database storage."
+  (let* ((name
+          (package-name package))
+         (version
+           (package-version package))
+         (channel-name
+           (symbol->string (channel-name (toys-box-channel box))))
+         (mod-name
+           (string-join
+             (map
+               symbol->string
+               (module-name module))
+             " "))
+         (file
+           (module-name->file-name (module-name module)))
+         (location
+           (package-location package))
+         (url
+           (location->url box file (location-line location)))
+         (homepage
+           (package-home-page package))
+         (licenses
+           (string-join
+             (serialize-license (package-license package))
+             "|"))
+         (synopsis
+           (package-synopsis package))
+         (inputs
+           (or (false-if-exception
+                 (string-join
+                   (normalize-inputs
+                     (package-inputs package))
+                   "|"))
+               ""))
+         (propagated-inputs
+           (or (false-if-exception
+                 (string-join
+                   (normalize-inputs
+                     (package-propagated-inputs package))
+                   "|"))
+               ""))
+         (description
+           (package-description package)))
     (list name
-          (symbol->string (channel-name (toys-box-channel box)))
-          _module-name
+          channel-name
+          mod-name
           file
-          (location->url file (location-line location) box)
+          url
           version
           homepage
           licenses
@@ -422,6 +474,7 @@ Web."
           description)))
 
 (define (insert-package db box module package)
+  "Serializes and inserts PACKAGE and corresponding search row into the DB."
   (let* ((stmt
            (sqlite-prepare
              db
@@ -460,11 +513,15 @@ Web."
             "packages"))))
 
 (define (all-symbols select from)
+  "Queries SELECT fields from all symbols in FROM table.  Use `j.` prefix for
+selecting fields."
   (let*
-    ((stmt (sqlite-prepare
-             db
-             (format #f "SELECT ~a FROM ~a j" select from)))
-     (columns (sqlite-column-names stmt)))
+    ((stmt
+       (sqlite-prepare
+         db
+         (format #f "SELECT ~a FROM ~a j" select from)))
+     (columns
+       (sqlite-column-names stmt)))
     (sqlite-fold
       (lambda (row seed)
         (cons
@@ -479,20 +536,25 @@ Web."
       stmt)))
 
 (define (query-symbols select from query)
+  "Queries SELECT fields from the FROM table with records matching QUERY
+string.  Use `j.` prefix for selecting fields."
   (let*
-    ((stmt (sqlite-prepare
-             db
-             (format #f
-                     "SELECT ~a FROM search s
-                      INNER JOIN ~a j ON s.fk = j.id
-                      WHERE s.`table` = ?
-                        AND s.name MATCH ?
-                      ORDER BY LENGTH(s.name) DESC, rank"
-                     select
-                     from)))
-     (columns (sqlite-column-names stmt))
-     (wildcard (format #f "\"~a\" *"
-                       (string-delete #\" query))))
+    ((stmt
+       (sqlite-prepare
+         db
+         (format #f
+                 "SELECT ~a FROM search s
+                 INNER JOIN ~a j ON s.fk = j.id
+                 WHERE s.`table` = ?
+                 AND s.name MATCH ?
+                 ORDER BY LENGTH(s.name) DESC, rank"
+                 select
+                 from)))
+     (columns
+       (sqlite-column-names stmt))
+     (wildcard
+       (format #f "\"~a\" *"
+               (string-delete #\" query))))
     (sqlite-bind-arguments stmt from wildcard)
     (sqlite-fold
       (lambda (row seed)
@@ -507,11 +569,9 @@ Web."
       '()
       stmt)))
 
-(define (debug msg)
-  "Prints the debug MSG to stdout."
-  (display (string-append "% " msg "\n")))
-
 (define (denormalize-rows rows)
+  "Denormalizes ROWS received from the database.  Explodes strings back to lists
+and etc."
   (let*
     ((split
        (lambda (str)
@@ -552,8 +612,8 @@ Web."
 (define (handle-api-search request request-body select from)
   "Handles generic API request for RECORDS with pagination and search
 functionality."
-  (let ((query (request-query-parameter request
-                                        "search")))
+  (let ((query
+          (request-query-parameter request "search")))
     (values `((content-type . (application/json)))
             (scm->json-string
               (list->vector
@@ -668,26 +728,21 @@ query parameter."
 
 (define (handle-channels-page request request-body)
   "Returns the channels search page."
-  (let ((query (request-query-parameter request
-                                        "search")))
+  (let ((query
+          (request-query-parameter request
+                                   "search"))
+        (fields
+          "j.id AS name,
+           j.branch,
+           j.`commit`,
+           j.url"))
     (values '((content-type . (text/html)))
             (lambda (port)
               (sxml->xml
                 (channels-template
                   (if query
-                    (query-symbols
-                      "j.id AS name,
-                       j.branch,
-                       j.`commit`,
-                       j.url"
-                      "boxes"
-                      query)
-                    (all-symbols 
-                      "j.id AS name,
-                       j.branch,
-                       j.`commit`,
-                       j.url"
-                      "boxes"))
+                    (query-symbols fields "boxes" query)
+                    (all-symbols fields "boxes"))
                   query
                   %last-updated-at)
                 port)))))
