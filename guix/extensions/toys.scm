@@ -25,12 +25,10 @@
   #:use-module (toys templates)
   #:use-module (gnu services)
   #:use-module (guix channels)
-  #:use-module (guix diagnostics)
   #:use-module (guix licenses)
   #:use-module (guix modules)
   #:use-module (guix packages)
   #:use-module (guix scripts)
-  #:use-module (guix ui)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (ice-9 receive)
@@ -69,6 +67,7 @@
                  "/toys"))
 (when (not (file-exists? %db-directory))
   (mkdir %db-directory))
+
 (define db
   (sqlite-open
     (format #f "file:~a/db.sqlite?_journal=WAL&_sync=NORMAL"

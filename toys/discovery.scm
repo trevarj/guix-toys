@@ -18,22 +18,13 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (toys discovery)
-  #:use-module (gnu packages)
-  #:use-module (gnu services)
   #:use-module (guix channels)
   #:use-module (guix discovery)
   #:use-module (guix describe)
   #:use-module (guix git)
-  #:use-module (guix memoization)
-  #:use-module (guix packages)
-  #:use-module (guix profiles)
-  #:use-module (guix records)
-  #:use-module (guix store)
   #:use-module (guix ui)
-  #:use-module (guix utils)
-  #:use-module (ice-9 match)
+  #:use-module (guix records)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-71)
 
   #:export (fetch-boxes
             fold-public-symbols
