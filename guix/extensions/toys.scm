@@ -735,6 +735,8 @@ query parameter."
           "j.id AS name,
            j.branch,
            j.`commit`,
+           (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages-count`,
+           (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services-count`,
            j.url"))
     (values '((content-type . (text/html)))
             (lambda (port)

@@ -385,18 +385,16 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          ,(assoc-ref channel "url")))
      (div
        (span (@ (class "muted")) "Branch: ")
-       ,(assoc-ref channel "branch"))))
+       ,(assoc-ref channel "branch"))
      ; (div
      ;   (span (@ (class "muted")) "Commit: ")
      ;   ,(assoc-ref channel "commit"))))
-     ; (div
-     ;   (span (@ (class "muted")) "Packages: ")
-     ;   ,(assoc-ref (assoc-ref channel "stats")
-     ;               "packages"))
-     ; (div
-     ;   (span (@ (class "muted")) "Services: ")
-     ;   ,(assoc-ref (assoc-ref channel "stats")
-     ;               "services"))))
+     (div
+       (span (@ (class "muted")) "Packages: ")
+       ,(assoc-ref channel "packages-count"))
+     (div
+       (span (@ (class "muted")) "Services: ")
+       ,(assoc-ref channel "services-count"))))
 
 (define (symbol-template symbol)
   `(div (@ (class "item"))
