@@ -157,7 +157,7 @@
              (branch "main")
              (introduction
               (make-channel-introduction
-               "2910a997db86cc5a474c369e72cee7c793becb15"
+               "0a0cbe82ff9786f3b072e573ce426619e33029b1"
                (openpgp-fingerprint
                 "46DB B5B2 61F5 36CD 37DE E3E7 1BE8 0027 F12B 9C29"))))))
   (toys-box
