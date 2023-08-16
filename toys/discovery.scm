@@ -18,10 +18,12 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (toys discovery)
+  #:use-module (git)
   #:use-module (guix channels)
   #:use-module (guix discovery)
   #:use-module (guix describe)
   #:use-module (guix git)
+  #:use-module (guix git-authenticate)
   #:use-module (guix ui)
   #:use-module (guix records)
   #:use-module (srfi srfi-1)
@@ -48,7 +50,8 @@
              (default #f)))
 
 (define (fetch-boxes file)
-  "Locally checkout boxes specified in FILE.  Previous checkouts are cached."
+  "Locally checkout and authenticate boxes specified in FILE.  Previous
+checkouts are cached."
   (define toy-boxes (primitive-load file))
   (map
     (lambda (box)
@@ -62,17 +65,33 @@
          (ref
            (or (channel-commit channel)
                (channel-branch channel)
-               "master")))
+               "master"))
+         (introduction
+           (channel-introduction channel)))
+
         (format #t "Fetching ~a...\n" url)
+        (define checkout-dir
+          (update-cached-checkout
+            url
+            #:ref `(branch . ,ref)
+            #:recursive? #t))
+
+        (when introduction
+          (format #t "Authenticating ~a...\n" url)
+          (with-repository checkout-dir repository
+            (authenticate-repository
+              repository
+              (string->oid
+                (channel-introduction-first-signed-commit introduction))
+              (channel-introduction-first-commit-signer introduction)
+              ;; FIXME: may not be "keyring" branch.
+              #:keyring-reference "origin/keyring")))
+
         `((box . ,box)
-          (dir . ,(string-append
-                    (update-cached-checkout
-                      url
-                      #:ref `(branch . ,ref)
-                      #:recursive? #t)
-                    "/"
-                    (or (toys-box-directory box)
-                        ""))))))
+          (dir . ,(format #f "~a/~a"
+                          checkout-dir
+                          (or (toys-box-directory box)
+                              ""))))))
     toy-boxes))
 
 (define (fold-public-symbols kons knil boxes)
@@ -105,9 +124,13 @@ value to append results to." (define old-load-path %load-path)
            (dir (assoc-ref box-wrapper 'dir))
            ;; FIXME: this leaks memory, there should be a way to remove modules
            ;; after they are resolve-interface'd and scanned.
-           (modules (scheme-modules
-                       dir
-                       #:warn warn-about-load-error)))
+           (introduction
+             (channel-introduction
+               (toys-box-channel box)))
+           (modules
+             (scheme-modules
+               dir
+               #:warn warn-about-load-error)))
           (append
             (fold-module-public-variables*
               (lambda (module symbol variable result)
