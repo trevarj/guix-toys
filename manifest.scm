@@ -1,2 +1,6 @@
 (specifications->manifest
-  (list "guile-json" "guile-sqlite3" "sqlite"))
+  (list "guix"
+        "guile-json"
+        "guile-sqlite3"
+        "sqlite"
+        "nss-certs"))
