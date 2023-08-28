@@ -3,4 +3,5 @@
         "guile-json"
         "guile-sqlite3"
         "sqlite"
-        "nss-certs"))
+        "nss-certs"
+        "coreutils"))

@@ -32,8 +32,28 @@ Discussion regarding this project happens at `#whereiseveryone` on the Libera IR
 
 ## development
 
-To run the server from local checkout use
+Start a development environment:
 
 ```sh
-GUILE_LOAD_PATH="$PWD:$GUILE_LOAD_PATH" GUIX_EXTENSIONS_PATH="$PWD/guix/extensions/" guix toys
+guix shell
+# or optionally
+guix shell --container --network
+```
+
+Initialize the database:
+
+```sh
+./dev init
+```
+
+Pull symbols data (you may want to remove some channels for faster pull times):
+
+```sh
+./dev pull channels.scm
+```
+
+Run the server:
+
+```sh
+./dev serve
 ```
