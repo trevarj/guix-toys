@@ -52,11 +52,28 @@
      (init-db db))
     (("pull" . rest)
      (when (equal? (length rest) 0)
-       (error "File with boxes not specified."))
+       (show-help)
+       (exit 1))
      (pull-data db (fetch-boxes (car rest))))
     (("serve" . rest)
      (debug "Listening on :8080")
-     (run-server toys-api))))
+     (run-server toys-api))
+    (_
+      (show-help))))
+
+(define (show-help)
+  (display "Usage: guix toys [OPTION] ACTION [FILE]
+Perform the toys related actions. Before running serve make sure the database
+was initialized and symbols were pulled.
+The valid values for ACTION are:
+
+   init             initialize the database file
+   pull             fetch symbols data from the channels defined in FILE
+   serve            start the web server listening on 127.0.0.1:8080")
+  (newline)
+  (display "
+  -h, --help             display this help and exit")
+  (newline))
 
 (define (debug msg)
   "Prints the debug MSG to stdout."
@@ -512,8 +529,8 @@ into the DB."
             "packages"))))
 
 (define (all-symbols select from)
-  "Queries SELECT fields from all symbols in FROM table.  Use `j.` prefix for
-selecting fields."
+  "Queries SELECT fields from all symbols in the FROM table.  Use `j.` prefix
+for selecting fields."
   (let*
     ((stmt
        (sqlite-prepare
