@@ -271,5 +271,16 @@
             (url "https://github.com/newluhux/guix-hui")
             (branch "master"))))
   (toys-box
+   (forge "gitea")
+   (channel (channel
+             (name 'noisytoot)
+             (url "https://git.noisytoot.org/noisytoot/guix-channel")
+             (branch "master")
+             (introduction
+              (make-channel-introduction
+               "9e5feb9b9c7a92b28f8b8fe737b13f5ca786e0a1"
+               (openpgp-fingerprint
+                "61C5 28F6 1F2C FADA 9526  A45B 1D43 EF4F 4492 268B"))))))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
