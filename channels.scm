@@ -282,5 +282,16 @@
                (openpgp-fingerprint
                 "61C5 28F6 1F2C FADA 9526  A45B 1D43 EF4F 4492 268B"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'kbg)
+             (url "https://git.sr.ht/~kennyballou/guix-channel.git")
+             (branch "master")
+             (introduction
+              (make-channel-introduction
+               "b9d0b8041d28ebd9f85cb041aa3f2235c8b39417"
+               (openpgp-fingerprint
+                "10F4 14AB D526 0D0E 2372  8C08 FE55 890B 57AE DCE5"))))))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
