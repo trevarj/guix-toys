@@ -67,12 +67,12 @@ Perform the toys related actions. Before running serve make sure the database
 was initialized and symbols were pulled.
 The valid values for ACTION are:
 
-   init             initialize the database file
-   pull             fetch symbols data from the channels defined in FILE
-   serve            start the web server listening on 127.0.0.1:8080")
+   init   initialize the database file
+   pull   fetch symbols data from the channels defined in FILE
+   serve  start the web server listening on 127.0.0.1:8080")
   (newline)
   (display "
-  -h, --help             display this help and exit")
+  -h      display this help and exit")
   (newline))
 
 (define (debug msg)
