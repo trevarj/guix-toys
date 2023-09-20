@@ -240,7 +240,8 @@
     (channel (channel
                (name 'mobilizon-reshare)
                (url "https://git.sr.ht/~fishinthecalculator/mobilizon-reshare-guix")
-               (branch "main"))))
+               (branch "main")))
+    (directory "modules"))
   (toys-box
     (forge "github")
     (channel (channel
