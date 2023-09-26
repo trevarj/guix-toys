@@ -124,6 +124,7 @@
                      "7F73 0343 F2F0 9F3C 77BF  79D3 2E25 EE8B 6180 2BB3"))))))
   (toys-box
     (forge "github")
+    (directory "src")
     (channel (channel
                (name 'crypto)
                (url "https://github.com/attila-lendvai/guix-crypto")
