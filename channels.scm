@@ -301,5 +301,16 @@
              (url "https://git.sr.ht/~hellseher/ffab")
              (branch "main"))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'rrr)
+             (url "https://git.sr.ht/~akagi/rrr")
+             (branch "master")
+             (introduction
+              (make-channel-introduction
+               "794d6e5eb362bfcf81ada12b6a49a0cd55c8e031"
+               (openpgp-fingerprint
+                "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
