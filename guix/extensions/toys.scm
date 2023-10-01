@@ -153,6 +153,9 @@ The valid values for ACTION are:
         propagated_inputs TEXT,
         description TEXT
       );
+
+      CREATE INDEX packages_channels_idx ON packages (channel);
+      CREATE INDEX services_channels_idx ON packages (channel);
     "))
 
 (define (pull-data db boxes)
