@@ -295,5 +295,11 @@
                (openpgp-fingerprint
                 "10F4 14AB D526 0D0E 2372  8C08 FE55 890B 57AE DCE5"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'ffab)
+             (url "https://git.sr.ht/~hellseher/ffab")
+             (branch "main"))))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
