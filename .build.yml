@@ -1,0 +1,10 @@
+image: guix
+triggers:
+  - action: email
+    condition: failure
+    to: unwox <me@unwox.com>
+tasks:
+  - test: |
+     cd toys
+     ./dev init
+     ./dev pull channels.scm
