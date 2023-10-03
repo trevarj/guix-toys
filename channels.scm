@@ -113,6 +113,7 @@
                      "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))))
   (toys-box
     (forge "cgit")
+    (directory "guix")
     (channel (channel
                (name 'guix-forge)
                (url "https://git.systemreboot.net/guix-forge/")
