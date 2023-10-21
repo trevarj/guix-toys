@@ -676,7 +676,10 @@ query parameter."
   "Returns the list of channels defined in channels.scm."
   (handle-api-search request
                      request-body
-                     %all-channels))
+		     "j.id AS name, 
+                      j.branch,
+                      j.url"
+		     "boxes"))
 
 (define (handle-api-symbols-list request request-body)
   "Returns the list of all public (exported) symbols defined in
