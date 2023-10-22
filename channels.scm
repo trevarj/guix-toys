@@ -324,5 +324,16 @@
                (openpgp-fingerprint
                 "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'sops-guix)
+             (url "https://git.sr.ht/~fishinthecalculator/sops-guix")
+             (branch "main")
+             (introduction
+              (make-channel-introduction
+               "bea63b9b2d07d7a978db8d271130171cdcc410e6"
+               (openpgp-fingerprint
+                "D088 4467 87F7 CBB2 AE08  BE6D D075 F59A 4805 49C3"))))))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
