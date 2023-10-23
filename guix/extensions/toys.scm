@@ -116,7 +116,8 @@ The valid values for ACTION are:
        dir  TEXT NOT NULL,
        branch TEXT NOT NULL,
        `commit` TEXT,
-       url TEXT NOT NULL
+       url TEXT NOT NULL,
+       subscription_snippet TEXT NOT NULL
      );
      DROP TABLE IF EXISTS public_symbols;
      CREATE TABLE public_symbols (
@@ -178,8 +179,8 @@ The valid values for ACTION are:
               (sqlite-prepare
                 db
                 "INSERT INTO boxes
-                (id, dir, branch, `commit`, url)
-                VALUES (?, ?, ?, ?, ?)
+                (id, dir, branch, `commit`, url, subscription_snippet)
+                VALUES (?, ?, ?, ?, ?, ?)
                 RETURNING id"))
             (search-stmt
               (sqlite-prepare
@@ -203,7 +204,8 @@ The valid values for ACTION are:
                   dir
                   (channel-branch channel)
                   (channel-commit channel)
-                  (channel-url channel))))
+                  (channel-url channel)
+		  (serialize-subscription-snippet channel))))
             0))
         (db-execute-stmt
           search-stmt
@@ -293,6 +295,17 @@ The valid values for ACTION are:
                  base-url ref file lineno))
         (else #f))
       #f)))
+
+(define (serialize-subscription-snippet channel)
+  "Formats CHANNEL for database storage."
+  (let ((channel-string
+	 `(channel
+	   (name ,(channel-name channel))
+	   (url ,(channel-url channel))
+	   (branch ,(channel-branch channel))
+	   (commit ,(channel-commit channel))
+	   (introduction ,(channel-introduction channel)))))
+    (format #f "~a" channel-string)))
 
 (define (serialize-license license)
   "Formats LICENSE for database storage."
@@ -681,9 +694,10 @@ query parameter."
   "Returns the list of channels defined in channels.scm."
   (handle-api-search request
                      request-body
-		     "j.id AS name, 
+		     "j.id AS name,
                       j.branch,
-                      j.url"
+                      j.url,
+                      j.subscription_snippet"
 		     "boxes"))
 
 (define (handle-api-symbols-list request request-body)
