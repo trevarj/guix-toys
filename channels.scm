@@ -200,7 +200,7 @@
      (channel (channel
                 (name 'confetti)
                 (url "https://git.sr.ht/~whereiseveryone/confetti")
-                (branch "s")
+                (branch "e")
                 (introduction
                  (make-channel-introduction
                   "e037ffa3a40bcd7807a97a0415ef588b411277c3"
