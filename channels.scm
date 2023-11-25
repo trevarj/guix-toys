@@ -325,6 +325,13 @@
                (openpgp-fingerprint
                 "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
   (toys-box
+   (forge "cgit")
+   (channel
+    (channel
+     (name 'gn-bioinformatics)
+     (url "https://git.genenetwork.org/guix-bioinformatics/")
+     (branch "master"))))
+  (toys-box
    (forge "sourcehut")
    (directory "modules")
    (channel (channel
