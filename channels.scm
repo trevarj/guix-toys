@@ -333,6 +333,19 @@
      (branch "master"))))
   (toys-box
    (forge "sourcehut")
+   (directory "benoitj")
+   (channel
+    (channel
+     (name 'benoitj)
+     (url "https://git.sr.ht/~benoit/my-guix-channel")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "68fbbb3718ef0c78a52df8388cfc5b1daa06f4e1"
+       (openpgp-fingerprint
+        "C3B6 ED99 DF87 B208 0C79  C8AC F86B 0628 26D4 C20A"))))))
+  (toys-box
+   (forge "sourcehut")
    (directory "modules")
    (channel (channel
              (name 'sops-guix)
