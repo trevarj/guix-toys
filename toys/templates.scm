@@ -394,7 +394,11 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        ,(assoc-ref channel "packages-count"))
      (div
        (span (@ (class "muted")) "Services: ")
-       ,(assoc-ref channel "services-count"))))
+       ,(assoc-ref channel "services-count"))
+     (div
+       (div (@ (class "muted")) "Subscription snippet: ")
+       (pre
+        ,(assoc-ref channel "subscription-snippet")))))
 
 (define (symbol-template symbol)
   `(div (@ (class "item"))
