@@ -326,6 +326,7 @@
                 "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
   (toys-box
    (forge "cgit")
+   (directory "gn")
    (channel
     (channel
      (name 'gn-bioinformatics)
