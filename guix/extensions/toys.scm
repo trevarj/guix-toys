@@ -87,7 +87,7 @@ The valid values for ACTION are:
 
 (define db
   (sqlite-open
-    (format #f "file:~a/db.sqlite?_journal=WAL&_sync=NORMAL&_pooling=true"
+    (format #f "file:~a/db.sqlite"
             %db-directory)))
 
 (define %last-updated-at
@@ -104,6 +104,8 @@ The valid values for ACTION are:
   (sqlite-exec
     db
     "PRAGMA foreign_keys = ON;
+     PRAGMA journal_mode=WAL;
+     PRAGMA synchronous=NORMAL;
 
      DROP TABLE IF EXISTS search;
      CREATE VIRTUAL TABLE search USING fts5(name, description, fk, `table`);
@@ -161,12 +163,15 @@ The valid values for ACTION are:
 (define (pull-data db boxes)
   "Removes existing data about symbols from DB and then pulls new data
   from BOXES into it."
-  (sqlite-exec db "BEGIN IMMEDIATE") ; this type of transactions allows for reads
-  (sqlite-exec db "DELETE FROM search")
-  (sqlite-exec db "DELETE FROM boxes")
-  (sqlite-exec db "DELETE FROM public_symbols")
-  (sqlite-exec db "DELETE FROM service_types")
-  (sqlite-exec db "DELETE FROM packages")
+  (sqlite-exec
+    db
+    "PRAGMA synchronous=NORMAL;
+     BEGIN IMMEDIATE;
+     DELETE FROM search;
+     DELETE FROM boxes;
+     DELETE FROM public_symbols;
+     DELETE FROM service_types;
+     DELETE FROM packages;")
   (for-each
     (lambda (wrapper)
       (let* ((stmt
