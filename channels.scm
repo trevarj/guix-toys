@@ -332,9 +332,8 @@
      (name 'gn-bioinformatics)
      (url "https://git.genenetwork.org/guix-bioinformatics/")
      (branch "master"))))
-  #;(toys-box
+  (toys-box
    (forge "sourcehut")
-   (directory "benoitj")
    (channel
     (channel
      (name 'benoitj)
@@ -342,7 +341,7 @@
      (branch "main")
      (introduction
       (make-channel-introduction
-       "68fbbb3718ef0c78a52df8388cfc5b1daa06f4e1"
+       "37444eebf69f83f4accaa2c69562209d94f4e57a"
        (openpgp-fingerprint
         "C3B6 ED99 DF87 B208 0C79  C8AC F86B 0628 26D4 C20A"))))))
   (toys-box
