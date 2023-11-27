@@ -87,7 +87,7 @@ The valid values for ACTION are:
 
 (define db
   (sqlite-open
-    (format #f "file:~a/db.sqlite?_journal=WAL&_sync=NORMAL"
+    (format #f "file:~a/db.sqlite?_journal=WAL&_sync=NORMAL&_pooling=true"
             %db-directory)))
 
 (define %last-updated-at
