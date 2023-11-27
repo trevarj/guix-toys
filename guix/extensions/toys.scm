@@ -105,63 +105,63 @@ The valid values for ACTION are:
     db
     "PRAGMA foreign_keys = ON;
 
-      DROP TABLE IF EXISTS search;
-      CREATE VIRTUAL TABLE search USING fts5(name, description, fk, `table`);
+     DROP TABLE IF EXISTS search;
+     CREATE VIRTUAL TABLE search USING fts5(name, description, fk, `table`);
 
-      DROP TABLE IF EXISTS boxes;
-      CREATE TABLE boxes (
-        id TEXT NOT NULL PRIMARY KEY,
-        dir  TEXT NOT NULL,
-        branch TEXT NOT NULL,
-        `commit` TEXT,
-        url TEXT NOT NULL
-      );
-      DROP TABLE IF EXISTS public_symbols;
-      CREATE TABLE public_symbols (
-        id INTEGER NOT NULL PRIMARY KEY,
-        name TEXT NOT NULL,
-        channel INTEGER NOT NULL,
-        module TEXT NOT NULL,
-        file TEXT NOT NULL,
-        url TEXT NOT NULL,
-        doc TEXT,
-        signature TEXT
-      );
-      DROP TABLE IF EXISTS service_types;
-      CREATE TABLE service_types (
-        id INTEGER NOT NULL PRIMARY KEY,
-        name TEXT NOT NULL,
-        channel INTEGER NOT NULL,
-        module TEXT NOT NULL,
-        file TEXT NOT NULL,
-        url TEXT NOT NULL,
-        description TEXT
-      );
-      DROP TABLE IF EXISTS packages;
-      CREATE TABLE packages (
-        id INTEGER NOT NULL PRIMARY KEY,
-        name TEXT NOT NULL,
-        channel INTEGER NOT NULL,
-        module TEXT NOT NULL,
-        file TEXT NOT NULL,
-        url TEXT NOT NULL,
-        version TEXT NOT NULL,
-        homepage TEXT,
-        licenses TEXT,
-        synopsis TEXT,
-        inputs TEXT,
-        propagated_inputs TEXT,
-        description TEXT
-      );
+     DROP TABLE IF EXISTS boxes;
+     CREATE TABLE boxes (
+       id TEXT NOT NULL PRIMARY KEY,
+       dir  TEXT NOT NULL,
+       branch TEXT NOT NULL,
+       `commit` TEXT,
+       url TEXT NOT NULL
+     );
+     DROP TABLE IF EXISTS public_symbols;
+     CREATE TABLE public_symbols (
+       id INTEGER NOT NULL PRIMARY KEY,
+       name TEXT NOT NULL,
+       channel INTEGER NOT NULL,
+       module TEXT NOT NULL,
+       file TEXT NOT NULL,
+       url TEXT NOT NULL,
+       doc TEXT,
+       signature TEXT
+     );
+     DROP TABLE IF EXISTS service_types;
+     CREATE TABLE service_types (
+       id INTEGER NOT NULL PRIMARY KEY,
+       name TEXT NOT NULL,
+       channel INTEGER NOT NULL,
+       module TEXT NOT NULL,
+       file TEXT NOT NULL,
+       url TEXT NOT NULL,
+       description TEXT
+     );
+     DROP TABLE IF EXISTS packages;
+     CREATE TABLE packages (
+       id INTEGER NOT NULL PRIMARY KEY,
+       name TEXT NOT NULL,
+       channel INTEGER NOT NULL,
+       module TEXT NOT NULL,
+       file TEXT NOT NULL,
+       url TEXT NOT NULL,
+       version TEXT NOT NULL,
+       homepage TEXT,
+       licenses TEXT,
+       synopsis TEXT,
+       inputs TEXT,
+       propagated_inputs TEXT,
+       description TEXT
+     );
 
-      CREATE INDEX packages_channels_idx ON packages (channel);
-      CREATE INDEX services_channels_idx ON packages (channel);
+     CREATE INDEX packages_channels_idx ON packages (channel);
+     CREATE INDEX services_channels_idx ON packages (channel);
     "))
 
 (define (pull-data db boxes)
   "Removes existing data about symbols from DB and then pulls new data
   from BOXES into it."
-  (sqlite-exec db "BEGIN")
+  (sqlite-exec db "BEGIN IMMEDIATE") ; this type of transactions allows for reads
   (sqlite-exec db "DELETE FROM search")
   (sqlite-exec db "DELETE FROM boxes")
   (sqlite-exec db "DELETE FROM public_symbols")
