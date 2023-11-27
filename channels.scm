@@ -256,7 +256,7 @@
                (url "https://git.sr.ht/~fishinthecalculator/mobilizon-reshare-guix")
                (branch "main")))
     (directory "modules"))
-  (toys-box
+  #;(toys-box
     (forge "github")
     (channel (channel
                 (name 'th)
@@ -332,7 +332,7 @@
      (name 'gn-bioinformatics)
      (url "https://git.genenetwork.org/guix-bioinformatics/")
      (branch "master"))))
-  (toys-box
+  #;(toys-box
    (forge "sourcehut")
    (directory "benoitj")
    (channel
