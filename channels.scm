@@ -357,5 +357,17 @@
                (openpgp-fingerprint
                 "D088 4467 87F7 CBB2 AE08  BE6D D075 F59A 4805 49C3"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'gocix)
+             (url "https://git.sr.ht/~fishinthecalculator/gocix")
+             (branch "main")
+             (introduction
+              (make-channel-introduction
+               "cdb78996334c4f63304ecce224e95bb96bfd4c7d"
+               (openpgp-fingerprint
+                "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2")))))
+   (directory "modules"))
+  (toys-box
     (forge "cgit")
     (channel %default-guix-channel)))
