@@ -98,9 +98,9 @@
                (url "https://gitlab.com/orang3/small-guix")
                (introduction
                  (make-channel-introduction
-                   "940e21366a8c986d1e10a851c7ce62223b6891ef"
+                   "f260da13666cd41ae3202270784e61e062a3999c"
                    (openpgp-fingerprint
-                     "D088 4467 87F7 CBB2 AE08  BE6D D075 F59A 4805 49C3"))))))
+                     "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))))
   (toys-box
     (forge "gitlab")
     (directory "modules")
@@ -353,9 +353,9 @@
              (branch "main")
              (introduction
               (make-channel-introduction
-               "bea63b9b2d07d7a978db8d271130171cdcc410e6"
+               "0bbaf1fdd25266c7df790f65640aaa01e6d2dbc9"
                (openpgp-fingerprint
-                "D088 4467 87F7 CBB2 AE08  BE6D D075 F59A 4805 49C3"))))))
+                "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))))
   (toys-box
    (forge "sourcehut")
    (channel (channel
