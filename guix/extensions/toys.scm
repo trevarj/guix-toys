@@ -31,6 +31,7 @@
   #:use-module (guix scripts)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 pretty-print)
   #:use-module (ice-9 receive)
   #:use-module (ice-9 regex)
   #:use-module (json)
@@ -205,7 +206,7 @@ The valid values for ACTION are:
                   (channel-branch channel)
                   (channel-commit channel)
                   (channel-url channel)
-		  (serialize-subscription-snippet channel))))
+                  (serialize-channel channel))))
             0))
         (db-execute-stmt
           search-stmt
@@ -296,16 +297,12 @@ The valid values for ACTION are:
         (else #f))
       #f)))
 
-(define (serialize-subscription-snippet channel)
+(define (serialize-channel channel)
   "Formats CHANNEL for database storage."
-  (let ((channel-string
-	 `(channel
-	   (name ,(channel-name channel))
-	   (url ,(channel-url channel))
-	   (branch ,(channel-branch channel))
-	   (commit ,(channel-commit channel))
-	   (introduction ,(channel-introduction channel)))))
-    (format #f "~a" channel-string)))
+  (let ((channel-sexp (channel->code channel)))
+    (call-with-output-string
+      (lambda (port)
+        (pretty-print channel-sexp port)))))
 
 (define (serialize-license license)
   "Formats LICENSE for database storage."
@@ -319,7 +316,6 @@ The valid values for ACTION are:
       (if license
         (list (normalize license))
         '()))))
-
 
 (define (serialize-public-symbol module box symbol variable)
   "Serializes VARIABLE for database storage."
@@ -694,11 +690,11 @@ query parameter."
   "Returns the list of channels defined in channels.scm."
   (handle-api-search request
                      request-body
-		     "j.id AS name,
+                     "j.id AS name,
                       j.branch,
                       j.url,
                       j.subscription_snippet"
-		     "boxes"))
+                      "boxes"))
 
 (define (handle-api-symbols-list request request-body)
   "Returns the list of all public (exported) symbols defined in
