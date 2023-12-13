@@ -235,6 +235,7 @@
                (url "https://github.com/Tass0sm/tassos-guix"))))
   (toys-box
    (forge "github")
+   (directory "src")
    (channel (channel
              (name 'sheepfold)
              (url "https://github.com/dochang/sheepfold"))))
