@@ -150,6 +150,12 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     white-space: nowrap;
   }
 
+  .pre {
+    background-color: #efefef;
+    padding: 0.25rem;
+    margin: 0;
+  }
+
   footer {
     font-style: italic;
     color: gray;
@@ -174,6 +180,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
     code,
     .code {
+      background-color: #444444;
+    }
+
+    .pre {
       background-color: #444444;
     }
 
@@ -395,9 +405,10 @@ ________________________,--._(___Y___)_,--._______________________ hjw
      (div
        (span (@ (class "muted")) "Services: ")
        ,(assoc-ref channel "services-count"))
-     (div
-       (div (@ (class "muted")) "Subscription snippet: ")
+     (details
+       (summary (@ (class "muted")) "Subscription snippet: ")
        (pre
+        (@ (class "pre"))
         ,(assoc-ref channel "subscription-snippet")))))
 
 (define (symbol-template symbol)
