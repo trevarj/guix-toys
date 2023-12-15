@@ -20,9 +20,11 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix extensions toys)
+  #:use-module (toys client)
   #:use-module (toys http)
   #:use-module (toys discovery)
   #:use-module (toys templates)
+  #:use-module (toys ui)
   #:use-module (gnu services)
   #:use-module (guix channels)
   #:use-module (guix licenses)
@@ -30,6 +32,7 @@
   #:use-module (guix packages)
   #:use-module (guix scripts)
   #:use-module (guix utils)
+  #:use-module (guix ui)
   #:use-module (ice-9 match)
   #:use-module (ice-9 pretty-print)
   #:use-module (ice-9 receive)
@@ -49,16 +52,40 @@
   (category extension)
   (synopsis "Explore packages and services through REST API")
   (match args
-    (("init" . rest)
+    (("init")
      (init-db db))
-    (("pull" . rest)
-     (when (equal? (length rest) 0)
-       (show-help)
-       (exit 1))
-     (pull-data db (fetch-boxes (car rest))))
-    (("serve" . rest)
+    (("pull" file)
+     (pull-data db (fetch-boxes file)))
+    (("serve")
      (debug "Listening on :8080")
      (run-server toys-api))
+    (("package" "search" query)
+     (define-values (res err) (search-packages query))
+     (when err (error err))
+     (with-paginated-output-port paginated
+      (for-each
+        (lambda (p)
+          (print-package p paginated)
+          (newline paginated))
+        (vector->list res))))
+    (("service" "search" query)
+     (define-values (res err) (search-services query))
+     (when err (error err))
+     (with-paginated-output-port paginated
+      (for-each
+        (lambda (s)
+          (print-service s paginated)
+          (newline paginated))
+        (vector->list res))))
+    (("symbol" "search" query)
+     (define-values (res err) (search-public-symbols query))
+     (when err (error err))
+     (with-paginated-output-port paginated
+      (for-each
+        (lambda (s)
+          (print-public-symbol s paginated)
+          (newline paginated))
+        (vector->list res))))
     (_
       (show-help))))
 
@@ -68,9 +95,12 @@ Perform the toys related actions. Before running serve make sure the database
 was initialized and symbols were pulled.
 The valid values for ACTION are:
 
-   init   initialize the database file
-   pull   fetch symbols data from the channels defined in FILE
-   serve  start the web server listening on 127.0.0.1:8080")
+   init            initialize the database file
+   pull            fetch symbols data from the channels defined in FILE
+   serve           start the web server listening on 127.0.0.1:8080
+   package search  search for a package in the toys instance database
+   service search  search for a service type in the toys instance database
+   symbol search   search for a public symbol in the toys instance database")
   (newline)
   (display "
   -h      display this help and exit")
