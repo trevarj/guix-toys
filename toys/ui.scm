@@ -22,6 +22,7 @@
 
   #:export (print-package
             print-service
+            print-channel
             print-public-symbol))
 
 (define (definition title definition port)
@@ -73,6 +74,21 @@
       (texi->plain-text (assoc-ref service "description"))
       #\newline)
     port))
+
+(define (print-channel channel port)
+  (definition "name" (assoc-ref channel "name") port)
+  (definition "url" (assoc-ref channel "url") port)
+  (definition "branch" (assoc-ref channel "branch") port)
+  (definition "packages count"
+    (number->string
+     (assoc-ref channel "packages_count")) port)
+  (definition "services count"
+    (number->string
+     (assoc-ref channel "services_count")) port)
+  (definition "subscription snippet"
+    (string-append
+     "\n"
+     (assoc-ref channel "subscription_snippet")) port))
 
 (define (print-public-symbol symbol port)
   (definition

@@ -77,6 +77,15 @@
           (print-service s paginated)
           (newline paginated))
         (vector->list res))))
+    (("channel" "search" query)
+     (define-values (res err) (search-channels query))
+     (when err (error err))
+     (with-paginated-output-port paginated
+      (for-each
+        (lambda (s)
+          (print-channel s paginated)
+          (newline paginated))
+        (vector->list res))))
     (("symbol" "search" query)
      (define-values (res err) (search-public-symbols query))
      (when err (error err))

@@ -25,6 +25,7 @@
 
   #:export (search-packages
             search-services
+            search-channels
             search-public-symbols))
 
 (define %default-instance-url "https://toys.whereis.xn--q9jyb4c")
