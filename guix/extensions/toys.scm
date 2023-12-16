@@ -693,6 +693,8 @@ query parameter."
                      "j.id AS name,
                       j.branch,
                       j.url,
+                      (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages_count`,
+                      (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services_count`,
                       j.subscription_snippet"
                       "boxes"))
 
