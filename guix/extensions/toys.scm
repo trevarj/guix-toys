@@ -203,7 +203,7 @@ The valid values for ACTION are:
 
 (define (pull-data db boxes)
   "Removes existing data about symbols from DB and then pulls new data
-  from BOXES into it."
+from BOXES into it."
   (sqlite-exec
     db
     "PRAGMA synchronous=NORMAL;
@@ -213,6 +213,7 @@ The valid values for ACTION are:
      DELETE FROM public_symbols;
      DELETE FROM service_types;
      DELETE FROM packages;")
+
   (for-each
     (lambda (wrapper)
       (let* ((stmt
@@ -231,7 +232,7 @@ The valid values for ACTION are:
                  VALUES (?, ?, ?, ?)"
                 #:cache? #t))
             (dir
-              (assoc-ref wrapper 'dir))
+              (assoc-ref wrapper 'module-dir))
             (box
               (assoc-ref wrapper 'box))
             (channel
@@ -253,22 +254,21 @@ The valid values for ACTION are:
           search-stmt
           (list
             (symbol->string (channel-name channel))
-            ""
-            id
-            "boxes"))))
+            "" id "boxes"))))
     boxes)
 
   (fold-public-symbols
-    (lambda (box module symbol variable result)
-      (insert-public-symbol db module box symbol variable)
+    (lambda (box module symbol variable box-wrapper result)
+      (insert-public-symbol variable db module box symbol box-wrapper)
 
-      (if (variable-bound? variable)
+      (when (variable-bound? variable)
         (let ((var (variable-ref variable)))
           (cond
             ((service-type? var)
-            (insert-service-type db box module var))
+              (insert-service-type var db box module box-wrapper))
             ((package? var)
-            (insert-package db box module var)))))
+              (insert-package var db box module box-wrapper)))))
+
       '())
     '()
     boxes)
@@ -297,11 +297,11 @@ The valid values for ACTION are:
 ;;; Locations
 ;;;
 
-(define (location->url box file lineno)
+(define (location->url box-wrapper file lineno)
   "Returns the URL for accessing specified BOX, FILE and LINENO via Web."
-  (let* ((directory (string-trim
-                      (or (toys-box-directory box)
-                          "")
+  (let* ((box (assoc-ref box-wrapper 'box))
+         (directory (string-trim
+                      (assoc-ref box-wrapper 'dir)
                       #\/))
          (channel (toys-box-channel box))
          (file (string-trim-both
@@ -361,7 +361,7 @@ The valid values for ACTION are:
         (list (normalize license))
         '()))))
 
-(define (serialize-public-symbol module box symbol variable)
+(define (serialize-public-symbol variable module box symbol box-wrapper)
   "Serializes VARIABLE for database storage."
   (let* ((variable-procedure?
            (and (variable-bound? variable)
@@ -381,7 +381,7 @@ The valid values for ACTION are:
          (url
            ;; TODO: figure out if it's possible to extract lineno from variable.
            ;; For now set it to 1.
-           (location->url box file 1))
+           (location->url box-wrapper file 1))
          (signature
            (or (and
                  variable-procedure?
@@ -409,7 +409,7 @@ The valid values for ACTION are:
           doc
           stripped-signature)))
 
-(define (insert-public-symbol db module box symbol variable)
+(define (insert-public-symbol variable db module box symbol box-wrapper)
   "Serializes and inserts VARIABLE and corresponding search row into the DB."
   (let* ((stmt
            (sqlite-prepare
@@ -427,19 +427,16 @@ The valid values for ACTION are:
               VALUES (?,?,?,?)"
              #:cache? #t))
          (data
-           (serialize-public-symbol module box symbol variable)))
+           (serialize-public-symbol variable module box symbol box-wrapper)))
     (define id
       (vector-ref
         (car (db-execute-stmt stmt data))
         0))
     (db-execute-stmt
       search-stmt
-      (list (symbol->string symbol)
-            ""
-            id
-            "public_symbols"))))
+      (list (symbol->string symbol) "" id "public_symbols"))))
 
-(define (serialize-service-type box module service-type)
+(define (serialize-service-type service-type box module box-wrapper)
   "Serializes SERVICE-TYPE for database storage."
   (let* ((mod-name
            (string-join
@@ -456,7 +453,7 @@ The valid values for ACTION are:
          (location
            (service-type-location service-type))
          (url
-           (location->url box file (location-line location)))
+           (location->url box-wrapper file (location-line location)))
          (description
            (service-type-description service-type)))
     (list name
@@ -466,7 +463,7 @@ The valid values for ACTION are:
           url
           description)))
 
-(define (insert-service-type db box module service-type)
+(define (insert-service-type service-type db box module box-wrapper)
   "Serializes and inserts SERVICE-TYPE and corresponding search row
 into the DB."
   (let* ((stmt
@@ -485,7 +482,7 @@ into the DB."
               VALUES (?,?,?,?)"
              #:cache? #t))
          (data
-           (serialize-service-type box module service-type)))
+           (serialize-service-type service-type box module box-wrapper)))
     (define id
       (vector-ref
         (car (db-execute-stmt stmt data))
@@ -497,7 +494,7 @@ into the DB."
             id
             "service_types"))))
 
-(define (serialize-package box module package)
+(define (serialize-package package box module box-wrapper)
   "Serializes PACKAGE for database storage."
   (let* ((name
           (package-name package))
@@ -516,7 +513,7 @@ into the DB."
          (location
            (package-location package))
          (url
-           (location->url box file (location-line location)))
+           (location->url box-wrapper file (location-line location)))
          (homepage
            (package-home-page package))
          (licenses
@@ -554,7 +551,7 @@ into the DB."
           propagated-inputs
           description)))
 
-(define (insert-package db box module package)
+(define (insert-package package db box module box-wrapper)
   "Serializes and inserts PACKAGE and corresponding search row into the DB."
   (let* ((stmt
            (sqlite-prepare
@@ -583,7 +580,7 @@ into the DB."
               VALUES (?,?,?,?)"
              #:cache? #t))
          (data
-           (serialize-package box module package)))
+           (serialize-package package box module box-wrapper)))
     (define id
       (vector-ref
         (car (db-execute-stmt stmt data))

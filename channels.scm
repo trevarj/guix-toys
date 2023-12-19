@@ -62,7 +62,6 @@
                (url "https://gitlab.inria.fr/guix-hpc/guix-hpc"))))
   (toys-box
     (forge "sourcehut")
-    (directory "src")
     (channel (channel
                (name 'rde)
                (url "https://git.sr.ht/~abcdw/rde")
@@ -103,7 +102,6 @@
                      "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))))
   (toys-box
     (forge "gitlab")
-    (directory "modules")
     (channel (channel
                (name 'guix-past)
                (url "https://gitlab.inria.fr/guix-hpc/guix-past")
@@ -124,7 +122,6 @@
                      "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))))
   (toys-box
     (forge "cgit")
-    (directory "guix")
     (channel (channel
                (name 'guix-forge)
                (url "https://git.systemreboot.net/guix-forge/")
@@ -136,7 +133,6 @@
                      "7F73 0343 F2F0 9F3C 77BF  79D3 2E25 EE8B 6180 2BB3"))))))
   (toys-box
     (forge "github")
-    (directory "src")
     (channel (channel
                (name 'crypto)
                (url "https://github.com/attila-lendvai/guix-crypto")
@@ -197,7 +193,6 @@
                      "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
    #;(toys-box
      (forge "sourcehut")
-     (directory "conf")
      (channel (channel
                 (name 'confetti)
                 (url "https://git.sr.ht/~whereiseveryone/confetti")
@@ -235,7 +230,6 @@
                (url "https://github.com/Tass0sm/tassos-guix"))))
   (toys-box
    (forge "github")
-   (directory "src")
    (channel (channel
              (name 'sheepfold)
              (url "https://github.com/dochang/sheepfold"))))
@@ -255,8 +249,7 @@
     (channel (channel
                (name 'mobilizon-reshare)
                (url "https://git.sr.ht/~fishinthecalculator/mobilizon-reshare-guix")
-               (branch "main")))
-    (directory "modules"))
+               (branch "main"))))
   #;(toys-box
     (forge "github")
     (channel (channel
@@ -327,7 +320,6 @@
                 "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
   (toys-box
    (forge "cgit")
-   (directory "gn")
    (channel
     (channel
      (name 'gn-bioinformatics)
@@ -347,7 +339,6 @@
         "C3B6 ED99 DF87 B208 0C79  C8AC F86B 0628 26D4 C20A"))))))
   (toys-box
    (forge "sourcehut")
-   (directory "modules")
    (channel (channel
              (name 'sops-guix)
              (url "https://git.sr.ht/~fishinthecalculator/sops-guix")
@@ -367,11 +358,9 @@
               (make-channel-introduction
                "cdb78996334c4f63304ecce224e95bb96bfd4c7d"
                (openpgp-fingerprint
-                "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2")))))
-   (directory "modules"))
+                "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))))
   (toys-box
    (forge "github")
-   (directory "modules")
    (channel (channel
              (name 'guixcn)
              (url "https://github.com/guixcn/guix-channel")
@@ -448,12 +437,12 @@
                "9860ea17cb21131fe5809053ffcc148ac7549465"
                (openpgp-fingerprint
                 "66E6 01AC 1756 020B 759B  E34B 7B65 F79C 3247 8510"))))))
-  (toys-box
-   (forge "sourcehut")
-   (channel (channel
-             (name 'hitwright)
-             (url "https://git.sr.ht/~hitwright/personal-guix-channel")
-             (branch "main"))))
+  ; (toys-box
+  ;  (forge "sourcehut")
+  ;  (channel (channel
+  ;            (name 'hitwright)
+  ;            (url "https://git.sr.ht/~hitwright/personal-guix-channel")
+  ;            (branch "main"))))
   (toys-box
    (forge "sourcehut")
    (channel (channel
@@ -469,7 +458,6 @@
                 "A28B F40C 3E55 1372 662D  14F7 41AA E7DC CA3D 8351"))))))
   (toys-box
    (forge "gogs")
-   (directory "guix")
    (channel (channel
              (name 'wigust)
              (url "https://notabug.org/wigust/guix-wigust"))))

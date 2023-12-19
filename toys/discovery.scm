@@ -33,8 +33,7 @@
 
             toys-box
             toys-box-channel
-            toys-box-forge
-            toys-box-directory))
+            toys-box-forge))
 
 ;; Guix channel wrapper with additional data.
 (define-record-type* <toys-box>
@@ -43,11 +42,14 @@
 
   (channel toys-box-channel)        ; channel
   (forge toys-box-forge             ; string | #f
-        (default #f))
-  ;; subdirectory in repository where source code for channel is situated
-  ;; TODO: parse from .guix-channel file?
-  (directory toys-box-directory     ; string | #f
-             (default #f)))
+        (default #f)))
+
+;; Forcefully export functions from (guix channels)
+(define read-channel-metadata-from-source
+  (@@ (guix channels) read-channel-metadata-from-source))
+
+(define channel-metadata-directory
+  (@@ (guix channels) channel-metadata-directory))
 
 (define (fetch-boxes file)
   "Locally checkout and authenticate boxes specified in FILE.  Previous
@@ -87,11 +89,15 @@ checkouts are cached."
               ;; FIXME: may not be "keyring" branch.
               #:keyring-reference "origin/keyring")))
 
+        (define channel-metadata
+          (read-channel-metadata-from-source checkout-dir))
+
+        (define dir
+          (channel-metadata-directory channel-metadata))
+
         `((box . ,box)
-          (dir . ,(format #f "~a/~a"
-                          checkout-dir
-                          (or (toys-box-directory box)
-                              ""))))))
+          (dir . ,dir)
+          (module-dir . ,(string-append checkout-dir dir)))))
     toy-boxes))
 
 (define (fold-public-symbols kons knil boxes)
@@ -101,7 +107,7 @@ value to append results to." (define old-load-path %load-path)
     (append
       (map
         (lambda (box-wrapper)
-          (assoc-ref box-wrapper 'dir))
+          (assoc-ref box-wrapper 'module-dir))
         ;; Filter out guix channel, it is scanned just fine without proper
         ;; importing.
         (filter
@@ -121,7 +127,7 @@ value to append results to." (define old-load-path %load-path)
                     (toys-box-channel (assoc-ref box-wrapper 'box)))))
         (let*
           ((box (assoc-ref box-wrapper 'box))
-           (dir (assoc-ref box-wrapper 'dir))
+           (dir (assoc-ref box-wrapper 'module-dir))
            ;; FIXME: this leaks memory, there should be a way to remove modules
            ;; after they are resolve-interface'd and scanned.
            (introduction
@@ -135,7 +141,7 @@ value to append results to." (define old-load-path %load-path)
             (fold-module-public-variables*
               (lambda (module symbol variable result)
                 (apply kons
-                       (list box module symbol variable result)))
+                       (list box module symbol variable box-wrapper result)))
               knil
               modules)
             result)))
