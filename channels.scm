@@ -4,7 +4,7 @@
 (list
   (toys-box
     (forge "gitea")
-    (channel 
+    (channel
       (channel
         (name 'emacs-master)
         (url "https://codeberg.org/akib/guix-channel-emacs-master")
@@ -370,5 +370,17 @@
                 "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2")))))
    (directory "modules"))
   (toys-box
-    (forge "cgit")
-    (channel %default-guix-channel)))
+   (forge "github")
+   (directory "modules")
+   (channel (channel
+             (name 'guixcn)
+             (url "https://github.com/guixcn/guix-channel")
+             (branch "master")
+             (introduction
+              (make-channel-introduction
+               "993d200265630e9c408028a022f32f34acacdf29"
+               (openpgp-fingerprint
+                "7EBE A494 60CE 5E2C 0875  7FDB 3B5A A993 E1A2 DFF0"))))))
+  (toys-box
+   (forge "cgit")
+   (channel %default-guix-channel)))
