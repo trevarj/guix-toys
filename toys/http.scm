@@ -19,6 +19,7 @@
 
 (define-module (toys http)
   #:use-module (json)
+  #:use-module (ice-9 match)
   #:use-module (web request)
   #:use-module (web response)
   #:use-module (web uri)
@@ -27,7 +28,8 @@
             request-path-components
             request-query-parameters
             request-query-parameter
-            paginated-response))
+            paginated-response
+            build-query-string))
 
 (define (handle-not-found)
   "Returns the 404 response."
@@ -89,3 +91,17 @@ returns #f."
               (paginator-pages . ,(number->string pages))
               (paginator-total . ,(number->string total)))
             (scm->json-string result))))
+
+(define (build-query-string args)
+  "Return an formatted and encoded query string for given ARGS which is an
+alist."
+  (let* ((normalize-fragment
+          (lambda (fragment)
+            (match fragment
+             ((key . value)
+              (string-append (uri-encode key)
+                             "="
+                             (uri-encode value)))
+             (_ (error "invalid query fragment")))))
+        (fragments (map normalize-fragment args)))
+    (string-join fragments "&")))
