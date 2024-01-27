@@ -382,7 +382,7 @@
                (openpgp-fingerprint
                 "7EBE A494 60CE 5E2C 0875  7FDB 3B5A A993 E1A2 DFF0"))))))
   (toys-box
-   (forge "gitea")
+   (forge "sourcehut")
    (channel (channel
              (name 'yewscion)
              (url "https://git.sr.ht/~yewscion/yewscion-guix-channel")
