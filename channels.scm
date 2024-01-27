@@ -195,7 +195,7 @@
                    "4ffb1fd3b89f80bac196d597edf6789dd843fe48"
                    (openpgp-fingerprint
                      "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
-   (toys-box
+   #;(toys-box
      (forge "sourcehut")
      (directory "conf")
      (channel (channel
@@ -402,6 +402,16 @@
                "f85f577fcb5ec7257b0dce961038699fd274e052"
                (openpgp-fingerprint
                 "2252 DEF9 035D 5101 4FC0  850E 1D90 9F28 0D85 F19F"))))))
+  (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'nebula)
+             (url "https://git.sr.ht/~apoorv569/nebula")
+             (introduction
+              (make-channel-introduction
+               "2f1be757b40f78456220823b71aace5277c5f33d"
+               (openpgp-fingerprint
+                "53B4 8418 D76A 3EF1 1BCC  92A8 4FDB 05CF 5D67 6283"))))))
   (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
