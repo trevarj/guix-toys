@@ -382,5 +382,16 @@
                (openpgp-fingerprint
                 "7EBE A494 60CE 5E2C 0875  7FDB 3B5A A993 E1A2 DFF0"))))))
   (toys-box
+   (forge "gitea")
+   (channel (channel
+             (name 'yewscion)
+             (url "https://git.sr.ht/~yewscion/yewscion-guix-channel")
+             (branch "trunk")
+             (introduction
+              (make-channel-introduction
+               "2dce8bfec5f2886f7642007bbead3f2fbee26312"
+               (openpgp-fingerprint
+                "6E3D E92C 3D0A 0A4D 1CDD  33EC 8EF2 971E D0D0 35B8"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
