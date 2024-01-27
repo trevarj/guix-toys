@@ -413,5 +413,15 @@
                (openpgp-fingerprint
                 "53B4 8418 D76A 3EF1 1BCC  92A8 4FDB 05CF 5D67 6283"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'vf2)
+             (url "https://git.sr.ht/~akagi/vf2-guix")
+             (introduction
+              (make-channel-introduction
+               "ce522ca3fe753b502065f42bcdacb679305c3dee"
+               (openpgp-fingerprint
+                "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
