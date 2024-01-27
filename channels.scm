@@ -391,7 +391,7 @@
               (make-channel-introduction
                "2dce8bfec5f2886f7642007bbead3f2fbee26312"
                (openpgp-fingerprint
-                "6E3D E92C 3D0A 0A4D 1CDD  33EC 8EF2 971E D0D0 35B8"))))))
+                "24C4 1BBD 8571 BD9D 1E17  FF38 5D9E 8581 A195 CF7B"))))))
   (toys-box
    (forge "sourcehut")
    (channel (channel
