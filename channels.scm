@@ -449,5 +449,11 @@
                (openpgp-fingerprint
                 "66E6 01AC 1756 020B 759B  E34B 7B65 F79C 3247 8510"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'hitwright)
+             (url "https://git.sr.ht/~hitwright/personal-guix-channel")
+             (branch "main"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
