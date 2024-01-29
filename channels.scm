@@ -423,5 +423,10 @@
                (openpgp-fingerprint
                 "FF72 877C 4F21 FC4D 467D  20C4 DCCB 5255 2098 B6C1"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'plt)
+             (url "https://git.sr.ht/~plattfot/plt"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
