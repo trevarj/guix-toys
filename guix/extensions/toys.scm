@@ -333,6 +333,9 @@ The valid values for ACTION are:
         ((equal? forge "gitea")
          (format #f "~a/src/commit/~a/~a#L~d"
                  base-url ref file lineno))
+        ((equal? forge "gogs")
+         (format #f "~a/src/~a/~a#L~d"
+                 base-url ref file lineno))
         (else #f))
       #f)))
 
