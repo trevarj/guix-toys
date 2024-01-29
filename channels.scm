@@ -468,5 +468,11 @@
                (openpgp-fingerprint
                 "A28B F40C 3E55 1372 662D  14F7 41AA E7DC CA3D 8351"))))))
   (toys-box
+   (forge "gogs")
+   (directory "guix")
+   (channel (channel
+             (name 'wigust)
+             (url "https://notabug.org/wigust/guix-wigust"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
