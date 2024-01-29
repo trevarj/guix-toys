@@ -438,5 +438,16 @@
                (openpgp-fingerprint
                 "295C 0246 4AC1 92F1 FFDD  7550 FCC0 88CE 07A0 4DAE"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'neguix)
+             (url "https://git.sr.ht/~niklaseklund/neguix")
+             (branch "main")
+             (introduction
+              (make-channel-introduction
+               "9860ea17cb21131fe5809053ffcc148ac7549465"
+               (openpgp-fingerprint
+                "66E6 01AC 1756 020B 759B  E34B 7B65 F79C 3247 8510"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
