@@ -428,5 +428,15 @@
              (name 'plt)
              (url "https://git.sr.ht/~plattfot/plt"))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'old)
+             (url "https://git.sr.ht/~old/guix-channel")
+             (introduction
+              (make-channel-introduction
+               "fba5d96ea99ac4a7b3ab868eab0d68b3cc7285ae"
+               (openpgp-fingerprint
+                "295C 0246 4AC1 92F1 FFDD  7550 FCC0 88CE 07A0 4DAE"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
