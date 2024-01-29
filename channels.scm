@@ -455,5 +455,18 @@
              (url "https://git.sr.ht/~hitwright/personal-guix-channel")
              (branch "main"))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'efraim-dfsg)
+             (url "https://git.sr.ht/~efraim/my-guix")
+             (introduction
+              (make-channel-introduction
+               ;; "4589296d61888fa88de331d5e180713c6a268c6f"
+               ;; official introduction commit doesn't work because commit with
+               ;; hash 0ed36fc128c4ba52e167d8bf2bd8e0456a6a7a41 is unsigned
+               "61c9f87404fcb97e20477ec379b643099e45f1db"
+               (openpgp-fingerprint
+                "A28B F40C 3E55 1372 662D  14F7 41AA E7DC CA3D 8351"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
