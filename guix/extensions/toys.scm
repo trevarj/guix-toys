@@ -219,15 +219,17 @@ The valid values for ACTION are:
               (sqlite-prepare
                 db
                 "INSERT INTO boxes
-                (id, dir, branch, `commit`, url, subscription_snippet)
-                VALUES (?, ?, ?, ?, ?, ?)
-                RETURNING id"))
+                 (id, dir, branch, `commit`, url, subscription_snippet)
+                 VALUES (?, ?, ?, ?, ?, ?)
+                 RETURNING id"
+                #:cache? #t))
             (search-stmt
               (sqlite-prepare
                 db
                 "INSERT INTO search
-                (name, description, fk, `table`)
-                VALUES (?, ?, ?, ?)"))
+                 (name, description, fk, `table`)
+                 VALUES (?, ?, ?, ?)"
+                #:cache? #t))
             (dir
               (assoc-ref wrapper 'dir))
             (box
@@ -415,13 +417,15 @@ The valid values for ACTION are:
              "INSERT INTO public_symbols
               (name, channel, module, file, url, doc, signature)
               VALUES (?,?,?,?,?,?,?)
-              RETURNING id"))
+              RETURNING id"
+             #:cache? #t))
          (search-stmt
            (sqlite-prepare
              db
              "INSERT INTO search
-             (name, description, fk, `table`)
-             VALUES (?,?,?,?)"))
+              (name, description, fk, `table`)
+              VALUES (?,?,?,?)"
+             #:cache? #t))
          (data
            (serialize-public-symbol module box symbol variable)))
     (define id
@@ -469,15 +473,17 @@ into the DB."
            (sqlite-prepare
              db
              "INSERT INTO service_types
-             (name, channel, module, file, url, description)
-             VALUES (?,?,?,?,?,?)
-             RETURNING id"))
+              (name, channel, module, file, url, description)
+              VALUES (?,?,?,?,?,?)
+              RETURNING id"
+             #:cache? #t))
          (search-stmt
            (sqlite-prepare
              db
              "INSERT INTO search
-             (name, description, fk, `table`)
-             VALUES (?,?,?,?)"))
+              (name, description, fk, `table`)
+              VALUES (?,?,?,?)"
+             #:cache? #t))
          (data
            (serialize-service-type box module service-type)))
     (define id
@@ -554,26 +560,28 @@ into the DB."
            (sqlite-prepare
              db
              "INSERT INTO packages
-             (name,
-              channel,
-              module,
-              file,
-              url,
-              version,
-              homepage,
-              licenses,
-              synopsis,
-              inputs,
-              propagated_inputs,
-              description)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-             RETURNING id"))
+              (name,
+               channel,
+               module,
+               file,
+               url,
+               version,
+               homepage,
+               licenses,
+               synopsis,
+               inputs,
+               propagated_inputs,
+               description)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+              RETURNING id"
+             #:cache? #t))
          (search-stmt
            (sqlite-prepare
              db
              "INSERT INTO search
-             (name, description, fk, `table`)
-             VALUES (?,?,?,?)"))
+              (name, description, fk, `table`)
+              VALUES (?,?,?,?)"
+             #:cache? #t))
          (data
            (serialize-package box module package)))
     (define id
@@ -587,6 +595,16 @@ into the DB."
             id
             "packages"))))
 
+(define (gather-row row columns)
+  "Constructs an associated list with named items from ROW that sqlite3
+returned."
+  (vector-fold
+    (lambda (k result col)
+      (cons `(,col . ,(vector-ref row k))
+            result))
+    '()
+    columns))
+
 (define (all-symbols select from)
   "Queries SELECT fields from all symbols in the FROM table.  Use `j.` prefix
 for selecting fields."
@@ -597,17 +615,9 @@ for selecting fields."
          (format #f "SELECT ~a FROM ~a j" select from)))
      (columns
        (sqlite-column-names stmt)))
-    (sqlite-fold
-      (lambda (row seed)
-        (cons
-          (vector-fold
-            (lambda (k result col)
-              (cons `(,col . ,(vector-ref row k))
-                    result))
-            '()
-            columns)
-          seed))
-      '()
+    (sqlite-map
+      (lambda (row)
+        (gather-row row columns))
       stmt)))
 
 (define (query-symbols select from query)
@@ -631,17 +641,9 @@ string.  Use `j.` prefix for selecting fields."
        (format #f "\"~a\" *"
                (string-delete #\" query))))
     (sqlite-bind-arguments stmt from wildcard)
-    (sqlite-fold
-      (lambda (row seed)
-        (cons
-         (vector-fold
-           (lambda (k result col)
-             (cons `(,col . ,(vector-ref row k))
-                   result))
-           '()
-           columns)
-         seed))
-      '()
+    (sqlite-map
+      (lambda (row)
+        (gather-row row columns))
       stmt)))
 
 (define (denormalize-rows rows)
@@ -848,20 +850,20 @@ query parameter."
 (define (toys-api request request-body)
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
-         (("api" "packages")
-          (handle-api-packages-search request request-body))
-         (("api" "services")
-          (handle-api-services-search request request-body))
-         (("api" "channels")
-          (handle-api-channels-list request request-body))
-         (("api" "symbols")
-          (handle-api-symbols-list request request-body))
-         (()
-          (handle-index-page request request-body))
-         (("services")
-          (handle-services-page request request-body))
-         (("channels")
-          (handle-channels-page request request-body))
-         (("symbols")
-          (handle-symbols-page request request-body))
-         (_ (handle-not-found))))
+    (("api" "packages")
+     (handle-api-packages-search request request-body))
+    (("api" "services")
+     (handle-api-services-search request request-body))
+    (("api" "channels")
+     (handle-api-channels-list request request-body))
+    (("api" "symbols")
+     (handle-api-symbols-list request request-body))
+    (()
+     (handle-index-page request request-body))
+    (("services")
+     (handle-services-page request request-body))
+    (("channels")
+     (handle-channels-page request request-body))
+    (("symbols")
+     (handle-symbols-page request request-body))
+    (_ (handle-not-found))))
