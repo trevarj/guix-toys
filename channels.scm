@@ -462,5 +462,10 @@
              (name 'wigust)
              (url "https://notabug.org/wigust/guix-wigust"))))
   (toys-box
+   (forge "gitea")
+   (channel (channel
+             (name 'kakafarm)
+             (url "https://codeberg.org/kakafarm/guix-kakafarm-channel"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
