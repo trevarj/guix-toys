@@ -462,7 +462,7 @@
              (name 'wigust)
              (url "https://notabug.org/wigust/guix-wigust"))))
   (toys-box
-   (forge "gitea")
+   (forge "codeberg")
    (channel (channel
              (name 'kakafarm)
              (url "https://codeberg.org/kakafarm/guix-kakafarm-channel"))))

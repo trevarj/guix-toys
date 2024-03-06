@@ -338,6 +338,9 @@ from BOXES into it."
         ((equal? forge "gogs")
          (format #f "~a/src/~a/~a#L~d"
                  base-url ref file lineno))
+        ((equal? forge "codeberg")
+         (format #f "~a/src/branch/~a/~a#L~d"
+                 base-url ref file lineno))
         (else #f))
       #f)))
 
