@@ -24,9 +24,13 @@
   #:use-module (web response)
 
   #:export (search-packages
+            show-packages
             search-services
+            show-services
             search-channels
-            search-public-symbols))
+            show-channels
+            search-public-symbols
+            show-public-symbols))
 
 (define %default-instance-url "https://toys.whereis.xn--q9jyb4c")
 
@@ -45,11 +49,23 @@
 (define (search-packages query)
   (request "packages" `(("search" . ,query))))
 
+(define (show-packages query)
+  (request "packages" `(("show" . ,query))))
+
 (define (search-services query)
   (request "services" `(("search" . ,query))))
+
+(define (show-services query)
+  (request "services" `(("show" . ,query))))
 
 (define (search-channels query)
   (request "channels" `(("search" . ,query))))
 
+(define (show-channels query)
+  (request "channels" `(("show" . ,query))))
+
 (define (search-public-symbols query)
   (request "symbols" `(("search" . ,query))))
+
+(define (show-public-symbols query)
+  (request "symbols" `(("show" . ,query))))

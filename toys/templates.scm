@@ -431,9 +431,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   (map
     (lambda (input)
       `(span
-         (a
-           (@ (href ,(string-append "/?search="
-                                    (car (string-split input #\@)))))
+         (a (@ (href ,(string-append "/?show=" (car (string-split input #\@)))))
            ,input)
          " "))
     inputs))

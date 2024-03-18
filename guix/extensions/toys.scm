@@ -2,7 +2,7 @@
 ;;;
 ;;; Copyright © 2022 Charles Jackson <charles.b.jackson@protonmail.com>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
-;;; Copyright © 2022, 2023 unwox <me@unwox.com>
+;;; Copyright © 2022-2024 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -21,6 +21,7 @@
 
 (define-module (guix extensions toys)
   #:use-module (toys client)
+  #:use-module (toys cmd clone)
   #:use-module (toys http)
   #:use-module (toys discovery)
   #:use-module (toys templates)
@@ -48,71 +49,113 @@
 
   #:export (guix-toys))
 
+(define (print-paginated-results results)
+  (with-paginated-output-port paginated
+    (for-each
+      (lambda (p)
+        (print-package p paginated)
+        (newline paginated))
+      (vector->list results))))
+
 (define-command (guix-toys . args)
   (category extension)
   (synopsis "Explore packages and services through REST API")
   (match args
+
     (("init")
      (init-db db))
+
     (("pull" file)
      (pull-data db (fetch-boxes file)))
+
     (("serve")
      (debug "Listening on :8080")
      (run-server toys-api))
+
     (("package" "search" query)
      (define-values (res err) (search-packages query))
      (when err (error err))
-     (with-paginated-output-port paginated
-      (for-each
-        (lambda (p)
-          (print-package p paginated)
-          (newline paginated))
-        (vector->list res))))
+     (print-paginated-results res))
+
+    (("package" "show" query)
+     (define-values (res err) (show-packages query))
+     (when err (error err))
+     (print-paginated-results res))
+
+    (("package" "clone" name . rest)
+     (define packages (show-packages name))
+     (when (< 0 (vector-length packages))
+       (let* ((package (vector-ref packages 0))
+              (origin (deserialize-origin (assoc-ref package "origin")))
+              (directory (if (null? rest) name (car rest))))
+         (clone-origin origin (or directory name)))))
+
     (("service" "search" query)
      (define-values (res err) (search-services query))
      (when err (error err))
-     (with-paginated-output-port paginated
-      (for-each
-        (lambda (s)
-          (print-service s paginated)
-          (newline paginated))
-        (vector->list res))))
+     (print-paginated-results res))
+
+    (("service" "show" query)
+     (define-values (res err) (show-services query))
+     (when err (error err))
+     (print-paginated-results res))
+
     (("channel" "search" query)
      (define-values (res err) (search-channels query))
      (when err (error err))
-     (with-paginated-output-port paginated
-      (for-each
-        (lambda (s)
-          (print-channel s paginated)
-          (newline paginated))
-        (vector->list res))))
+     (print-paginated-results res))
+
+    (("channel" "show" query)
+     (define-values (res err) (show-channels query))
+     (when err (error err))
+     (print-paginated-results res))
+
     (("symbol" "search" query)
      (define-values (res err) (search-public-symbols query))
      (when err (error err))
-     (with-paginated-output-port paginated
-      (for-each
-        (lambda (s)
-          (print-public-symbol s paginated)
-          (newline paginated))
-        (vector->list res))))
+     (print-paginated-results res))
+
+    (("symbol" "show" query)
+     (define-values (res err) (show-public-symbols query))
+     (when err (error err))
+     (print-paginated-results res))
+
     (_
       (show-help))))
 
 (define (show-help)
-  (display "Usage: guix toys [OPTION] ACTION [FILE]
+  (display "Usage: guix toys [OPTION] ACTION [ARGS]
 Perform the toys related actions. Before running serve make sure the database
 was initialized and symbols were pulled.
 The valid values for ACTION are:
 
-   init            initialize the database file
-   pull            fetch symbols data from the channels defined in FILE
-   serve           start the web server listening on 127.0.0.1:8080
-   package search  search for a package in the toys instance database
-   service search  search for a service type in the toys instance database
-   symbol search   search for a public symbol in the toys instance database")
+   init
+       initialize the database file
+   pull FILE
+       fetch symbols data from the channels defined in FILE
+   serve
+       start the web server listening on 127.0.0.1:8080
+
+   package search QUERY
+       search for a package in the toys instance database
+   package show NAME
+       search for a package with the exact NAME in the toys instance database
+   package clone PACKAGE [DIR]
+       clone a PACKAGE source code to current directory into a DIR
+
+   service search QUERY
+       search for a service type in the toys instance database
+   service show NAME
+       search for a service with the exact NAME in the toys instance database
+
+   symbol search QUERY
+       search for a public symbol in the toys instance database
+   symbol show NAME
+       search for a public symbol with the exact NAME in the toys instance
+       database")
   (newline)
   (display "
-  -h      display this help and exit")
+  -h   display this help and exit")
   (newline))
 
 (define (debug msg)
@@ -194,7 +237,8 @@ The valid values for ACTION are:
        synopsis TEXT,
        inputs TEXT,
        propagated_inputs TEXT,
-       description TEXT
+       description TEXT,
+       origin TEXT NOT NULL
      );
 
      CREATE INDEX packages_channels_idx ON packages (channel);
@@ -499,32 +543,25 @@ into the DB."
 
 (define (serialize-package package box module box-wrapper)
   "Serializes PACKAGE for database storage."
-  (let* ((name
-          (package-name package))
-         (version
-           (package-version package))
-         (channel-name
-           (symbol->string (channel-name (toys-box-channel box))))
+  (let* ((name (package-name package))
+         (version (package-version package))
+         (channel-name (symbol->string (channel-name (toys-box-channel box))))
          (mod-name
            (string-join
              (map
                symbol->string
                (module-name module))
              " "))
-         (file
-           (module-name->file-name (module-name module)))
-         (location
-           (package-location package))
-         (url
-           (location->url box-wrapper file (location-line location)))
+         (file (module-name->file-name (module-name module)))
+         (location (package-location package))
+         (url (location->url box-wrapper file (location-line location)))
          (homepage
            (package-home-page package))
          (licenses
            (string-join
              (serialize-license (package-license package))
              "|"))
-         (synopsis
-           (package-synopsis package))
+         (synopsis (package-synopsis package))
          (inputs
            (or (false-if-exception
                  (string-join
@@ -539,8 +576,15 @@ into the DB."
                      (package-propagated-inputs package))
                    "|"))
                ""))
-         (description
-           (package-description package)))
+         (description (package-description package))
+         (origin (if (and (package-source package)
+                          (origin? (package-source package)))
+                   (or
+                    (false-if-exception
+                      (scm->json-string
+                       (serialize-origin (package-source package))))
+                    "")
+                   "")))
     (list name
           channel-name
           mod-name
@@ -552,7 +596,8 @@ into the DB."
           synopsis
           inputs
           propagated-inputs
-          description)))
+          description
+          origin)))
 
 (define (insert-package package db box module box-wrapper)
   "Serializes and inserts PACKAGE and corresponding search row into the DB."
@@ -571,8 +616,9 @@ into the DB."
                synopsis,
                inputs,
                propagated_inputs,
-               description)
-              VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+               description,
+               origin)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
               RETURNING id"
              #:cache? #t))
          (search-stmt
@@ -620,7 +666,23 @@ for selecting fields."
         (gather-row row columns))
       stmt)))
 
-(define (query-symbols select from query)
+(define (show-symbols select from name)
+  "Queries SELECT fields from the FROM table with records *exactly* matching
+NAME string.  Use `j.` prefix for selecting fields."
+  (let*
+    ((stmt
+       (sqlite-prepare
+         db
+         (format #f "SELECT ~a FROM ~a j WHERE j.name = ? ORDER BY j.channel"
+                 select from)))
+     (columns (sqlite-column-names stmt)))
+    (sqlite-bind-arguments stmt name)
+    (sqlite-map
+      (lambda (row)
+        (gather-row row columns))
+      stmt)))
+
+(define (search-symbols select from query)
   "Queries SELECT fields from the FROM table with records matching QUERY
 string.  Use `j.` prefix for selecting fields."
   (let*
@@ -632,7 +694,7 @@ string.  Use `j.` prefix for selecting fields."
                  INNER JOIN ~a j ON s.fk = j.id
                  WHERE s.`table` = ?
                  AND s.name MATCH ?
-                 ORDER BY LENGTH(s.name) DESC, rank"
+                 ORDER BY LENGTH(s.name), rank"
                  select
                  from)))
      (columns
@@ -646,9 +708,27 @@ string.  Use `j.` prefix for selecting fields."
         (gather-row row columns))
       stmt)))
 
+(define (denormalize-api-rows rows)
+  "Denormalizes ROWS received from the database.  Explodes strings back to
+lists and etc."
+  (let*
+    ((denormalize-pair
+       (lambda (key value)
+         (cond
+           ((equal? key "origin")
+            `(,key . ,(json-string->scm value)))
+           (else `(,key . ,value)))))
+     (denormalize-row
+       (lambda (row)
+         (map
+           (lambda (pair)
+             (denormalize-pair (car pair) (cdr pair)))
+           row))))
+    (map denormalize-row rows)))
+
 (define (denormalize-rows rows)
-  "Denormalizes ROWS received from the database.  Explodes strings back to lists
-and etc."
+  "Denormalizes ROWS received from the database.  Explodes strings back to
+lists and etc."
   (let*
     ((split
        (lambda (str)
@@ -689,14 +769,17 @@ and etc."
 (define (handle-api-search request request-body select from)
   "Handles generic API request for RECORDS with pagination and search
 functionality."
-  (let ((query
-          (request-query-parameter request "search")))
+  (let* ((search-query (request-query-parameter request "search"))
+         (show-query (request-query-parameter request "show"))
+         (searcher (if show-query show-symbols search-symbols))
+         (query (or show-query search-query)))
     (values `((content-type . (application/json)))
             (scm->json-string
               (list->vector
-                (if query
-                  (query-symbols select from query)
-                  (all-symbols select from)))))))
+                (denormalize-api-rows
+                  (if query
+                    (searcher select from query)
+                    (all-symbols select from))))))))
 
 (define (handle-api-packages-search request request-body)
   "Returns the list of packagess whose name contains a value from \"search\"
@@ -714,6 +797,7 @@ query parameter."
                       j.synopsis,
                       j.inputs,
                       j.propagated_inputs as propagatedInputs,
+                      j.origin,
                       j.description"
                      "packages"))
 
@@ -762,16 +846,25 @@ query parameter."
 
 (define (handle-search-page request request-body select from template)
   "Handles generic search page request for RECORDS using TEMPLATE."
-  (let ((query (string-trim-both
-                 (or (request-query-parameter request "search")
-                     ""))))
+  (let* ((search-query (request-query-parameter request "search"))
+         ;; when search query is wrapped into double quotes (e.g. "emacs")
+         ;; consider it a show query instead requiring exact match
+         (quoted-search-query
+           (string-match "\"([^\"']+)\""
+                         (string-trim-both (or search-query ""))))
+         (show-query
+           (if quoted-search-query
+            search-query
+            (request-query-parameter request "show")))
+         (searcher (if show-query show-symbols search-symbols))
+         (query (or show-query search-query)))
     (values '((content-type . (text/html)))
             (lambda (port)
               (sxml->xml
                 (template
-                  (if (not (zero? (string-length query)))
+                  (if query
                     (denormalize-rows
-                      (query-symbols select from query))
+                      (searcher select from (string-trim-both query #\")))
                     '())
                   query
                   %last-updated-at)
@@ -811,9 +904,7 @@ query parameter."
 
 (define (handle-channels-page request request-body)
   "Returns the channels search page."
-  (let ((query
-          (request-query-parameter request
-                                   "search"))
+  (let ((query (request-query-parameter request "search"))
         (fields
           "j.id AS name,
            j.branch,
@@ -827,7 +918,7 @@ query parameter."
               (sxml->xml
                 (channels-template
                   (if query
-                    (query-symbols fields "boxes" query)
+                    (search-symbols fields "boxes" query)
                     (all-symbols fields "boxes"))
                   query
                   %last-updated-at)
