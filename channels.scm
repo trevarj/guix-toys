@@ -467,5 +467,16 @@
              (name 'kakafarm)
              (url "https://codeberg.org/kakafarm/guix-kakafarm-channel"))))
   (toys-box
+   (forge "codeberg")
+   (channel (channel
+             (name 'atomized)
+             (url "https://codeberg.org/ieure/atomized-guix.git")
+             (branch "main")
+             (introduction
+              (make-channel-introduction
+               "bdbcd3c5815f64799e2c0d139896da83d9972bd1"
+               (openpgp-fingerprint
+                "6980 A9B9 5202 AA11 EB1D  8922 8499 AC88 F1A7 1CF2"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
