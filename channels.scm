@@ -478,5 +478,15 @@
                (openpgp-fingerprint
                 "6980 A9B9 5202 AA11 EB1D  8922 8499 AC88 F1A7 1CF2"))))))
   (toys-box
+    (forge "gitlab")
+    (channel (channel
+               (name 'suixpkgs)
+               (url "https://gitlab.vulnix.sh/spacecadet/suixpkgs.git")
+               (introduction
+                 (make-channel-introduction
+                   "dc5e12b0b485c9ee90e3224379551b72e59d846b"
+                   (openpgp-fingerprint
+                     "A121 9B10 8E0D 568A 07B5  CC26 487A B572 6228 CB79"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
