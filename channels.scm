@@ -488,5 +488,15 @@
                    (openpgp-fingerprint
                      "A121 9B10 8E0D 568A 07B5  CC26 487A B572 6228 CB79"))))))
   (toys-box
+   (forge "gitlab")
+   (channel (channel
+             (name 'cdo)
+             (url "https://git.mutix.org/cdo/guix-channel.git")
+             (introduction
+              (make-channel-introduction
+               "d8d516b1d477d287ca9cee5cbd73140ed2a0bfc8"
+               (openpgp-fingerprint
+                "D899 861B 5EAD 198A CA06  2A9B 9DA1 DD52 53A7 AA4C"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
