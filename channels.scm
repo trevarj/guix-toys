@@ -498,5 +498,17 @@
                (openpgp-fingerprint
                 "D899 861B 5EAD 198A CA06  2A9B 9DA1 DD52 53A7 AA4C"))))))
   (toys-box
+    (forge "codeberg")
+    (channel
+      (channel
+        (name 'saayix)
+        (url "https://codeberg.org/look/saayix")
+        (branch "main")
+        (introduction
+         (make-channel-introduction
+          "12540f593092e9a177eb8a974a57bb4892327752"
+          (openpgp-fingerprint
+           "3FFA 7335 973E 0A49 47FC  0A8C 38D5 96BE 07D3 34AB"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
