@@ -136,6 +136,11 @@ The valid values for ACTION are:
    serve
        start the web server listening on 127.0.0.1:8080
 
+   channel search QUERY
+       search for a channel in the toys instance database
+   channel show NAME
+       search for a channel with the exact NAME in the toys instance database
+
    package search QUERY
        search for a package in the toys instance database
    package show NAME
