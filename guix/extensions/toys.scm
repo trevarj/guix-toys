@@ -290,7 +290,7 @@ from BOXES into it."
                   (symbol->string (channel-name channel))
                   dir
                   (channel-branch channel)
-                  (channel-commit channel)
+                  (assoc-ref wrapper 'commit)
                   (channel-url channel)
                   (serialize-channel channel))))
             0))
@@ -820,6 +820,7 @@ query parameter."
                      request-body
                      "j.id AS name,
                       j.branch,
+                      j.`commit`,
                       j.url,
                       (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages_count`,
                       (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services_count`,

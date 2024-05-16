@@ -95,8 +95,14 @@ checkouts are cached."
         (define dir
           (channel-metadata-directory channel-metadata))
 
+        (define commit
+          (with-repository checkout-dir repository
+            (oid->string
+              (reference-target (repository-head repository)))))
+
         `((box . ,box)
           (dir . ,dir)
+          (commit . ,commit)
           (module-dir . ,(string-append checkout-dir dir)))))
     toy-boxes))
 
