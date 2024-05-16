@@ -796,7 +796,7 @@ query parameter."
                       j.licenses,
                       j.synopsis,
                       j.inputs,
-                      j.propagated_inputs as propagatedInputs,
+                      j.propagated_inputs AS propagatedInputs,
                       j.origin,
                       j.description"
                      "packages"))
@@ -822,9 +822,9 @@ query parameter."
                       j.branch,
                       j.`commit`,
                       j.url,
-                      (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages_count`,
-                      (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services_count`,
-                      j.subscription_snippet"
+                      (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packagesCount`,
+                      (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `servicesCount`,
+                      j.subscription_snippet AS `subscriptionSnippet`"
                       "boxes"))
 
 (define (handle-api-symbols-list request request-body)
