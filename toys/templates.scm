@@ -472,10 +472,11 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     `((a (@ (href ,(string-append "https://repology.org/project/"
                                   name
                                   "/versions#gnuguix"))
-            (style "vertical-align: bottom; max-height: 1.5rem;"))
+            (style "vertical-align: bottom;"))
          (img (@ (src ,(string-append "https://repology.org/badge/version-for-repo/gnuguix/"
                                       name
                                       ".svg?header="))
+                 (style "max-height: 1.5rem")
                  (alt ,(string-append name " version"))))))))
 
 (define (repology-latest-badge package)
@@ -484,11 +485,12 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     `((a (@ (href ,(string-append "https://repology.org/project/"
                                   name
                                   "/versions#gnuguix"))
-            (style "vertical-align: bottom; max-height: 1.5rem;"))
+            (style "vertical-align: bottom;"))
          (img (@ (src ,(string-append "https://repology.org/badge/latest-versions/"
                                       name
                                       ".svg?header=&minversion="
                                       version))
+                 (style "max-height: 1.5rem")
                  (alt ,(string-append "Latest packaged version:" version))))))))
 
 (define (texi->html texi)
