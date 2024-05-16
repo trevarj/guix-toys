@@ -3,7 +3,7 @@
 
 (list
   (toys-box
-    (forge "gitea")
+    (forge "codeberg")
     (channel
       (channel
         (name 'emacs-master)
@@ -268,7 +268,7 @@
                    (openpgp-fingerprint
                      "D451 85A2 755D AF83 1F1C  3DC6 3EFB F2BB BB29 B99E"))))))
   (toys-box
-    (forge "gitea")
+    (forge "codeberg")
     (channel (channel
                (name 'ngapsh)
                (url "https://codeberg.org/Parnikkapore/guix-ngapsh-unsigned")
