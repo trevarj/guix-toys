@@ -336,9 +336,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                   "guix")
         `(div
            (span (@ (class "muted")) "Repology: ")
-           "provided: "
-           ,(repology-badge package)
-           ", latest known "
+           "latest known "
            ,(repology-latest-badge package))
         "")
      ,(if (> (length (assoc-ref package "inputs")) 0)
@@ -474,7 +472,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     `((a (@ (href ,(string-append "https://repology.org/project/"
                                   name
                                   "/versions#gnuguix"))
-            (style "vertical-align: bottom;"))
+            (style "vertical-align: bottom; max-height: 1.5rem;"))
          (img (@ (src ,(string-append "https://repology.org/badge/version-for-repo/gnuguix/"
                                       name
                                       ".svg?header="))
@@ -486,7 +484,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     `((a (@ (href ,(string-append "https://repology.org/project/"
                                   name
                                   "/versions#gnuguix"))
-            (style "vertical-align: bottom;"))
+            (style "vertical-align: bottom; max-height: 1.5rem;"))
          (img (@ (src ,(string-append "https://repology.org/badge/latest-versions/"
                                       name
                                       ".svg?header=&minversion="
