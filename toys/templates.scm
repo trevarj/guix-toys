@@ -332,13 +332,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        ,(assoc-ref package "name")
        " "
        ,(assoc-ref package "version"))
-     ,(if (equal? (assoc-ref package "channel")
-                  "guix")
-        `(div
-           (span (@ (class "muted")) "Repology: ")
-           "latest known "
-           ,(repology-latest-badge package))
-        "")
      ,(if (> (length (assoc-ref package "inputs")) 0)
         `(div
            (span (@ (class "muted")) "Dependencies: ")
@@ -466,32 +459,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
            '())
         " "))
     license))
-
-(define (repology-badge package)
-  (let ((name (assoc-ref package "name")))
-    `((a (@ (href ,(string-append "https://repology.org/project/"
-                                  name
-                                  "/versions#gnuguix"))
-            (style "vertical-align: bottom;"))
-         (img (@ (src ,(string-append "https://repology.org/badge/version-for-repo/gnuguix/"
-                                      name
-                                      ".svg?header="))
-                 (style "max-height: 1.5rem")
-                 (alt ,(string-append name " version"))))))))
-
-(define (repology-latest-badge package)
-  (let ((name (assoc-ref package "name"))
-        (version (assoc-ref package "version")))
-    `((a (@ (href ,(string-append "https://repology.org/project/"
-                                  name
-                                  "/versions#gnuguix"))
-            (style "vertical-align: bottom;"))
-         (img (@ (src ,(string-append "https://repology.org/badge/latest-versions/"
-                                      name
-                                      ".svg?header=&minversion="
-                                      version))
-                 (style "max-height: 1.5rem")
-                 (alt ,(string-append "Latest packaged version:" version))))))))
 
 (define (texi->html texi)
   (if (> (string-length texi) 0)
