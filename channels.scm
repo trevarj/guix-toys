@@ -341,7 +341,7 @@
    (forge "sourcehut")
    (channel (channel
              (name 'sops-guix)
-             (url "https://git.sr.ht/~fishinthecalculator/sops-guix")
+             (url "https://github.com/fishinthecalculator/sops-guix")
              (branch "main")
              (introduction
               (make-channel-introduction
