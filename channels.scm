@@ -521,5 +521,11 @@
        (openpgp-fingerprint
         "F695 F39E C625 E081 33B5  759F 0FC6 8703 75EF E2F5"))))))
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+     (name 'ollama-guix)
+     (url "https://codeberg.org/tusharhero/ollama-guix"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
