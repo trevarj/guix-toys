@@ -527,5 +527,11 @@
      (name 'ollama-guix)
      (url "https://codeberg.org/tusharhero/ollama-guix"))))
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+     (name 'thgsc)
+     (url "https://codeberg.org/tusharhero/thgsc"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
