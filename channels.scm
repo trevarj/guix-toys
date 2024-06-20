@@ -533,5 +533,17 @@
      (name 'thgsc)
      (url "https://codeberg.org/tusharhero/thgsc"))))
   (toys-box
+   (forge "gitlab")
+   (channel
+    (channel
+     (name 'tuziwo)
+     (branch "main")
+     (url "https://gitlab.com/woshilapin/tuziwo-channel")
+     (introduction
+      (make-channel-introduction
+       "0deff2a94032f2d96e82f93edeb61f35da879987"
+       (openpgp-fingerprint
+        "5554 54E7 6611 9F60 80F1  2F63 B041 63DC 7020 116A"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
