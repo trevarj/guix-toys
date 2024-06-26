@@ -545,5 +545,16 @@
        (openpgp-fingerprint
         "5554 54E7 6611 9F60 80F1  2F63 B041 63DC 7020 116A"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel
+    (channel
+     (name 'mediagoblin)
+     (url "https://git.sr.ht/~mediagoblin/mediagoblin")
+     (introduction
+      (make-channel-introduction
+       "d4b2f5b67c6862346e0f91b5e964d5b07878046d"
+       (openpgp-fingerprint
+        "3E7F36E73BDD6A7106F92021023C05E2C9C068F0"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
