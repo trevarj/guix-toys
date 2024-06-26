@@ -73,10 +73,8 @@ checkouts are cached."
 
         (format #t "Fetching ~a...\n" url)
         (define checkout-dir
-          (update-cached-checkout
-            url
-            #:ref `(branch . ,ref)
-            #:recursive? #t))
+         (update-cached-checkout
+          url #:ref `(branch . ,ref)))
 
         (when introduction
           (format #t "Authenticating ~a...\n" url)
