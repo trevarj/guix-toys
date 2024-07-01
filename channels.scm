@@ -191,17 +191,17 @@
                    "4ffb1fd3b89f80bac196d597edf6789dd843fe48"
                    (openpgp-fingerprint
                      "4DA1 9E0B 4161 3198 F4F5  9D9C 1A5A 96AD 307C D736"))))))
-   #;(toys-box
-     (forge "sourcehut")
-     (channel (channel
-                (name 'confetti)
-                (url "https://git.sr.ht/~whereiseveryone/confetti")
-                (branch "e")
-                (introduction
-                 (make-channel-introduction
-                  "e037ffa3a40bcd7807a97a0415ef588b411277c3"
-                  (openpgp-fingerprint
-                   "3B1D 7F19 E36B B60C 0F5B  2CA9 A52A A2B4 77B6 DD35"))))))
+  (toys-box
+   (forge "sourcehut")
+   (channel (channel
+              (name 'confetti)
+              (url "https://git.sr.ht/~whereiseveryone/confetti")
+              (branch "e")
+              (introduction
+               (make-channel-introduction
+                "7c1031ed20508ebe275f6f29e5854a7f723a2c1b"
+                (openpgp-fingerprint
+                 "3B1D 7F19 E36B B60C 0F5B  2CA9 A52A A2B4 77B6 DD35"))))))
   (toys-box
     (forge "gitlab")
     (channel (channel
