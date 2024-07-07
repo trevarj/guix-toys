@@ -487,7 +487,7 @@
                    "dc5e12b0b485c9ee90e3224379551b72e59d846b"
                    (openpgp-fingerprint
                      "A121 9B10 8E0D 568A 07B5  CC26 487A B572 6228 CB79"))))))
-  (toys-box
+  #;(toys-box
    (forge "gitlab")
    (channel (channel
              (name 'cdo)
