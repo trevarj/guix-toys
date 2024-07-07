@@ -57,3 +57,12 @@ Run the server:
 ```sh
 ./dev serve
 ```
+
+## support
+
+If you wish to support the project please consider donating. All donations go
+to covering hosting costs for our [toys instance](https://toys.whereis.みんな/).
+Currently we pay $12.5 a month for that.
+
+Monero:
+859s7UbwF8kFwnsJzaNvGf8H8zboVi9vg8U3TUM7N2J5AG8srsksZZhGn2unDGFXV5AesVMJd6FnCjgyESY48Ux3ArGobUc
