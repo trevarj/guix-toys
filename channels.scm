@@ -566,5 +566,15 @@
               (openpgp-fingerprint
                "AA52 B3F3 E764 5F95 6BA1 23E2 43D7 A3F7 7931 A85D"))))))
   (toys-box
+   (forge "gogs")
+   (channel (channel
+             (name 'little-guix-channel)
+             (url "https://git.goritskov.com/rodion/little-guix-channel.git")
+             (introduction
+              (make-channel-introduction
+               "cfee0a86d4bdc74abcf03c47715a382d7ba93be8"
+               (openpgp-fingerprint
+		"37F5 3D87 DFB3 EE32 393D  24B2 3A07 1A95 2839 DB19"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
