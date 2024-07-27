@@ -49,11 +49,11 @@
 
   #:export (guix-toys))
 
-(define (print-paginated-results results)
+(define (print-paginated-results method results)
   (with-paginated-output-port paginated
     (for-each
       (lambda (p)
-        (print-package p paginated)
+        (method p paginated)
         (newline paginated))
       (vector->list results))))
 
@@ -75,12 +75,12 @@
     (("package" "search" query)
      (define-values (res err) (search-packages query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-package res))
 
     (("package" "show" query)
      (define-values (res err) (show-packages query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-package res))
 
     (("package" "clone" name . rest)
      (define packages (show-packages name))
@@ -93,32 +93,32 @@
     (("service" "search" query)
      (define-values (res err) (search-services query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-service res))
 
     (("service" "show" query)
      (define-values (res err) (show-services query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-service res))
 
     (("channel" "search" query)
      (define-values (res err) (search-channels query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-channel res))
 
     (("channel" "show" query)
      (define-values (res err) (show-channels query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-channel res))
 
     (("symbol" "search" query)
      (define-values (res err) (search-public-symbols query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-public-symbol res))
 
     (("symbol" "show" query)
      (define-values (res err) (show-public-symbols query))
      (when err (error err))
-     (print-paginated-results res))
+     (print-paginated-results print-public-symbol res))
 
     (_
       (show-help))))
