@@ -167,7 +167,7 @@
          (args (filter
                  (negate unspecified?)
                  (list "tar" "xvf" tmp-file "-C" directory
-                       (when (not bomb?) "--strip-components" "1")
+                       (when (not bomb?) "--strip-components")
                        (when (not bomb?) "1")))))
     (build:url-fetch url tmp-file #:mirrors %mirrors)
     (mkdir directory)
