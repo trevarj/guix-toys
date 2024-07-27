@@ -18,6 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (toys ui)
+  #:use-module (guix colors)
   #:use-module (guix ui)
 
   #:export (print-package
@@ -25,17 +26,21 @@
             print-channel
             print-public-symbol))
 
-(define (definition title definition port)
+(define* (definition title definition port #:key (bold? #f))
   (when (and definition
              (not (string-null? definition)))
     (display title port)
     (display ": " port)
-    (display definition port)
+    (if bold?
+      (display
+        (colorize-string definition (color BOLD))
+        port)
+      (display definition port))
     (newline port)))
 
 (define (print-package package port)
-  (definition "name" (assoc-ref package "name") port)
-  (definition "version" (assoc-ref package "version") port)
+  (definition "name" (assoc-ref package "name") port #:bold? #t)
+  (definition "version" (assoc-ref package "version") port #:bold? #t)
   (definition "channel" (assoc-ref package "channel") port)
   (definition
     "inputs"
@@ -60,7 +65,7 @@
     port))
 
 (define (print-service service port)
-  (definition "name" (assoc-ref service "name") port)
+  (definition "name" (assoc-ref service "name") port #:bold? #t)
   (definition "channel" (assoc-ref service "channel") port)
   (definition
     "location"
@@ -76,7 +81,7 @@
     port))
 
 (define (print-channel channel port)
-  (definition "name" (assoc-ref channel "name") port)
+  (definition "name" (assoc-ref channel "name") port #:bold? #t)
   (definition "url" (assoc-ref channel "url") port)
   (definition "branch" (assoc-ref channel "branch") port)
   (definition "packages count"
@@ -96,7 +101,8 @@
     (if (not (string-null? (assoc-ref symbol "signature")))
       (assoc-ref symbol "signature")
       (assoc-ref symbol "name"))
-    port)
+    port
+    #:bold? #t)
   (definition "channel" (assoc-ref symbol "channel") port)
   (definition
     "location"
