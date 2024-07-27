@@ -721,7 +721,9 @@ lists and etc."
        (lambda (key value)
          (cond
            ((equal? key "origin")
-            `(,key . ,(json-string->scm value)))
+            `(,key . ,(if (not (string-null? value))
+                        (json-string->scm value)
+                        #f)))
            (else `(,key . ,value)))))
      (denormalize-row
        (lambda (row)
