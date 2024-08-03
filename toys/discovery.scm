@@ -33,7 +33,8 @@
 
             toys-box
             toys-box-channel
-            toys-box-forge))
+            toys-box-forge
+            toys-box-synopsis))
 
 ;; Guix channel wrapper with additional data.
 (define-record-type* <toys-box>
@@ -42,7 +43,9 @@
 
   (channel toys-box-channel)        ; channel
   (forge toys-box-forge             ; string | #f
-        (default #f)))
+        (default #f))
+  (synopsis toys-box-synopsis       ; string
+            (default "")))
 
 ;; Forcefully export functions from (guix channels)
 (define read-channel-metadata-from-source
@@ -58,12 +61,9 @@ checkouts are cached."
   (map
     (lambda (box)
       (let*
-        ((channel
-           (toys-box-channel box))
-         (url
-           (channel-url channel))
-         (name
-           (channel-name channel))
+        ((channel (toys-box-channel box))
+         (url (channel-url channel))
+         (name (channel-name channel))
          (ref
            (or (channel-commit channel)
                (channel-branch channel)

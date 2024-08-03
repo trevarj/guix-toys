@@ -205,6 +205,7 @@ The valid values for ACTION are:
        branch TEXT NOT NULL,
        `commit` TEXT,
        url TEXT NOT NULL,
+       synopsis TEXT NOT NULL,
        subscription_snippet TEXT NOT NULL
      );
      DROP TABLE IF EXISTS public_symbols;
@@ -269,8 +270,8 @@ from BOXES into it."
               (sqlite-prepare
                 db
                 "INSERT INTO boxes
-                 (id, dir, branch, `commit`, url, subscription_snippet)
-                 VALUES (?, ?, ?, ?, ?, ?)
+                 (id, dir, branch, `commit`, url, synopsis, subscription_snippet)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)
                  RETURNING id"
                 #:cache? #t))
             (search-stmt
@@ -280,12 +281,9 @@ from BOXES into it."
                  (name, description, fk, `table`)
                  VALUES (?, ?, ?, ?)"
                 #:cache? #t))
-            (dir
-              (assoc-ref wrapper 'module-dir))
-            (box
-              (assoc-ref wrapper 'box))
-            (channel
-              (toys-box-channel box)))
+            (dir (assoc-ref wrapper 'module-dir))
+            (box (assoc-ref wrapper 'box))
+            (channel (toys-box-channel box)))
         (define id
           (vector-ref
             (car
@@ -297,6 +295,7 @@ from BOXES into it."
                   (channel-branch channel)
                   (assoc-ref wrapper 'commit)
                   (channel-url channel)
+                  (toys-box-synopsis box)
                   (serialize-channel channel))))
             0))
         (db-execute-stmt
@@ -920,6 +919,7 @@ query parameter."
            (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages-count`,
            (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services-count`,
            j.url,
+           j.synopsis,
            j.subscription_snippet AS `subscription-snippet`"))
     (values '((content-type . (text/html)))
             (lambda (port)

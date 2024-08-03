@@ -384,6 +384,11 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          (@ (href ,(assoc-ref channel "url"))
             (rel "nofollow"))
          ,(assoc-ref channel "url")))
+     ,(if (not (string-null? (assoc-ref channel "synopsis")))
+        `(div
+          (span (@ (class "muted")) "Synopsis: ")
+          ,(assoc-ref channel "synopsis"))
+        "")
      (div
        (span (@ (class "muted")) "Branch: ")
        ,(assoc-ref channel "branch"))
