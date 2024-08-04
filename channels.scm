@@ -574,7 +574,17 @@
               (make-channel-introduction
                "cfee0a86d4bdc74abcf03c47715a382d7ba93be8"
                (openpgp-fingerprint
-		"37F5 3D87 DFB3 EE32 393D  24B2 3A07 1A95 2839 DB19"))))))
+                "37F5 3D87 DFB3 EE32 393D  24B2 3A07 1A95 2839 DB19"))))))
+  (toys-box
+   (forge "github")
+   (channel (channel
+             (name 'teamspeak)
+             (url "https://github.com/jeandudey/guix-teamspeak")
+             (introduction
+              (make-channel-introduction
+               "89e76dbefbb2b1686cd5ca275fb185e9aec72693"
+               (openpgp-fingerprint
+                "9D54 3ADF 6E90 348C C606  90A9 6279 AEC2 0A95 24EC"))))))
   (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
