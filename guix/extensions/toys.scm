@@ -744,10 +744,10 @@ lists and etc."
      (denormalize-license
        (lambda (value)
          `(("name" . ,(match:substring
-                        (string-match "\\[(.+)\\]" value)
+                        (string-match "\\[(.*)\\]" value)
                         1))
            ("uri"  . ,(match:substring
-                        (string-match "\\((.+)\\)" value)
+                        (string-match "\\((.*)\\)" value)
                         1)))))
      (denormalize-pair
        (lambda (key value)
