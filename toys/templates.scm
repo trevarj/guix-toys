@@ -446,24 +446,27 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (symbol-channel channel)
   `(div
     (span (@ (class "muted")) "Channel: ")
-    (a
-      (@ (href ,(string-append "/channels?search="
+    (a (@ (href ,(string-append "/channels?search="
                                 channel))
           (rel "nofollow"))
-      ,channel)))
+       ,channel)))
 
-(define (symbol-licenses license)
+(define (symbol-licenses licenses)
   (map
     (lambda (item)
-      `((a (@ (href ,(assoc-ref item "uri")))
-           ,(assoc-ref item "name"))
-        ;; warn if license is nonfree
-        ,(if (equal? (assoc-ref item "name") "Nonfree")
-           '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
-                  "⚠")
-           '())
-        " "))
-    license))
+      (let ((name (assoc-ref item "name"))
+            (uri (assoc-ref item "uri")))
+        `(,(if (and (not (string-null? uri))
+                    (not (string-prefix? "file://" uri)))
+             `(a (@ (href ,uri)) ,name)
+             name)
+          ;; warn if license is nonfree
+          ,(if (equal? name "Nonfree")
+            '(span (@ (style "color: red; font-weight: bold; margin-left: 0.25rem;"))
+                    "⚠")
+            "")
+          " ")))
+    licenses))
 
 (define (texi->html texi)
   (if (> (string-length texi) 0)
