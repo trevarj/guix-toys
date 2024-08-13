@@ -365,7 +365,7 @@
    (forge "sourcehut")
    (channel (channel
              (name 'gocix)
-             (url "https://git.sr.ht/~fishinthecalculator/gocix")
+             (url "https://github.com/fishinthecalculator/gocix")
              (branch "main")
              (introduction
               (make-channel-introduction
