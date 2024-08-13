@@ -3,6 +3,19 @@
 
 (list
   (toys-box
+   (forge "cgit")
+   (synopsis "Setup and management instructions for a Guix North American Build Farm")
+   (channel
+    (channel
+     (name 'guix-north-america)
+     (url "https://git.rekahsoft.ca/rekahsoft/guix-north-america.git")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "c0979ad86fdf0b403c60d5767328cb862ecc00ef"
+       (openpgp-fingerprint
+        "F8D5 46F3 AF37 EF53 D1B6  48BE 7B4D EB93 212B 3022"))))))
+  (toys-box
     (forge "codeberg")
     (channel
       (channel
