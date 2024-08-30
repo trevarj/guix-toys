@@ -565,7 +565,7 @@
      (url "https://git.sr.ht/~mediagoblin/mediagoblin")
      (introduction
       (make-channel-introduction
-       "25cfc5238029f1123fb4344eb65ec92cc5f57e54"
+       "0ce4fbec9038abd9434b5a375d61f088663ce21d"
        (openpgp-fingerprint
         "3E7F36E73BDD6A7106F92021023C05E2C9C068F0"))))))
   (toys-box
