@@ -86,14 +86,14 @@
   (definition "branch" (assoc-ref channel "branch") port)
   (definition "packages count"
     (number->string
-     (assoc-ref channel "packages_count")) port)
+     (assoc-ref channel "packagesCount")) port)
   (definition "services count"
     (number->string
-     (assoc-ref channel "services_count")) port)
+     (assoc-ref channel "servicesCount")) port)
   (definition "subscription snippet"
     (string-append
      "\n"
-     (assoc-ref channel "subscription_snippet")) port))
+     (assoc-ref channel "subscriptionSnippet")) port))
 
 (define (print-public-symbol symbol port)
   (definition
