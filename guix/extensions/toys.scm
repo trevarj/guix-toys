@@ -22,6 +22,7 @@
 (define-module (guix extensions toys)
   #:use-module (toys client)
   #:use-module (toys cmd clone)
+  #:use-module (toys cmd install)
   #:use-module (toys http)
   #:use-module (toys discovery)
   #:use-module (toys templates)
@@ -82,6 +83,12 @@
      (when err (error err))
      (print-paginated-results print-package res))
 
+    ((or ("package" "install" . packages)
+         ("install" . packages))
+     (if (< 0 (length packages))
+      (for-each install-package packages)
+      (show-help)))
+
     (("package" "clone" name . rest)
      (define packages (show-packages name))
      (when (< 0 (vector-length packages))
@@ -125,8 +132,8 @@
 
 (define (show-help)
   (display "Usage: guix toys [OPTION] ACTION [ARGS]
-Perform the toys related actions. Before running serve make sure the database
-was initialized and symbols were pulled.
+Perform the toys related actions. Before running \"serve\" make sure
+the database was initialized and symbols were pulled.
 The valid values for ACTION are:
 
    init
@@ -147,6 +154,10 @@ The valid values for ACTION are:
        search for a package with the exact NAME in the toys instance database
    package clone PACKAGE [DIR]
        clone a PACKAGE source code to current directory into a DIR
+   package install PACKAGES
+       install PACKAGES the toys instance knows about
+   install PACKAGES
+       an alias for \"package install PACKAGES\"
 
    service search QUERY
        search for a service type in the toys instance database
@@ -161,7 +172,8 @@ The valid values for ACTION are:
   (newline)
   (display "
   -h   display this help and exit")
-  (newline))
+  (newline)
+  (exit 1))
 
 (define (debug msg)
   "Prints the debug MSG to stdout."

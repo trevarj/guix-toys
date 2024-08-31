@@ -29,6 +29,7 @@
   #:use-module (srfi srfi-1)
 
   #:export (fetch-boxes
+            fetch-channel
             fold-public-symbols
 
             toys-box
@@ -54,6 +55,21 @@
 (define channel-metadata-directory
   (@@ (guix channels) channel-metadata-directory))
 
+(define* (fetch-channel url ref #:optional (introduction #f))
+  (format #t "Fetching ~a...\n" url)
+  (define checkout-dir (update-cached-checkout url #:ref `(branch . ,ref)))
+  (when introduction
+   (format #t "Authenticating ~a...\n" url)
+   (with-repository checkout-dir repository
+                    (authenticate-repository
+                      repository
+                      (string->oid
+                        (channel-introduction-first-signed-commit introduction))
+                      (channel-introduction-first-commit-signer introduction)
+                      ;; FIXME: may not be "keyring" branch.
+                      #:keyring-reference "origin/keyring")))
+  checkout-dir)
+
 (define (fetch-boxes file)
   "Locally checkout and authenticate boxes specified in FILE.  Previous
 checkouts are cached."
@@ -64,40 +80,15 @@ checkouts are cached."
         ((channel (toys-box-channel box))
          (url (channel-url channel))
          (name (channel-name channel))
-         (ref
-           (or (channel-commit channel)
-               (channel-branch channel)
-               "master"))
-         (introduction
-           (channel-introduction channel)))
-
-        (format #t "Fetching ~a...\n" url)
-        (define checkout-dir
-         (update-cached-checkout
-          url #:ref `(branch . ,ref)))
-
-        (when introduction
-          (format #t "Authenticating ~a...\n" url)
-          (with-repository checkout-dir repository
-            (authenticate-repository
-              repository
-              (string->oid
-                (channel-introduction-first-signed-commit introduction))
-              (channel-introduction-first-commit-signer introduction)
-              ;; FIXME: may not be "keyring" branch.
-              #:keyring-reference "origin/keyring")))
-
-        (define channel-metadata
-          (read-channel-metadata-from-source checkout-dir))
-
-        (define dir
-          (channel-metadata-directory channel-metadata))
-
-        (define commit
-          (with-repository checkout-dir repository
-            (oid->string
-              (reference-target (repository-head repository)))))
-
+         (ref (or (channel-commit channel) (channel-branch channel) "master"))
+         (introduction (channel-introduction channel))
+         (checkout-dir (fetch-channel url ref introduction))
+         (channel-metadata (read-channel-metadata-from-source checkout-dir))
+         (dir (channel-metadata-directory channel-metadata))
+         (commit (with-repository
+                   checkout-dir repository
+                   (oid->string
+                     (reference-target (repository-head repository))))))
         `((box . ,box)
           (dir . ,dir)
           (commit . ,commit)
@@ -106,7 +97,8 @@ checkouts are cached."
 
 (define (fold-public-symbols kons knil boxes)
   "Apply KONS to the list of public symbols found in BOXES.  KNIL is an initial
-value to append results to." (define old-load-path %load-path)
+value to append results to."
+  (define old-load-path %load-path)
   (set! %load-path
     (append
       (map
