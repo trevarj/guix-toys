@@ -201,7 +201,7 @@ The valid values for ACTION are:
      DROP TABLE IF EXISTS boxes;
      CREATE TABLE boxes (
        id TEXT NOT NULL PRIMARY KEY,
-       dir  TEXT NOT NULL,
+       dir TEXT NOT NULL,
        branch TEXT NOT NULL,
        `commit` TEXT,
        url TEXT NOT NULL,
@@ -695,12 +695,12 @@ string.  Use `j.` prefix for selecting fields."
          db
          (format #f
                  "SELECT ~a FROM search s
-                 INNER JOIN ~a j ON s.fk = j.id
-                 WHERE s.`table` = ?
-                 AND s.name MATCH ?
-                 ORDER BY LENGTH(s.name), rank"
-                 select
-                 from)))
+                  INNER JOIN ~a j ON s.fk = j.id
+                  WHERE s.`table` = ?
+                  AND s.name MATCH ?
+                  ORDER BY LENGTH(s.name), rank"
+                  select
+                  from)))
      (columns
        (sqlite-column-names stmt))
      (wildcard
@@ -772,7 +772,7 @@ lists and etc."
 ;;; API
 ;;;
 
-(define (handle-api-search request request-body select from)
+(define (handle-api-search request select from)
   "Handles generic API request for RECORDS with pagination and search
 functionality."
   (let* ((search-query (request-query-parameter request "search"))
@@ -787,11 +787,10 @@ functionality."
                     (searcher select from query)
                     (all-symbols select from))))))))
 
-(define (handle-api-packages-search request request-body)
+(define (handle-api-packages-search request)
   "Returns the list of packagess whose name contains a value from \"search\"
 query parameter."
   (handle-api-search request
-                     request-body
                      "j.name,
                       j.channel,
                       j.module,
@@ -807,11 +806,10 @@ query parameter."
                       j.description"
                      "packages"))
 
-(define (handle-api-services-search request request-body)
+(define (handle-api-services-search request)
   "Returns the list of services whose name contains a value from \"search\"
 query parameter."
   (handle-api-search request
-                     request-body
                      "j.name,
                       j.channel,
                       j.module,
@@ -820,10 +818,9 @@ query parameter."
                       j.description"
                      "service_types"))
 
-(define (handle-api-channels-list request request-body)
+(define (handle-api-channels-list request)
   "Returns the list of channels defined in channels.scm."
   (handle-api-search request
-                     request-body
                      "j.id AS name,
                       j.branch,
                       j.`commit`,
@@ -833,11 +830,10 @@ query parameter."
                       j.subscription_snippet AS `subscriptionSnippet`"
                       "boxes"))
 
-(define (handle-api-symbols-list request request-body)
+(define (handle-api-symbols-list request)
   "Returns the list of all public (exported) symbols defined in
 %package-module-path."
   (handle-api-search request
-                     request-body
                      "j.name,
                       j.channel,
                       j.module,
@@ -851,7 +847,7 @@ query parameter."
 ;;; HTML pages
 ;;;
 
-(define (handle-search-page request request-body select from template)
+(define (handle-search-page request select from template)
   "Handles generic search page request for RECORDS using TEMPLATE."
   (let* ((search-query (request-query-parameter request "search"))
          ;; when search query is wrapped into double quotes (e.g. "emacs")
@@ -877,10 +873,9 @@ query parameter."
                   %last-updated-at)
                 port)))))
 
-(define (handle-index-page request request-body)
+(define (handle-index-page request)
   "Returns the index page."
   (handle-search-page request
-                      request-body
                       "j.name,
                        j.channel,
                        j.module,
@@ -896,10 +891,9 @@ query parameter."
                       "packages"
                       packages-template))
 
-(define (handle-services-page request request-body)
+(define (handle-services-page request)
   "Returns the services search page."
   (handle-search-page request
-                      request-body
                       "j.name,
                        j.channel,
                        j.module,
@@ -909,7 +903,7 @@ query parameter."
                       "service_types"
                       services-template))
 
-(define (handle-channels-page request request-body)
+(define (handle-channels-page request)
   "Returns the channels search page."
   (let ((query (request-query-parameter request "search"))
         (fields
@@ -932,10 +926,9 @@ query parameter."
                   %last-updated-at)
                 port)))))
 
-(define (handle-symbols-page request request-body)
+(define (handle-symbols-page request)
   "Returns the symbols search page."
   (handle-search-page request
-                      request-body
                       "j.name,
                        j.channel,
                        j.module,
@@ -950,19 +943,19 @@ query parameter."
   "Routes and handles incoming HTTP requests."
   (match (request-path-components request)
     (("api" "packages")
-     (handle-api-packages-search request request-body))
+     (handle-api-packages-search request))
     (("api" "services")
-     (handle-api-services-search request request-body))
+     (handle-api-services-search request))
     (("api" "channels")
-     (handle-api-channels-list request request-body))
+     (handle-api-channels-list request))
     (("api" "symbols")
-     (handle-api-symbols-list request request-body))
+     (handle-api-symbols-list request))
     (()
-     (handle-index-page request request-body))
+     (handle-index-page request))
     (("services")
-     (handle-services-page request request-body))
+     (handle-services-page request))
     (("channels")
-     (handle-channels-page request request-body))
+     (handle-channels-page request))
     (("symbols")
-     (handle-symbols-page request request-body))
+     (handle-symbols-page request))
     (_ (handle-not-found))))
