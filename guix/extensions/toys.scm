@@ -677,8 +677,13 @@ NAME string.  Use `j.` prefix for selecting fields."
     ((stmt
        (sqlite-prepare
          db
-         (format #f "SELECT ~a FROM ~a j WHERE j.name = ? ORDER BY j.channel"
-                 select from)))
+         ;; unfortunately we have to work around the fact that the boxes table
+         ;; structure is quite different from other tables: it doesn't have
+         ;; a name and a channel fields
+         (if (equal? from "boxes")
+          (format #f "SELECT ~a FROM boxes j WHERE j.id = ?" select)
+          (format #f "SELECT ~a FROM ~a j WHERE j.name = ? ORDER BY j.channel"
+                  select from))))
      (columns (sqlite-column-names stmt)))
     (sqlite-bind-arguments stmt name)
     (sqlite-map
