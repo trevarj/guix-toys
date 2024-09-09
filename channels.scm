@@ -599,5 +599,16 @@
                (openpgp-fingerprint
                 "9D54 3ADF 6E90 348C C606  90A9 6279 AEC2 0A95 24EC"))))))
   (toys-box
+   (forge "codeberg")
+   (channel (channel
+             (name 'sijo)
+             (url "https://codeberg.org/simendsjo/dotfiles.git")
+             (branch "main")
+             (introduction
+              (make-channel-introduction
+               "c352f7331b1722b2ffb964572c7f7fbec585bd2f"
+               (openpgp-fingerprint
+                "B0F2 D6C5 2936 95FD 57B5  D255 77BC 6345 B65D 6CFB"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
