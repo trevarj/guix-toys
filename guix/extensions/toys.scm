@@ -203,7 +203,7 @@ The valid values for ACTION are:
   "Initializes database schema."
   (sqlite-exec
     db
-    "PRAGMA foreign_keys = ON;
+    "PRAGMA foreign_keys=ON;
      PRAGMA journal_mode=WAL;
      PRAGMA synchronous=NORMAL;
 
@@ -259,8 +259,8 @@ The valid values for ACTION are:
        origin TEXT NOT NULL
      );
 
-     CREATE INDEX packages_channels_idx ON packages (channel);
-     CREATE INDEX services_channels_idx ON packages (channel);
+     CREATE INDEX packages_channel_idx ON packages (channel);
+     CREATE INDEX service_types_channel_idx ON service_types (channel);
     "))
 
 (define (pull-data db boxes)
