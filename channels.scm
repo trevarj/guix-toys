@@ -53,6 +53,17 @@
                 (url "https://github.com/umanwizard/guix-rust-next")
                 (branch "master"))))
   (toys-box
+   (forge "github")
+   (channel (channel
+               (name 'tailscale)
+               (url "https://github.com/umanwizard/guix-tailscale")
+               (branch "main")
+               (introduction
+                 (make-channel-introduction
+                   "c72e15e84c4a9d199303aa40a81a95939db0cfee"
+                   (openpgp-fingerprint
+                     "9E53 FC33 B832 8C74 5E7B 31F7 0226 C10D 7877 B741"))))))
+  (toys-box
     (forge "github")
     (channel (channel
                (name 'druix)
