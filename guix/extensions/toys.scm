@@ -667,22 +667,46 @@ returned."
     '()
     columns))
 
-(define (all-symbols select from)
+(define (all-symbols select from limit page)
   "Queries SELECT fields from all symbols in the FROM table.  Use `j.` prefix
 for selecting fields."
   (let*
     ((stmt
-       (sqlite-prepare
-         db
-         (format #f "SELECT ~a FROM ~a j" select from)))
-     (columns
-       (sqlite-column-names stmt)))
+       (sqlite-prepare db
+         (format #f "SELECT ~a FROM ~a j LIMIT ? OFFSET ?" select from)))
+     (columns (sqlite-column-names stmt)))
+    (sqlite-bind-arguments stmt limit (* (- page 1)))
     (sqlite-map
       (lambda (row)
         (gather-row row columns))
       stmt)))
 
-(define (show-symbols select from name)
+(define (count-symbols from query)
+  "Counts results for the given QUERY and FROM table.  If QUERY is #f, count
+all symbols from FROM table."
+  (if (and query (string? query) (not (string-null? query)))
+    (let ((stmt
+            (sqlite-prepare db
+              (format #f
+                "SELECT COUNT(*) FROM search s
+                 INNER JOIN ~a j ON s.fk = j.id
+                 WHERE s.`table` = ?
+                 AND s.name MATCH ?"
+                 from)))
+          (wildcard (format #f "\"~a\" *" (string-delete #\" query))))
+      (sqlite-bind-arguments stmt from wildcard)
+      (vector-ref (sqlite-step stmt) 0))
+    (let ((stmt
+            (sqlite-prepare db
+              (format #f
+                "SELECT COUNT(*) FROM search s
+                 INNER JOIN ~a j ON s.fk = j.id
+                 WHERE s.`table` = ?"
+                 from))))
+      (sqlite-bind-arguments stmt from)
+      (vector-ref (sqlite-step stmt) 0))))
+
+(define (show-symbols select from name page)
   "Queries SELECT fields from the FROM table with records *exactly* matching
 NAME string.  Use `j.` prefix for selecting fields."
   (let*
@@ -693,17 +717,23 @@ NAME string.  Use `j.` prefix for selecting fields."
          ;; structure is quite different from other tables: it doesn't have
          ;; a name and a channel fields
          (if (equal? from "boxes")
-          (format #f "SELECT ~a FROM boxes j WHERE j.id = ?" select)
-          (format #f "SELECT ~a FROM ~a j WHERE j.name = ? ORDER BY j.channel"
+          (format #f "SELECT ~a FROM boxes j
+                      WHERE j.id = ?
+                      LIMIT 24 OFFSET ?"
+                  select)
+          (format #f "SELECT ~a FROM ~a j
+                      WHERE j.name = ?
+                      ORDER BY j.channel
+                      LIMIT 24 OFFSET ?"
                   select from))))
      (columns (sqlite-column-names stmt)))
-    (sqlite-bind-arguments stmt name)
+    (sqlite-bind-arguments stmt name (* (- page 1) 24))
     (sqlite-map
       (lambda (row)
         (gather-row row columns))
       stmt)))
 
-(define (search-symbols select from query)
+(define (search-symbols select from query limit page)
   "Queries SELECT fields from the FROM table with records matching QUERY
 string.  Use `j.` prefix for selecting fields."
   (let*
@@ -715,7 +745,9 @@ string.  Use `j.` prefix for selecting fields."
                   INNER JOIN ~a j ON s.fk = j.id
                   WHERE s.`table` = ?
                   AND s.name MATCH ?
-                  ORDER BY LENGTH(s.name), rank"
+                  ORDER BY LENGTH(s.name), rank
+                  LIMIT ?
+                  OFFSET ?"
                   select
                   from)))
      (columns
@@ -723,10 +755,9 @@ string.  Use `j.` prefix for selecting fields."
      (wildcard
        (format #f "\"~a\" *"
                (string-delete #\" query))))
-    (sqlite-bind-arguments stmt from wildcard)
+    (sqlite-bind-arguments stmt from wildcard limit (* (- page 1) 24))
     (sqlite-map
-      (lambda (row)
-        (gather-row row columns))
+      (lambda (row) (gather-row row columns))
       stmt)))
 
 (define (denormalize-api-rows rows)
@@ -795,17 +826,28 @@ functionality."
   (let* ((search-query (request-query-parameter request "search"))
          (show-query (request-query-parameter request "show"))
          (searcher (if show-query show-symbols search-symbols))
-         (query (or show-query search-query)))
-    (values `((content-type . (application/json)))
+         (query (or show-query search-query))
+         (limit (max 1
+                 (min 1000
+                  (string->number
+                   (or (request-query-parameter request "limit") "24")))))
+         (total (count-symbols from query))
+         (pages (floor (/ total limit)))
+         (page (max 1
+                (min pages
+                 (string->number
+                  (or (request-query-parameter request "page") "1")))))
+         (results (if query
+                    (searcher select from query limit page)
+                    (all-symbols select from limit page))))
+    (values `((content-type . (application/json))
+              (pagination-total . ,(number->string total))
+              (pagination-pages . ,(number->string pages)))
             (scm->json-string
-              (list->vector
-                (denormalize-api-rows
-                  (if query
-                    (searcher select from query)
-                    (all-symbols select from))))))))
+              (list->vector (denormalize-api-rows results))))))
 
 (define (handle-api-packages-search request)
-  "Returns the list of packagess whose name contains a value from \"search\"
+  "Returns the list of packages whose name contains a value from \"search\"
 query parameter."
   (handle-api-search request
                      "j.name,
@@ -877,17 +919,21 @@ query parameter."
             search-query
             (request-query-parameter request "show")))
          (searcher (if show-query show-symbols search-symbols))
-         (query (or show-query search-query)))
+         (query (or show-query search-query ""))
+         (page (max 1
+                (string->number
+                 (or (request-query-parameter request "page") "1")))))
     (values '((content-type . (text/html)))
             (lambda (port)
               (sxml->xml
                 (template
                   (if query
                     (denormalize-rows
-                      (searcher select from (string-trim-both query #\")))
+                      (searcher select from (string-trim-both query #\") 24 page))
                     '())
                   query
-                  %last-updated-at)
+                  page
+                  (count-symbols from query))
                 port)))))
 
 (define (handle-index-page request)
@@ -922,7 +968,7 @@ query parameter."
 
 (define (handle-channels-page request)
   "Returns the channels search page."
-  (let ((query (request-query-parameter request "search"))
+  (let ((query (or (request-query-parameter request "search") ""))
         (fields
           "j.id AS name,
            j.branch,
@@ -931,16 +977,18 @@ query parameter."
            (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services-count`,
            j.url,
            j.synopsis,
-           j.subscription_snippet AS `subscription-snippet`"))
+           j.subscription_snippet AS `subscription-snippet`")
+        (page (string->number (or (request-query-parameter request "page") "1"))))
     (values '((content-type . (text/html)))
             (lambda (port)
               (sxml->xml
                 (channels-template
-                  (if query
-                    (search-symbols fields "boxes" query)
-                    (all-symbols fields "boxes"))
+                  (if (not (string-null? query))
+                    (search-symbols fields "boxes" query 24 page)
+                    (all-symbols fields "boxes" 24 page))
                   query
-                  %last-updated-at)
+                  page
+                  (count-symbols "boxes" query))
                 port)))))
 
 (define (handle-symbols-page request)

@@ -18,6 +18,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (toys templates)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-43)
   #:use-module (texinfo)
   #:use-module (texinfo html)
@@ -156,10 +157,17 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     margin: 0;
   }
 
-  footer {
-    font-style: italic;
-    color: gray;
-    margin-top: 1rem;
+  .paginator {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .paginator-active {
+    font-weight: bold;
+    text-decoration: none;
+    pointer-events: none;
   }
 
   @media (max-width: 32rem) {
@@ -202,7 +210,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 ")
 
-(define (base-template body current query last-updated-at)
+(define (base-template body current query page total)
   `(html
      (@ (lang "en"))
      (head
@@ -226,10 +234,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                      (value ,(or query ""))
                      (placeholder "Enter query")))
            (button (@ (type "submit")) "Search"))
-         (main ,@body)
-         #;(footer
-           "Last updated at: "
-           ,last-updated-at)))))
+         (main ,@body)))))
 
 (define (menu-template pages current)
   `(nav
@@ -245,28 +250,30 @@ ________________________,--._(___Y___)_,--._______________________ hjw
               ,(assoc-ref item 'name)))
          pages)))
 
-(define (base-items-template path items query normalizer placeholder last-updated-at)
+(define (base-items-template path items query normalizer placeholder page total)
   "Returns base template for search pages."
-    (base-template
-      (if (and (or (not (string? query))
-                   (= (string-length query) 0))
-               (= (length items) 0))
-        placeholder
-        (if (and (string? query)
-                (> (string-length query) 0)
-                (= (length items) 0))
-          `("Nothing found, try another query!"
-            (div (@ (class "not-found"))
-                (pre ,%empty-results-art)
-                (small (@ (class "muted"))
-                        "Art by Hayley Jane Wakenshaw")))
-          (map
+  (base-template
+    (if (and (or (not (string? query))
+                 (= (string-length query) 0))
+             (= (length items) 0))
+      placeholder
+      (if (and (string? query)
+              (> (string-length query) 0)
+              (= (length items) 0))
+        `("Nothing found, try another query!"
+          (div (@ (class "not-found"))
+              (pre ,%empty-results-art)
+              (small (@ (class "muted"))
+                      "Art by Hayley Jane Wakenshaw")))
+        `(,(map
             (lambda (item)
               (normalizer item))
-            items)))
-      path
-      query
-      last-updated-at))
+            items)
+          ,(paginator-template query page 24 total))))
+    path
+    query
+    page
+    total))
 
 (define (placeholder-template method)
  `((p "Enter the query into the form above. "
@@ -286,7 +293,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       (code "limit")
       " is a number of items on a single page. "
       "Pagination information (such as a number of pages and etc) is returned
-      in response headers. ")
+       in response headers. ")
    "If you'd like to join our channel webring send a patch to "
    (a (@ (href "mailto:~whereiseveryone/toys@lists.sr.ht"))
       "~whereiseveryone/toys@lists.sr.ht")
@@ -294,37 +301,41 @@ ________________________,--._(___Y___)_,--._______________________ hjw
    (a (@ (href "https://git.sr.ht/~whereiseveryone/toys/tree/master/item/channels.scm"))
       "channels.scm") "."))
 
-(define (packages-template items query last-updated-at)
+(define (packages-template items query page total)
   (base-items-template "/"
                        items
                        query
                        package-template
                        (placeholder-template "/api/packages")
-                       last-updated-at))
+                       page
+                       total))
 
-(define (services-template items query last-updated-at)
+(define (services-template items query page total)
   (base-items-template "/services"
                        items
                        query
                        service-template
                        (placeholder-template "/api/services")
-                       last-updated-at))
+                       page
+                       total))
 
-(define (channels-template items query last-updated-at)
+(define (channels-template items query page total)
   (base-items-template "/channels"
                        items
                        query
                        channel-template
                        (placeholder-template "/api/channels")
-                       last-updated-at))
+                       page
+                       total))
 
-(define (symbols-template items query last-updated-at)
+(define (symbols-template items query page total)
   (base-items-template "/symbols"
                        items
                        query
                        symbol-template
                        (placeholder-template "/api/symbols")
-                       last-updated-at))
+                       page
+                       total))
 
 (define (package-template package)
   `(div (@ (class "item"))
@@ -476,3 +487,26 @@ ________________________,--._(___Y___)_,--._______________________ hjw
           (texi-fragment->stexi texi)))
       texi)
     ""))
+
+(define (paginator-template query page limit total)
+  (define last-page (ceiling (/ total limit)))
+  (define (numbers-template query current-page last-page)
+   (fold-right
+    (lambda (i result)
+     (cons
+      `(a (@ (href ,(string-append "?page=" (number->string (+ 1 i))
+                                   "&search=" query))
+             (class ,(if (= page (+ 1 i)) "paginator-active" "")))
+        ,(number->string (+ 1 i)))
+      result))
+    '()
+    (iota last-page)))
+
+  (list
+    (if (< limit total)
+      `(div (@ (class "paginator"))
+            "Page: " ,(numbers-template query page last-page))
+      "")
+    (if (< 0 total)
+      `(div "Total results: " (strong ,(number->string total)))
+      "")))
