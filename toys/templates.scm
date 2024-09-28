@@ -75,7 +75,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 
   .muted {
-    color: #444444;
+    color: rgba(0, 0, 0, 0.5);
   }
 
   main {
@@ -151,7 +151,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 
   .pre {
-    background-color: #efefef;
+    background-color: rgba(0, 0, 0, 0.05);
     padding: 0.25rem;
     margin: 0;
   }
@@ -174,17 +174,17 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
   @media (prefers-color-scheme: dark) {
     html {
-      background: #222222;
+      background: rgba(0, 0, 0, 0.9);
       color: white;
     }
 
     code,
     .code {
-      background-color: #444444;
+      background-color: rgba(0, 0, 0, 0.5);
     }
 
     .pre {
-      background-color: #444444;
+      background-color: rgba(0, 0, 0, 0.5);
     }
 
     a {
