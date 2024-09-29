@@ -122,7 +122,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 
   .code {
-    background-color: #efefef;
+    background-color: rgba(0, 0, 0, 0.05);
     display: block;
     overflow-x: auto;
     padding: 0.5rem;
@@ -146,7 +146,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 
   code {
-    background-color: #efefef;
+    background-color: rgba(0, 0, 0, 0.05);
     padding: 0.25rem;
     white-space: nowrap;
   }
@@ -188,11 +188,11 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
     code,
     .code {
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
     .pre {
-      background-color: rgba(0, 0, 0, 0.5);
+      background-color: rgba(255, 255, 255, 0.1);
     }
 
     a {
@@ -200,12 +200,12 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     }
 
     .muted {
-      color: #999999;
+      color: rgba(255, 255, 255, 0.5);
       text-decoration: none;
     }
 
     .item {
-      border-bottom: 0.0625rem solid #444444;
+      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
     }
   }
 ")
