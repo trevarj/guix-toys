@@ -621,5 +621,11 @@
                (openpgp-fingerprint
                 "B0F2 D6C5 2936 95FD 57B5  D255 77BC 6345 B65D 6CFB"))))))
   (toys-box
+   (forge "codeberg")
+   (channel (channel
+             (name 'lguix-channel)
+             (url "https://codeberg.org/lgatto/lguix-channel")
+             (branch "main"))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
