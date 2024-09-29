@@ -706,7 +706,7 @@ all symbols from FROM table."
       (sqlite-bind-arguments stmt from)
       (vector-ref (sqlite-step stmt) 0))))
 
-(define (show-symbols select from name page)
+(define (show-symbols select from name limit page)
   "Queries SELECT fields from the FROM table with records *exactly* matching
 NAME string.  Use `j.` prefix for selecting fields."
   (let*
@@ -719,15 +719,15 @@ NAME string.  Use `j.` prefix for selecting fields."
          (if (equal? from "boxes")
           (format #f "SELECT ~a FROM boxes j
                       WHERE j.id = ?
-                      LIMIT 24 OFFSET ?"
+                      LIMIT ? OFFSET ?"
                   select)
           (format #f "SELECT ~a FROM ~a j
                       WHERE j.name = ?
                       ORDER BY j.channel
-                      LIMIT 24 OFFSET ?"
+                      LIMIT ? OFFSET ?"
                   select from))))
      (columns (sqlite-column-names stmt)))
-    (sqlite-bind-arguments stmt name (* (- page 1) 24))
+    (sqlite-bind-arguments stmt name limit (* (- page 1) 24))
     (sqlite-map
       (lambda (row)
         (gather-row row columns))
