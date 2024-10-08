@@ -28,6 +28,13 @@
            "C954 CA9A BB4B EA43 417B  7151 5535 FCF5 4D88 616B"))))))
   (toys-box
     (forge "sourcehut")
+    (channel 
+      (channel
+        (name 'glue)
+        (url "https://git.sr.ht/~puercopop/glue")
+        (branch "default"))))
+  (toys-box
+    (forge "sourcehut")
     (channel (channel
                 (name 'guixrus)
                 (url "https://git.sr.ht/~whereiseveryone/guixrus")
