@@ -27,12 +27,17 @@
           (openpgp-fingerprint
            "C954 CA9A BB4B EA43 417B  7151 5535 FCF5 4D88 616B"))))))
   (toys-box
-    (forge "sourcehut")
-    (channel 
-      (channel
-        (name 'glue)
-        (url "https://git.sr.ht/~puercopop/glue")
-        (branch "default"))))
+   (forge "sourcehut")
+   (channel
+    (channel
+     (name 'glue)
+     (url "https://git.sr.ht/~puercopop/glue")
+     (branch "default")
+     (introduction
+      (make-channel-introduction
+       "ea330f23fbebdb623892c1345d9bf6a0c4861276"
+       (openpgp-fingerprint
+        "D5A3 4BC7 B37F 4017 D091  5CF5 EEF6 BD0D 5626 DB0F"))))))
   (toys-box
     (forge "sourcehut")
     (channel (channel
