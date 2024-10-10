@@ -639,5 +639,16 @@
              (url "https://codeberg.org/lgatto/lguix-channel")
              (branch "main"))))
   (toys-box
+   (forge "sourcehut")
+   (channel (channel
+             (name 'fnat)
+             (url "https://git.sr.ht/~fabionatali/guix-fnat")
+             (branch "main")
+             (introduction
+              (make-channel-introduction
+               "d514c962015bc4ef48c7bf27dcb0a890702e0750"
+               (openpgp-fingerprint
+                "03FC BBEF CB3A 0FB2 A5D0  66FB 7D1D 5AF9 427D BEDC"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
