@@ -650,5 +650,16 @@
                (openpgp-fingerprint
                 "03FC BBEF CB3A 0FB2 A5D0  66FB 7D1D 5AF9 427D BEDC"))))))
   (toys-box
+    (forge "forgejo")
+    (channel (channel
+               (name 'sakura)
+               (url "https://g.freya.cat/freya/sakura")
+               (branch "main")
+               (introduction
+                 (make-channel-introduction
+                   "8fb2f9c2fa414754c41c1c73665e3e73e12693ab"
+                   (openpgp-fingerprint
+                     "3CD3 65F0 373C EB13 853A  F568 9FBC 6FFD 6D2D BF17"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
