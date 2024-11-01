@@ -127,10 +127,10 @@
                    (openpgp-fingerprint
                      "43E6 223B 3497 270A 6162  82FF B675 80AB 5694 9C84"))))))
   (toys-box
-    (forge "gitlab")
+    (forge "codeberg")
     (channel (channel
                (name 'small-guix)
-               (url "https://gitlab.com/orang3/small-guix")
+               (url "https://codeberg.org/fishinthecalculator/small-guix.git")
                (introduction
                  (make-channel-introduction
                    "f260da13666cd41ae3202270784e61e062a3999c"
@@ -281,10 +281,10 @@
                (openpgp-fingerprint
                 "C9BE B8A0 4458 FDDF 1268 1B39 029D 8EB7 7E18 D68C"))))))
   (toys-box
-    (forge "sourcehut")
+    (forge "codeberg")
     (channel (channel
                (name 'mobilizon-reshare)
-               (url "https://git.sr.ht/~fishinthecalculator/mobilizon-reshare-guix")
+               (url "https://codeberg.org/fishinthecalculator/mobilizon-reshare-guix.git")
                (branch "main"))))
   #;(toys-box
     (forge "github")
