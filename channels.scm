@@ -594,13 +594,13 @@
   (toys-box
    (forge "github")
    (channel (channel
-            (name 'bric-a-brac)
-            (url "https://github.com/altomcat/bric-a-brac.git")
-            (introduction
-             (make-channel-introduction
-              "cb7dbb3911da911e06146d4a7bde372c4b5a4783"
+             (name 'bric-a-brac)
+             (url "https://github.com/altomcat/bric-a-brac")
+             (introduction
+              (make-channel-introduction
+                "9c87d2feb0c07dd6e62f13acfcbba53d8c1f5b3a"
               (openpgp-fingerprint
-               "AA52 B3F3 E764 5F95 6BA1 23E2 43D7 A3F7 7931 A85D"))))))
+                "4FF9 5EA8 27FB 0BF7 C9CE 6F03 7284 5387 AAC2 2DE0"))))))
   (toys-box
    (forge "cgit")
    (channel (channel
