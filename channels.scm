@@ -8,7 +8,7 @@
    (channel
     (channel
      (name 'guix-north-america)
-     (url "https://git.rekahsoft.ca/rekahsoft/guix-north-america.git")
+     (url "https://git.rekahsoft.ca/rekahsoft/guix-north-america")
      (branch "master")
      (introduction
       (make-channel-introduction
@@ -130,7 +130,7 @@
     (forge "codeberg")
     (channel (channel
                (name 'small-guix)
-               (url "https://codeberg.org/fishinthecalculator/small-guix.git")
+               (url "https://codeberg.org/fishinthecalculator/small-guix")
                (introduction
                  (make-channel-introduction
                    "f260da13666cd41ae3202270784e61e062a3999c"
@@ -284,7 +284,7 @@
     (forge "codeberg")
     (channel (channel
                (name 'mobilizon-reshare)
-               (url "https://codeberg.org/fishinthecalculator/mobilizon-reshare-guix.git")
+               (url "https://codeberg.org/fishinthecalculator/mobilizon-reshare-guix")
                (branch "main"))))
   #;(toys-box
     (forge "github")
@@ -330,7 +330,7 @@
    (forge "sourcehut")
    (channel (channel
              (name 'kbg)
-             (url "https://git.sr.ht/~kennyballou/guix-channel.git")
+             (url "https://git.sr.ht/~kennyballou/guix-channel")
              (branch "master")
              (introduction
               (make-channel-introduction
@@ -506,7 +506,7 @@
    (forge "codeberg")
    (channel (channel
              (name 'atomized)
-             (url "https://codeberg.org/ieure/atomized-guix.git")
+             (url "https://codeberg.org/ieure/atomized-guix")
              (branch "main")
              (introduction
               (make-channel-introduction
@@ -517,7 +517,7 @@
     (forge "gitlab")
     (channel (channel
                (name 'suixpkgs)
-               (url "https://gitlab.vulnix.sh/spacecadet/suixpkgs.git")
+               (url "https://gitlab.vulnix.sh/spacecadet/suixpkgs")
                (introduction
                  (make-channel-introduction
                    "dc5e12b0b485c9ee90e3224379551b72e59d846b"
@@ -527,7 +527,7 @@
    (forge "gitlab")
    (channel (channel
              (name 'cdo)
-             (url "https://git.mutix.org/cdo/guix-channel.git")
+             (url "https://git.mutix.org/cdo/guix-channel")
              (introduction
               (make-channel-introduction
                "d8d516b1d477d287ca9cee5cbd73140ed2a0bfc8"
@@ -625,7 +625,7 @@
    (forge "codeberg")
    (channel (channel
              (name 'sijo)
-             (url "https://codeberg.org/simendsjo/dotfiles.git")
+             (url "https://codeberg.org/simendsjo/dotfiles")
              (branch "main")
              (introduction
               (make-channel-introduction
