@@ -16,6 +16,18 @@
        (openpgp-fingerprint
         "F8D5 46F3 AF37 EF53 D1B6  48BE 7B4D EB93 212B 3022"))))))
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+     (name 'divya-lambda)
+     (url "https://codeberg.org/divyaranjan/divya-lambda.git")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "fe2010125fcbe003de42436b1a73ab53cc5e8288"
+       (openpgp-fingerprint
+        "F0B3 1A69 8006 8FB8 096A  2F12 B245 10C6 108C 8D4A"))))))
+  (toys-box
     (forge "codeberg")
     (channel
       (channel
