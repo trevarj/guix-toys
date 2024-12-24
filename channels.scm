@@ -673,5 +673,15 @@
                    (openpgp-fingerprint
                      "3CD3 65F0 373C EB13 853A  F568 9FBC 6FFD 6D2D BF17"))))))
   (toys-box
+   (forge "codeberg")
+   (channel (channel
+             (name 'guix-science-nonfree)
+             (url "https://codeberg.org/guix-science/guix-science-nonfree")
+             (introduction
+              (make-channel-introduction
+               "58661b110325fd5d9b40e6f0177cc486a615817e"
+               (openpgp-fingerprint
+                "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
