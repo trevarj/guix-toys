@@ -38,7 +38,9 @@
     ((name . "Public symbols")
      (href . "/symbols"))
     ((name . "Source code")
-     (href . "https://git.sr.ht/~whereiseveryone/toys"))))
+     (href . "https://git.sr.ht/~whereiseveryone/toys"))
+    ((name . "Issue tracker")
+     (href . "https://todo.sr.ht/~whereiseveryone/toys"))))
 
 (define %title
 "       _            _    _        _         _
