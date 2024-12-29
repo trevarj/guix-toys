@@ -683,5 +683,17 @@
                (openpgp-fingerprint
                 "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))))
   (toys-box
+   (forge "sourcehut")
+   (channel
+    (channel
+     (name 'electronics)
+     (url "https://git.sr.ht/~csantosb/guix.channel-electronics")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "ba1a85b31202a711d3e3ed2f4adca6743e0ecce2"
+       (openpgp-fingerprint
+	"DA15 A1FC 975E 5AA4 0B07 EF76 F1B4 CAD1 F94E E99A"))))))
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
