@@ -159,15 +159,15 @@
                    (openpgp-fingerprint
                      "3CE4 6455 8A84 FDC6 9DB4  0CFB 090B 1199 3D9A EBB5"))))))
   (toys-box
-    (forge "github")
+    (forge "codeberg")
     (channel (channel
-               (name 'guix-science)
-               (url "https://github.com/guix-science/guix-science")
-               (introduction
-                 (make-channel-introduction
-                   "b1fe5aaff3ab48e798a4cce02f0212bc91f423dc"
-                   (openpgp-fingerprint
-                     "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))))
+	       (name 'guix-science)
+	       (url "https://codeberg.org/guix-science/guix-science")
+	       (introduction
+		 (make-channel-introduction
+		   "b1fe5aaff3ab48e798a4cce02f0212bc91f423dc"
+		   (openpgp-fingerprint
+		     "CA4F 8CF4 37D7 478F DA05  5FD4 4213 7701 1A37 8446"))))))
   (toys-box
     (forge "cgit")
     (channel (channel
