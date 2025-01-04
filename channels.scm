@@ -2,6 +2,20 @@
              (toys discovery))
 
 (list
+ (toys-box
+  (forge "gitlab")
+  (synopsis "Bleeding edge development packages of Spritely projects, such as
+Goblins and Hoot")
+  (channel
+   (channel
+    (name 'spritely)
+    (url "https://gitlab.com/spritely/spritely-guix.git")
+    (branch "main")
+    (introduction
+     (make-channel-introduction
+      "fc1a248dcc8d1da6f0460d4b03d8a6a304ccae73"
+      (openpgp-fingerprint
+       "973D E54C 08E4 ECBB A7AE  2912 8EDC 92AC 17DE 7691"))))))
   (toys-box
    (forge "cgit")
    (synopsis "Setup and management instructions for a Guix North American Build Farm")
