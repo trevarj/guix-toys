@@ -149,10 +149,11 @@
                    (openpgp-fingerprint
                      "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))))
   (toys-box
-    (forge "gitlab")
+    (forge "codeberg")
+    (synopsis "Packages from the past")
     (channel (channel
                (name 'guix-past)
-               (url "https://gitlab.inria.fr/guix-hpc/guix-past")
+               (url "https://codeberg.org/guix-science/guix-past")
                (introduction
                  (make-channel-introduction
                    "0c119db2ea86a389769f4d2b9c6f5c41c027e336"
