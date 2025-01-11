@@ -649,10 +649,10 @@ Goblins and Hoot")
                (openpgp-fingerprint
                 "9D54 3ADF 6E90 348C C606  90A9 6279 AEC2 0A95 24EC"))))))
   (toys-box
-   (forge "codeberg")
+   (forge "sourcehut")
    (channel (channel
              (name 'sijo)
-             (url "https://codeberg.org/simendsjo/dotfiles")
+             (url "https://git.sr.ht/~simendsjo/dotfiles")
              (branch "main")
              (introduction
               (make-channel-introduction
