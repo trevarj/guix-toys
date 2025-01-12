@@ -16,6 +16,18 @@ Goblins and Hoot")
       "fc1a248dcc8d1da6f0460d4b03d8a6a304ccae73"
       (openpgp-fingerprint
        "973D E54C 08E4 ECBB A7AE  2912 8EDC 92AC 17DE 7691"))))))
+ (toys-box
+  (forge "sourcehut")
+  (synopsis "Guix Common Lisp channel")
+  (channel
+   (name 'invoke-restart)
+   (url "https://git.sr.ht/~whereiseveryone/invoke-restart")
+   (branch "master")
+   (introduction
+    (make-channel-introduction
+     "bcb9f22acfa4c138026688c1c7a1327482f0e0a3"
+     (openpgp-fingerprint
+      "3B1D 7F19 E36B B60C 0F5B  2CA9 A52A A2B4 77B6 DD35")))))
   (toys-box
    (forge "cgit")
    (synopsis "Setup and management instructions for a Guix North American Build Farm")
