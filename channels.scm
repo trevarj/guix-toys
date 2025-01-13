@@ -19,15 +19,14 @@ Goblins and Hoot")
  (toys-box
   (forge "sourcehut")
   (synopsis "Guix Common Lisp channel")
-  (channel
-   (name 'invoke-restart)
-   (url "https://git.sr.ht/~whereiseveryone/invoke-restart")
-   (branch "master")
-   (introduction
-    (make-channel-introduction
-     "bcb9f22acfa4c138026688c1c7a1327482f0e0a3"
-     (openpgp-fingerprint
-      "3B1D 7F19 E36B B60C 0F5B  2CA9 A52A A2B4 77B6 DD35")))))
+  (channel (channel
+            (name 'invoke-restart)
+            (url "https://git.sr.ht/~whereiseveryone/invoke-restart")
+            (introduction
+             (make-channel-introduction
+              "bcb9f22acfa4c138026688c1c7a1327482f0e0a3"
+              (openpgp-fingerprint
+               "3B1D 7F19 E36B B60C 0F5B  2CA9 A52A A2B4 77B6 DD35"))))))
   (toys-box
    (forge "cgit")
    (synopsis "Setup and management instructions for a Guix North American Build Farm")
