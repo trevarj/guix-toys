@@ -3,6 +3,19 @@
 
 (list
  (toys-box
+  (forge "github")
+  (synopsis "Channel for bleeding edge Emacs, with the commit updating
+every two hours by a GitHub workflow")
+  (channel (channel
+            (name 'emacs-master)
+            (url "https://github.com/gs-101/emacs-master.git")
+            (branch "main")
+            (introduction
+             (make-channel-introduction
+              "568579841d0ca41a9d222a2cfcad9a7367f9073b"
+              (openpgp-fingerprint
+               "3049 BF6C 0829 94E4 38ED  4A15 3033 E0E9 F7E2 5FE4"))))))
+ (toys-box
   (forge "gitlab")
   (channel
    (channel
