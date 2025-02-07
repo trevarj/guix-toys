@@ -4,6 +4,17 @@
 (list
  (toys-box
   (forge "gitlab")
+  (channel
+   (channel
+    (name 'bloup)
+    (url "https://framagit.org/nll/bloup.git")
+    (introduction
+     (make-channel-introduction
+      "f627568549edd28c97dded5e5ec985cd11e95f58"
+      (openpgp-fingerprint
+       "5D54 CF25 57B2 38E8 8DC1 80A2 2D22 3241 0AB7 4043"))))))
+ (toys-box
+  (forge "gitlab")
   (synopsis "Bleeding edge development packages of Spritely projects, such as
 Goblins and Hoot")
   (channel
