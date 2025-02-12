@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;;
-;;; Copyright © 2022, 2023 unwox <me@unwox.com>
+;;; Copyright © 2022-2025 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -74,26 +74,39 @@
   "Locally checkout and authenticate boxes specified in FILE.  Previous
 checkouts are cached."
   (define toy-boxes (primitive-load file))
-  (map
-    (lambda (box)
-      (let*
-        ((channel (toys-box-channel box))
-         (url (channel-url channel))
-         (name (channel-name channel))
-         (ref (or (channel-commit channel) (channel-branch channel) "master"))
-         (introduction (channel-introduction channel))
-         (checkout-dir (fetch-channel url ref introduction))
-         (channel-metadata (read-channel-metadata-from-source checkout-dir))
-         (dir (channel-metadata-directory channel-metadata))
-         (commit (with-repository
-                   checkout-dir repository
-                   (oid->string
-                     (reference-target (repository-head repository))))))
-        `((box . ,box)
-          (dir . ,dir)
-          (commit . ,commit)
-          (module-dir . ,(string-append checkout-dir dir)))))
-    toy-boxes))
+  (define result
+    (map
+      (lambda (box)
+        (with-exception-handler
+          (lambda (exception)
+            (format (current-error-port)
+              "Error while pulling ~s channel: ~s\n"
+              (channel-name (toys-box-channel box)) exception)
+            #f)
+          (lambda ()
+            (let*
+              ((channel (toys-box-channel box))
+               (url (channel-url channel))
+               (name (channel-name channel))
+               (ref (or (channel-commit channel)
+                        (channel-branch channel)
+                        "master"))
+               (introduction (channel-introduction channel))
+               (checkout-dir (fetch-channel url ref introduction))
+               (channel-metadata (read-channel-metadata-from-source checkout-dir))
+               (dir (channel-metadata-directory channel-metadata))
+               (commit (with-repository
+                         checkout-dir repository
+                         (oid->string
+                           (reference-target (repository-head repository))))))
+              `((box . ,box)
+                (dir . ,dir)
+                (commit . ,commit)
+                (module-dir . ,(string-append checkout-dir dir)))))
+          #:unwind? #t))
+      toy-boxes))
+
+  (filter identity result))
 
 (define (fold-public-symbols kons knil boxes)
   "Apply KONS to the list of public symbols found in BOXES.  KNIL is an initial
@@ -117,32 +130,35 @@ value to append results to."
   (define public-symbols
     (fold
       (lambda (box-wrapper result)
-        (format #t "Scanning ~a...\n"
-                (symbol->string
-                  (channel-name
-                    (toys-box-channel (assoc-ref box-wrapper 'box)))))
-        (let*
-          ((box (assoc-ref box-wrapper 'box))
-           (dir (assoc-ref box-wrapper 'module-dir))
-           ;; FIXME: this leaks memory, there should be a way to remove modules
-           ;; after they are resolve-interface'd and scanned.
-           (introduction
-             (channel-introduction
-               (toys-box-channel box)))
-           (modules
-             (scheme-modules
-               dir
-               #:warn warn-about-load-error)))
-          (append
-            (fold-module-public-variables*
-              (lambda (module symbol variable result)
-                (apply kons
-                       (list box module symbol variable box-wrapper result)))
-              knil
-              modules)
-            result)))
+        (with-exception-handler
+          (lambda (exception)
+            (format (current-error-port)
+              "Error while scanning ~s channel: ~s\n"
+              (channel-name (toys-box-channel (assoc-ref box-wrapper 'box)))
+              exception)
+            #f)
+          (lambda ()
+            (format #t "Scanning ~a...\n"
+                    (symbol->string
+                      (channel-name
+                        (toys-box-channel (assoc-ref box-wrapper 'box)))))
+            (let*
+              ((box (assoc-ref box-wrapper 'box))
+               (dir (assoc-ref box-wrapper 'module-dir))
+               ;; FIXME: this leaks memory, there should be a way to remove modules
+               ;; after they are resolve-interface'd and scanned.
+               (introduction (channel-introduction (toys-box-channel box)))
+               (modules (scheme-modules dir #:warn warn-about-load-error)))
+              (append
+                (fold-module-public-variables*
+                  (lambda (module symbol variable result)
+                    (apply kons
+                           (list box module symbol variable box-wrapper result)))
+                  knil
+                  modules)
+                result)))))
       '()
       boxes))
 
   (set! %load-path old-load-path)
-  public-symbols)
+  (filter identity public-symbols))
