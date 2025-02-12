@@ -8,7 +8,7 @@
 every two hours by a GitHub workflow")
   (channel (channel
             (name 'emacs-master)
-            (url "https://github.com/gs-101/emacs-master.git")
+            (url "https://github.com/gs-101/emacs-master")
             (branch "main")
             (introduction
              (make-channel-introduction
@@ -20,7 +20,7 @@ every two hours by a GitHub workflow")
   (channel
    (channel
     (name 'bloup)
-    (url "https://framagit.org/nll/bloup.git")
+    (url "https://framagit.org/nll/bloup")
     (introduction
      (make-channel-introduction
       "f627568549edd28c97dded5e5ec985cd11e95f58"
@@ -33,7 +33,7 @@ Goblins and Hoot")
   (channel
    (channel
     (name 'spritely)
-    (url "https://gitlab.com/spritely/spritely-guix.git")
+    (url "https://gitlab.com/spritely/spritely-guix")
     (branch "main")
     (introduction
      (make-channel-introduction
@@ -69,7 +69,7 @@ Goblins and Hoot")
    (channel
     (channel
      (name 'divya-lambda)
-     (url "https://codeberg.org/divyaranjan/divya-lambda.git")
+     (url "https://codeberg.org/divyaranjan/divya-lambda")
      (branch "master")
      (introduction
       (make-channel-introduction
