@@ -76,7 +76,8 @@ Goblins and Hoot")
        "fe2010125fcbe003de42436b1a73ab53cc5e8288"
        (openpgp-fingerprint
         "F0B3 1A69 8006 8FB8 096A  2F12 B245 10C6 108C 8D4A"))))))
-  (toys-box
+  ;; Is superseeded by gs-101/emacs-master.
+  #;(toys-box
     (forge "codeberg")
     (channel
       (channel
