@@ -676,7 +676,7 @@ for selecting fields."
        (sqlite-prepare db
          (format #f "SELECT ~a FROM ~a j LIMIT ? OFFSET ?" select from)))
      (columns (sqlite-column-names stmt)))
-    (sqlite-bind-arguments stmt limit (* (- page 1)))
+    (sqlite-bind-arguments stmt limit (* (- page 1) limit))
     (sqlite-map
       (lambda (row)
         (gather-row row columns))
@@ -728,7 +728,7 @@ NAME string.  Use `j.` prefix for selecting fields."
                       LIMIT ? OFFSET ?"
                   select from))))
      (columns (sqlite-column-names stmt)))
-    (sqlite-bind-arguments stmt name limit (* (- page 1) 24))
+    (sqlite-bind-arguments stmt name limit (* (- page 1) limit))
     (sqlite-map
       (lambda (row)
         (gather-row row columns))
@@ -756,7 +756,7 @@ string.  Use `j.` prefix for selecting fields."
      (wildcard
        (format #f "\"~a\" *"
                (string-delete #\" query))))
-    (sqlite-bind-arguments stmt from wildcard limit (* (- page 1) 24))
+    (sqlite-bind-arguments stmt from wildcard limit (* (- page 1) limit))
     (sqlite-map
       (lambda (row) (gather-row row columns))
       stmt)))
