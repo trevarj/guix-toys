@@ -171,6 +171,11 @@ Goblins and Hoot")
                (name 'guix-hpc)
                (url "https://gitlab.inria.fr/guix-hpc/guix-hpc"))))
   (toys-box
+    (forge "gitlab")
+    (channel (channel
+               (name 'guix-hpc-non-free)
+               (url "https://gitlab.inria.fr/guix-hpc/guix-hpc-non-free"))))
+  (toys-box
     (forge "sourcehut")
     (channel (channel
                (name 'rde)
