@@ -32,7 +32,7 @@
             search-public-symbols
             show-public-symbols))
 
-(define %default-instance-url "https://toys.whereis.xn--q9jyb4c")
+(define %default-instance-url "https://toys.whereis.social")
 
 (define (request method args)
   (let* ((uri (format #f "~a/api/~a?~a"
