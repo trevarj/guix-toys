@@ -763,6 +763,15 @@ Goblins and Hoot")
        "ba1a85b31202a711d3e3ed2f4adca6743e0ecce2"
        (openpgp-fingerprint
          "DA15 A1FC 975E 5AA4 0B07 EF76 F1B4 CAD1 F94E E99A"))))))
+
+  (toys-box
+   (forge "github")
+   (channel
+    (channel
+     (name 'lauras-channel)
+     (url "https://github.com/jakiki6/lauras-channel")
+     (branch "master"))))
+
   (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
