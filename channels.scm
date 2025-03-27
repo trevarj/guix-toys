@@ -582,7 +582,7 @@ Goblins and Hoot")
    (forge "codeberg")
    (channel (channel
              (name 'kakafarm)
-             (url "https://codeberg.org/kakafarm/guix-kakafarm-channel"))))
+             (url "https://codeberg.org/kakafarm/kakafarm-guix-channel"))))
   (toys-box
    (forge "codeberg")
    (channel (channel
