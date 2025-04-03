@@ -773,5 +773,20 @@ Goblins and Hoot")
      (branch "master"))))
 
   (toys-box
+   (forge "forgejo")
+   (synopsis "Channel with an assortment of tools intended to eventually
+be merged into the main repository, and an almost complete collection
+of Chicken Scheme eggs")
+   (channel
+    (channel
+     (name 'ziltis-guixchannel)
+     (url "https://forgejo.lyrion.ch/zilti/guixchannel")
+     (introduction
+      (make-channel-introduction
+       "805120dbd9c57cbab48e6a01b49782a5ccb7f3f0"
+       (openpgp-fingerprint
+        "37F6 55BA F43B C0FF 300A  91A1 B389 76E8 2C9D AE42"))))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
