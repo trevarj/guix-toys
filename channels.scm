@@ -802,5 +802,18 @@ of Chicken Scheme eggs")
      (url "https://github.com/guix-science/guix-bioc.git"))))
 
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+     (name 'jacop)
+     (url "https://codeberg.org/jA_cOp/guix-channel")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "52d5279eaf9678a15c6fd2617b24e55254a54ac7"
+       (openpgp-fingerprint
+        "9BBF 97C8 4A99 F393 0F7C  27C0 821C DF90 87BE 586A"))))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
