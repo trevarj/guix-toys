@@ -122,16 +122,27 @@ every two hours by a GitHub workflow")
                      "7c67c3a9f299517bfc4ce8235628657898dd26b2"
                      (openpgp-fingerprint
                        "CD2D 5EAA A98C CB37 DA91  D6B0 5F58 1664 7F8B E551"))))))
+   ;; Is superseded by garrgravarr/guix-emacs
+   ;; (toys-box
+   ;;  (forge "github")
+   ;;  (channel (channel
+   ;;            (name 'emacs)
+   ;;            (url "https://github.com/babariviere/guix-emacs")
+   ;;            (introduction
+   ;;             (make-channel-introduction
+   ;;              "72ca4ef5b572fea10a4589c37264fa35d4564783"
+   ;;              (openpgp-fingerprint
+   ;;               "261C A284 3452 FB01 F6DF  6CF4 F9B7 864F 2AB4 6F18"))))))
    (toys-box
-     (forge "github")
-     (channel (channel
-                (name 'emacs)
-                (url "https://github.com/babariviere/guix-emacs")
-                (introduction
-                  (make-channel-introduction
-                    "72ca4ef5b572fea10a4589c37264fa35d4564783"
-                    (openpgp-fingerprint
-                      "261C A284 3452 FB01 F6DF  6CF4 F9B7 864F 2AB4 6F18"))))))
+    (forge "github")
+    (channel (channel
+              (name 'emacs)
+              (url "https://github.com/garrgravarr/guix-emacs")
+              (introduction
+               (make-channel-introduction
+                "d676ef5f94d2c1bd32f11f084d47dcb1a180fdd4"
+                (openpgp-fingerprint
+                 "2DDF 9601 2828 6172 F10C  51A4 E80D 3600 684C 71BA"))))))
    (toys-box
      (forge "github")
      (channel (channel
