@@ -826,5 +826,13 @@ of Chicken Scheme eggs")
         "9BBF 97C8 4A99 F393 0F7C  27C0 821C DF90 87BE 586A"))))))
 
   (toys-box
+   (forge "sourcehut")
+   (synopsis "Personal channel of Skylar Hill with whatever packages she wants but couldn't find elsewhere.")
+   (channel
+    (channel
+     (name 'skylark)
+     (url "https://git.sr.ht/~stellarskylark/skylark-guix"))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
