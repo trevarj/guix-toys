@@ -831,7 +831,8 @@ of Chicken Scheme eggs")
    (channel
     (channel
      (name 'skylark)
-     (url "https://git.sr.ht/~stellarskylark/skylark-guix"))))
+     (url "https://git.sr.ht/~stellarskylark/skylark-guix")
+     (branch "main"))))
 
   (toys-box
    (forge "cgit")
