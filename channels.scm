@@ -843,7 +843,7 @@ of Chicken Scheme eggs")
      (branch "trunk")
      (introduction
       (make-channel-introduction
-       "5a0ad031924a848a07bfdb455da4ae07b0266ef4"
+       "914dc7ff51fd7c66f1ecc574b40ad1481731b936"
        (openpgp-fingerprint
         "83BC 6E1C 8726 B8C2 97F8 D16E 24F4 6738 CE11 4AF6"))))))
 
