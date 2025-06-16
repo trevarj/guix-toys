@@ -849,4 +849,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "cgit")
+   (synopsis "Guix channel for and by UNIST Lab of Software")
+   (channel
+    (channel
+     (name 'loftix)
+     (url "https://trong.loang.net/~cnx/loftix")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "1b5437ce217590545f7a7319a5c62b6300aee6c4"
+       (openpgp-fingerprint
+        "838A FE0D 55DC 074E 360F  943A 84B6 9CE6 F3F6 B767"))))))
+
+  (toys-box
+   (forge "cgit")
    (channel %default-guix-channel)))
