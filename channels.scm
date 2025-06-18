@@ -862,5 +862,19 @@ of Chicken Scheme eggs")
         "838A FE0D 55DC 074E 360F  943A 84B6 9CE6 F3F6 B767"))))))
 
   (toys-box
+   (forge "codeberg")
+   (synopsis "Personal guix channel for Abbé")
+   (channel
+    (channel
+     (name 'abbe)
+     (url "https://codeberg.org/group/guix-modules.git")
+     (branch "mainline")
+     (introduction
+      (make-channel-introduction
+       "8c754e3a4b49af7459a8c99de130fa880e5ca86a"
+       (openpgp-fingerprint
+         "F682 CDCC 39DC 0FEA E116  20B6 C746 CFA9 E74F A4B0"))))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
