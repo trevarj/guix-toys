@@ -803,14 +803,14 @@ of Chicken Scheme eggs")
    (channel
     (channel
      (name 'guix-cran)
-     (url "https://github.com/guix-science/guix-cran.git"))))
+     (url "https://github.com/guix-science/guix-cran"))))
 
   (toys-box
    (forge "github")
    (channel
     (channel
      (name 'guix-bioc)
-     (url "https://github.com/guix-science/guix-bioc.git"))))
+     (url "https://github.com/guix-science/guix-bioc"))))
 
   (toys-box
    (forge "codeberg")
@@ -839,7 +839,7 @@ of Chicken Scheme eggs")
    (channel
     (channel
      (name 'sss)
-     (url "https://codeberg.org/jjba23/sss.git")
+     (url "https://codeberg.org/jjba23/sss")
      (branch "trunk")
      (introduction
       (make-channel-introduction
@@ -867,7 +867,7 @@ of Chicken Scheme eggs")
    (channel
     (channel
      (name 'abbe)
-     (url "https://codeberg.org/group/guix-modules.git")
+     (url "https://codeberg.org/group/guix-modules")
      (branch "mainline")
      (introduction
       (make-channel-introduction
