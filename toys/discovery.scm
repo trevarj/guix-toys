@@ -30,7 +30,8 @@
 
   #:export (fetch-boxes
             fetch-channel
-            fold-public-symbols
+            for-each-box
+            for-each-symbol
 
             toys-box
             toys-box-channel
@@ -70,10 +71,18 @@
                       #:keyring-reference "origin/keyring")))
   checkout-dir)
 
-(define (fetch-boxes file)
+(define* (fetch-boxes file #:optional (channel #f))
   "Locally checkout and authenticate boxes specified in FILE.  Previous
 checkouts are cached."
-  (define toy-boxes (primitive-load file))
+  (define toy-boxes
+    (if channel
+      (filter
+        (lambda (box)
+          (equal? channel
+                  (symbol->string (channel-name (toys-box-channel box)))))
+        (primitive-load file))
+      (primitive-load file)))
+
   (define result
     (map
       (lambda (box)
@@ -108,9 +117,20 @@ checkouts are cached."
 
   (filter identity result))
 
-(define (fold-public-symbols kons knil boxes)
-  "Apply KONS to the list of public symbols found in BOXES.  KNIL is an initial
-value to append results to."
+(define (for-each-symbol fn box-wrapper)
+  (let*
+    ((box (assoc-ref box-wrapper 'box))
+     (dir (assoc-ref box-wrapper 'module-dir))
+     ;; FIXME: this leaks memory, there should be a way to remove modules
+     ;; after they are resolve-interface'd and scanned.
+     (modules (scheme-modules dir #:warn warn-about-load-error)))
+    (fold-module-public-variables*
+      (lambda (module symbol variable result)
+        (apply fn (list box module symbol variable box-wrapper)))
+      '()
+      modules)))
+
+(define (for-each-box fn boxes)
   (define old-load-path %load-path)
   (set! %load-path
     (append
@@ -127,38 +147,19 @@ value to append results to."
           boxes))
       %load-path))
 
-  (define public-symbols
-    (fold
-      (lambda (box-wrapper result)
-        (with-exception-handler
-          (lambda (exception)
-            (format (current-error-port)
-              "Error while scanning ~s channel: ~s\n"
-              (channel-name (toys-box-channel (assoc-ref box-wrapper 'box)))
-              exception)
-            #f)
-          (lambda ()
-            (format #t "Scanning ~a...\n"
-                    (symbol->string
-                      (channel-name
-                        (toys-box-channel (assoc-ref box-wrapper 'box)))))
-            (let*
-              ((box (assoc-ref box-wrapper 'box))
-               (dir (assoc-ref box-wrapper 'module-dir))
-               ;; FIXME: this leaks memory, there should be a way to remove modules
-               ;; after they are resolve-interface'd and scanned.
-               (introduction (channel-introduction (toys-box-channel box)))
-               (modules (scheme-modules dir #:warn warn-about-load-error)))
-              (append
-                (fold-module-public-variables*
-                  (lambda (module symbol variable result)
-                    (apply kons
-                           (list box module symbol variable box-wrapper result)))
-                  knil
-                  modules)
-                result)))))
-      '()
-      boxes))
+  (for-each
+    (lambda (box-wrapper)
+      (with-exception-handler
+        (lambda (exception)
+          ;; FIXME: how the hell is one supposed to print errors in this
+          ;; language properly?
+          (format (current-error-port)
+            "Error while scanning ~s channel: ~s\n"
+            (channel-name (toys-box-channel (assoc-ref box-wrapper 'box)))
+            exception)
+          #f)
+        (lambda () (fn box-wrapper))
+        #:unwind? #t))
+    boxes)
 
-  (set! %load-path old-load-path)
-  (filter identity public-symbols))
+  (set! %load-path old-load-path))

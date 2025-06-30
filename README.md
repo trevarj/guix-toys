@@ -4,7 +4,7 @@
 
 Issue tracker is [here](https://todo.sr.ht/~whereiseveryone/toys).
 
-The live instance can be found at [toys.whereis.みんな](https://toys.whereis.みんな/)
+The live instance can be found at [toys.whereis.social](https://toys.whereis.social).
 
 ## join
 
@@ -36,7 +36,7 @@ Start a development environment:
 
 ```sh
 guix shell
-# or optionally
+# or even
 guix shell --container --network
 ```
 
@@ -46,10 +46,12 @@ Initialize the database:
 ./dev init
 ```
 
-Pull symbols data (you may want to remove some channels for faster pull times):
+Pull symbols data:
 
 ```sh
 ./dev pull channels.scm
+# or only pull specific channel
+./dev pull channels.scm CHANNEL-NAME
 ```
 
 Run the server:
@@ -58,10 +60,12 @@ Run the server:
 ./dev serve
 ```
 
+Visit [http://localhost:8080](http://localhost:8080).
+
 ## support
 
 If you wish to support the project please consider donating. All donations go
-to covering hosting costs for our [toys instance](https://toys.whereis.みんな/).
+to covering hosting costs for our [toys instance](https://toys.whereis.social).
 Currently we pay $12.5 a month for that.
 
 Monero:

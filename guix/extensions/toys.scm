@@ -2,7 +2,7 @@
 ;;;
 ;;; Copyright © 2022 Charles Jackson <charles.b.jackson@protonmail.com>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
-;;; Copyright © 2022-2024 unwox <me@unwox.com>
+;;; Copyright © 2022-2025 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -28,6 +28,7 @@
   #:use-module (toys templates)
   #:use-module (toys ui)
   #:use-module (gnu services)
+  #:use-module (guix build utils)
   #:use-module (guix channels)
   #:use-module (guix licenses)
   #:use-module (guix modules)
@@ -67,7 +68,18 @@
      (init-db db))
 
     (("pull" file)
-     (pull-data db (fetch-boxes file)))
+     ;; This approach is kind of stupid and annoying but at the same time is
+     ;; necessary to keep memory consumption of this command (relatively) low.
+     ;; By re-running this command for each channel separately we can avoid
+     ;; keeping already scanned modules in memory.
+     (for-each
+       (lambda (box)
+         (invoke "guix" "toys" "pull" file
+                 (symbol->string (channel-name (toys-box-channel box)))))
+       (primitive-load file)))
+
+    (("pull" file channel)
+     (pull-data db (fetch-boxes file channel)))
 
     (("serve")
      (debug "Listening on :8080")
@@ -128,7 +140,8 @@
      (print-paginated-results print-public-symbol res))
 
     (_
-      (show-help))))
+      (show-help)
+      (exit 1))))
 
 (define (show-help)
   (display "Usage: guix toys [OPTION] ACTION [ARGS]
@@ -138,8 +151,9 @@ The valid values for ACTION are:
 
    init
        initialize the database file
-   pull FILE
-       fetch symbols data from the channels defined in FILE
+   pull FILE [CHANNEL]
+       fetch symbols from all channels (or optionally specified CHANNEL)
+       defined in FILE.
    serve
        start the web server listening on 127.0.0.1:8080
 
@@ -172,8 +186,7 @@ The valid values for ACTION are:
   (newline)
   (display "
   -h   display this help and exit")
-  (newline)
-  (exit 1))
+  (newline))
 
 (define (debug msg)
   "Prints the debug MSG to stdout."
@@ -208,7 +221,7 @@ The valid values for ACTION are:
      PRAGMA synchronous=NORMAL;
 
      DROP TABLE IF EXISTS search;
-     CREATE VIRTUAL TABLE search USING fts5(name, description, fk, `table`);
+     CREATE VIRTUAL TABLE search USING fts5(name, description, fk, channel, `table`);
 
      DROP TABLE IF EXISTS boxes;
      CREATE TABLE boxes (
@@ -266,73 +279,72 @@ The valid values for ACTION are:
 (define (pull-data db boxes)
   "Removes existing data about symbols from DB and then pulls new data
 from BOXES into it."
-  (sqlite-exec
-    db
-    "PRAGMA synchronous=NORMAL;
-     BEGIN IMMEDIATE;
-     DELETE FROM search;
-     DELETE FROM boxes;
-     DELETE FROM public_symbols;
-     DELETE FROM service_types;
-     DELETE FROM packages;")
+  (for-each-box
+    (lambda (box-wrapper)
+      (define dir (assoc-ref box-wrapper 'module-dir))
+      (define box (assoc-ref box-wrapper 'box))
+      (define channel (toys-box-channel box))
+      (define _channel-name (symbol->string (channel-name channel)))
 
-  (for-each
-    (lambda (wrapper)
-      (let* ((stmt
-              (sqlite-prepare
-                db
-                "INSERT INTO boxes
-                 (id, dir, branch, `commit`, url, synopsis, subscription_snippet)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)
-                 RETURNING id"
-                #:cache? #t))
-            (search-stmt
-              (sqlite-prepare
-                db
-                "INSERT INTO search
-                 (name, description, fk, `table`)
-                 VALUES (?, ?, ?, ?)"
-                #:cache? #t))
-            (dir (assoc-ref wrapper 'module-dir))
-            (box (assoc-ref wrapper 'box))
-            (channel (toys-box-channel box)))
-        (define id
-          (vector-ref
-            (car
+      (format #t "Scanning ~a...\n" _channel-name)
+
+      (sqlite-exec db "BEGIN IMMEDIATE;")
+
+      (with-exception-handler
+        (lambda (exception)
+          (sqlite-exec db "ROLLBACK")
+          (raise-exception exception))
+        (lambda ()
+          (for-each
+            (lambda (query)
               (db-execute-stmt
-                stmt
-                (list
-                  (symbol->string (channel-name channel))
-                  dir
-                  (channel-branch channel)
-                  (assoc-ref wrapper 'commit)
-                  (channel-url channel)
-                  (toys-box-synopsis box)
-                  (serialize-channel channel))))
-            0))
-        (db-execute-stmt
-          search-stmt
-          (list
-            (symbol->string (channel-name channel))
-            "" id "boxes"))))
-    boxes)
+                (sqlite-prepare db query #:cache? #t)
+                (list _channel-name)))
+            (list "DELETE FROM search WHERE channel = ?"
+                  "DELETE FROM boxes WHERE id = ?"
+                  "DELETE FROM public_symbols WHERE channel = ?"
+                  "DELETE FROM service_types WHERE channel = ?"
+                  "DELETE FROM packages WHERE channel = ?"))
 
-  (fold-public-symbols
-    (lambda (box module symbol variable box-wrapper result)
-      (insert-public-symbol variable db module box symbol box-wrapper)
+          (db-execute-stmt
+            (sqlite-prepare
+              db
+              "INSERT INTO search (name, description, fk, channel, `table`)
+               VALUES (?, ?, ?, ?, ?)"
+              #:cache? #t)
+            (list _channel-name "" _channel-name _channel-name "boxes"))
 
-      (when (variable-bound? variable)
-        (let ((var (variable-ref variable)))
-          (cond
-            ((service-type? var)
-              (insert-service-type var db box module box-wrapper))
-            ((package? var)
-              (insert-package var db box module box-wrapper)))))
+          (db-execute-stmt
+            (sqlite-prepare
+              db
+              "INSERT INTO boxes
+               (id, dir, branch, `commit`, url, synopsis, subscription_snippet)
+               VALUES (?, ?, ?, ?, ?, ?, ?)"
+              #:cache? #t)
+            (list
+              _channel-name
+              dir
+              (channel-branch channel)
+              (assoc-ref box-wrapper 'commit)
+              (channel-url channel)
+              (toys-box-synopsis box)
+              (serialize-channel channel)))
 
-      '())
-    '()
-    boxes)
-  (sqlite-exec db "COMMIT"))
+          (for-each-symbol
+            (lambda (box module symbol variable box-wrapper)
+              (insert-public-symbol variable db module box symbol box-wrapper)
+
+              (when (variable-bound? variable)
+                (let ((var (variable-ref variable)))
+                  (cond
+                    ((service-type? var)
+                      (insert-service-type var db box module box-wrapper))
+                    ((package? var)
+                      (insert-package var db box module box-wrapper))))))
+            box-wrapper)
+
+          (sqlite-exec db "COMMIT"))))
+    boxes))
 
 ;;;
 ;;; Packages
@@ -340,10 +352,8 @@ from BOXES into it."
 
 (define (normalize-inputs inputs)
   "Returns normalized view of the INPUTS with their versions."
-  (let ((input-packages (filter
-                          (lambda (p)
-                            (package? (cadr p)))
-                          inputs)))
+  (let ((input-packages (filter (lambda (p) (package? (cadr p)))
+                                inputs)))
     (map
       (lambda (input)
         (define input-package (cadr input))
@@ -419,8 +429,7 @@ from BOXES into it."
                              (license-name item)
                              (license-uri item)))))
     (if (list? license)
-      (map normalize
-           license)
+      (map normalize license)
       (if license
         (list (normalize license))
         '()))))
@@ -465,13 +474,7 @@ from BOXES into it."
                  variable-procedure?
                  (procedure-documentation (variable-ref variable)))
                "")))
-    (list name
-          channel-name
-          mod-name
-          file
-          url
-          doc
-          stripped-signature)))
+    (list name channel-name mod-name file url doc stripped-signature)))
 
 (define (insert-public-symbol variable db module box symbol box-wrapper)
   "Serializes and inserts VARIABLE and corresponding search row into the DB."
