@@ -490,8 +490,8 @@ from BOXES into it."
            (sqlite-prepare
              db
              "INSERT INTO search
-              (name, description, fk, `table`)
-              VALUES (?,?,?,?)"
+              (name, description, fk, channel, `table`)
+              VALUES (?,?,?,?,?)"
              #:cache? #t))
          (data
            (serialize-public-symbol variable module box symbol box-wrapper)))
@@ -501,7 +501,9 @@ from BOXES into it."
         0))
     (db-execute-stmt
       search-stmt
-      (list (symbol->string symbol) "" id "public_symbols"))))
+      (list (symbol->string symbol) "" id
+            (symbol->string (channel-name (toys-box-channel box)))
+            "public_symbols"))))
 
 (define (serialize-service-type service-type box module box-wrapper)
   "Serializes SERVICE-TYPE for database storage."
@@ -545,8 +547,8 @@ into the DB."
            (sqlite-prepare
              db
              "INSERT INTO search
-              (name, description, fk, `table`)
-              VALUES (?,?,?,?)"
+              (name, description, fk, channel, `table`)
+              VALUES (?,?,?,?,?)"
              #:cache? #t))
          (data
            (serialize-service-type service-type box module box-wrapper)))
@@ -559,6 +561,7 @@ into the DB."
       (list (symbol->string (service-type-name service-type))
             (service-type-description service-type)
             id
+            (symbol->string (channel-name (toys-box-channel box)))
             "service_types"))))
 
 (define (serialize-package package box module box-wrapper)
@@ -645,8 +648,8 @@ into the DB."
            (sqlite-prepare
              db
              "INSERT INTO search
-              (name, description, fk, `table`)
-              VALUES (?,?,?,?)"
+              (name, description, fk, channel, `table`)
+              VALUES (?,?,?,?,?)"
              #:cache? #t))
          (data
            (serialize-package package box module box-wrapper)))
@@ -659,6 +662,7 @@ into the DB."
       (list (package-name package)
             (package-description package)
             id
+            (symbol->string (channel-name (toys-box-channel box)))
             "packages"))))
 
 (define (gather-row row columns)
