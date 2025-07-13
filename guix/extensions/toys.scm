@@ -59,89 +59,104 @@
         (newline paginated))
       (vector->list results))))
 
+(define %db-directory
+  (string-append (cache-directory #:ensure? #t)
+                 "/toys"))
+(when (not (file-exists? %db-directory))
+  (mkdir %db-directory))
+
+(define db
+  (sqlite-open
+    (format #f "file:~a/db.sqlite"
+            %db-directory)))
+
 (define-command (guix-toys . args)
   (category extension)
   (synopsis "Explore packages and services through REST API")
-  (match args
+  (dynamic-wind noop
+    (lambda ()
+      (match args
+        (("init")
+        (init-db db))
 
-    (("init")
-     (init-db db))
+        (("pull" file)
+        ;; This approach is kind of stupid and annoying but at the same time is
+        ;; necessary to keep memory consumption of this command (relatively) low.
+        ;; By re-running this command for each channel separately we can avoid
+        ;; keeping already scanned modules in memory.
+        (for-each
+          (lambda (box)
+            (invoke "guix" "toys" "pull" file
+                    (symbol->string (channel-name (toys-box-channel box)))))
+          (primitive-load file)))
 
-    (("pull" file)
-     ;; This approach is kind of stupid and annoying but at the same time is
-     ;; necessary to keep memory consumption of this command (relatively) low.
-     ;; By re-running this command for each channel separately we can avoid
-     ;; keeping already scanned modules in memory.
-     (for-each
-       (lambda (box)
-         (invoke "guix" "toys" "pull" file
-                 (symbol->string (channel-name (toys-box-channel box)))))
-       (primitive-load file)))
+        (("pull" file channel)
+        (pull-data db (fetch-boxes file channel)))
 
-    (("pull" file channel)
-     (pull-data db (fetch-boxes file channel)))
+        (("serve")
+        (debug "Listening on :8080")
+        (run-server toys-api))
 
-    (("serve")
-     (debug "Listening on :8080")
-     (run-server toys-api))
+        (("package" "search" query)
+        (define-values (res err) (search-packages query))
+        (when err (error err))
+        (print-paginated-results print-package res))
 
-    (("package" "search" query)
-     (define-values (res err) (search-packages query))
-     (when err (error err))
-     (print-paginated-results print-package res))
+        (("package" "show" query)
+        (define-values (res err) (show-packages query))
+        (when err (error err))
+        (print-paginated-results print-package res))
 
-    (("package" "show" query)
-     (define-values (res err) (show-packages query))
-     (when err (error err))
-     (print-paginated-results print-package res))
+        ((or ("package" "install" . packages)
+            ("install" . packages))
+        (if (< 0 (length packages))
+          (for-each install-package packages)
+          (show-help)))
 
-    ((or ("package" "install" . packages)
-         ("install" . packages))
-     (if (< 0 (length packages))
-      (for-each install-package packages)
-      (show-help)))
+        (("package" "clone" name . rest)
+        (define packages (show-packages name))
+        (when (< 0 (vector-length packages))
+          (let* ((package (vector-ref packages 0))
+                  (origin (deserialize-origin (assoc-ref package "origin")))
+                  (directory (if (null? rest) name (car rest))))
+            (clone-origin origin (or directory name)))))
 
-    (("package" "clone" name . rest)
-     (define packages (show-packages name))
-     (when (< 0 (vector-length packages))
-       (let* ((package (vector-ref packages 0))
-              (origin (deserialize-origin (assoc-ref package "origin")))
-              (directory (if (null? rest) name (car rest))))
-         (clone-origin origin (or directory name)))))
+        (("service" "search" query)
+        (define-values (res err) (search-services query))
+        (when err (error err))
+        (print-paginated-results print-service res))
 
-    (("service" "search" query)
-     (define-values (res err) (search-services query))
-     (when err (error err))
-     (print-paginated-results print-service res))
+        (("service" "show" query)
+        (define-values (res err) (show-services query))
+        (when err (error err))
+        (print-paginated-results print-service res))
 
-    (("service" "show" query)
-     (define-values (res err) (show-services query))
-     (when err (error err))
-     (print-paginated-results print-service res))
+        (("channel" "search" query)
+        (define-values (res err) (search-channels query))
+        (when err (error err))
+        (print-paginated-results print-channel res))
 
-    (("channel" "search" query)
-     (define-values (res err) (search-channels query))
-     (when err (error err))
-     (print-paginated-results print-channel res))
+        (("channel" "show" query)
+        (define-values (res err) (show-channels query))
+        (when err (error err))
+        (print-paginated-results print-channel res))
 
-    (("channel" "show" query)
-     (define-values (res err) (show-channels query))
-     (when err (error err))
-     (print-paginated-results print-channel res))
+        (("symbol" "search" query)
+        (define-values (res err) (search-public-symbols query))
+        (when err (error err))
+        (print-paginated-results print-public-symbol res))
 
-    (("symbol" "search" query)
-     (define-values (res err) (search-public-symbols query))
-     (when err (error err))
-     (print-paginated-results print-public-symbol res))
+        (("symbol" "show" query)
+        (define-values (res err) (show-public-symbols query))
+        (when err (error err))
+        (print-paginated-results print-public-symbol res))
 
-    (("symbol" "show" query)
-     (define-values (res err) (show-public-symbols query))
-     (when err (error err))
-     (print-paginated-results print-public-symbol res))
+        (_
+          (show-help)
+          (exit 1))))
 
-    (_
-      (show-help)
-      (exit 1))))
+    (lambda ()
+      (sqlite-close db))))
 
 (define (show-help)
   (display "Usage: guix toys [OPTION] ACTION [ARGS]
@@ -191,17 +206,6 @@ The valid values for ACTION are:
 (define (debug msg)
   "Prints the debug MSG to stdout."
   (display (string-append "% " msg "\n")))
-
-(define %db-directory
-  (string-append (cache-directory #:ensure? #t)
-                 "/toys"))
-(when (not (file-exists? %db-directory))
-  (mkdir %db-directory))
-
-(define db
-  (sqlite-open
-    (format #f "file:~a/db.sqlite"
-            %db-directory)))
 
 (define %last-updated-at
   (date->string (current-date 0) "~4"))
