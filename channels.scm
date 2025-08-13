@@ -339,10 +339,10 @@ Goblins and Hoot")
                      "13E7 6CD6 E649 C28C 3385  4DF5 5E5A A665 6149 17F7"))))))
 
   (toys-box
-    (forge "sourcehut")
+    (forge "stagit")
     (channel (channel
                (name 'waggle)
-               (url "https://git.sr.ht/~lunabee/waggle")
+               (url "https://git.lunabee.space/waggle")
                (branch "trunk")
                (introduction
                  (make-channel-introduction
