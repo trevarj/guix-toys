@@ -539,10 +539,10 @@ Goblins and Hoot")
                 "8D10 60B9 6BB8 292E 829B  7249 AED4 1CC1 93B7 01E2"))))))
 
   (toys-box
-   (forge "github")
+   (forge "codeberg")
    (channel (channel
              (name 'guixcn)
-             (url "https://github.com/guixcn/guix-channel")
+             (url "https://codeberg.org/guixcn/guix-channel")
              (branch "master")
              (introduction
               (make-channel-introduction
