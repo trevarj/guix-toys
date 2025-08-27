@@ -956,5 +956,18 @@ of Chicken Scheme eggs")
          "F682 CDCC 39DC 0FEA E116  20B6 C746 CFA9 E74F A4B0"))))))
 
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+      (name 'zzkt)
+      (url "https://codeberg.org/zzkt/guix")
+      (branch "endless")
+      (introduction
+        (make-channel-introduction
+          "c24ecaae83f67d495a3951f372c69c2682c090a9"
+          (openpgp-fingerprint
+            "24A7 4604 91E6 A60F 5BB4  A00F 989F 5E6E DB47 8160"))))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
