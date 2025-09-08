@@ -969,5 +969,18 @@ of Chicken Scheme eggs")
             "24A7 4604 91E6 A60F 5BB4  A00F 989F 5E6E DB47 8160"))))))
 
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+      (name 'guix-arg)
+      (url "https://codeberg.org/alxsim/guix-arg")
+      (branch "main")
+      (introduction
+       (make-channel-introduction
+        "bfe08d197d172e65b878599fc30c09ea838a2899"
+        (openpgp-fingerprint
+         "4C7D 43C9 189E FAB5 7D65  4CF6 6A95 D3D7 A344 E88C"))))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
