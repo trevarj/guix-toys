@@ -56,6 +56,9 @@
 (define channel-metadata-directory
   (@@ (guix channels) channel-metadata-directory))
 
+(define channel-metadata-dependencies
+  (@@ (guix channels) channel-metadata-dependencies))
+
 (define* (fetch-channel url ref #:optional (introduction #f))
   (format #t "Fetching ~a...\n" url)
   (define checkout-dir (update-cached-checkout url #:ref `(branch . ,ref)))
@@ -69,6 +72,20 @@
                       (channel-introduction-first-commit-signer introduction)
                       ;; FIXME: may not be "keyring" branch.
                       #:keyring-reference "origin/keyring")))
+
+  ;; also fetch channel dependencies
+  (let* ((metadata (read-channel-metadata-from-source checkout-dir))
+         (dependencies (channel-metadata-dependencies metadata)))
+    (for-each
+      (lambda (dependency)
+        (fetch-channel
+          (channel-url dependency)
+          (or (channel-commit dependency)
+              (channel-branch dependency)
+              "master")
+          (channel-introduction dependency)))
+      dependencies))
+
   checkout-dir)
 
 (define* (fetch-boxes file #:optional (channel #f))
@@ -130,22 +147,35 @@ checkouts are cached."
       '()
       modules)))
 
+(define (boxes-load-paths boxes)
+  (let* ((boxes-without-guix
+           (filter
+             (lambda (box-wrapper)
+               (not (equal? 'guix
+                            (channel-name
+                              (toys-box-channel (assoc-ref box-wrapper 'box))))))
+             boxes))
+         (load-paths
+           (map
+             (lambda (box-wrapper)
+               (let* ((module-dir (assoc-ref box-wrapper 'module-dir))
+                      (metadata (read-channel-metadata-from-source module-dir))
+                      (dependencies (channel-metadata-dependencies metadata)))
+                 (cons*
+                   module-dir
+                   (map
+                     (lambda (dependency)
+                       (url-cache-directory
+                         (channel-url dependency)
+                         (%repository-cache-directory)))
+                     dependencies))))
+             boxes-without-guix)))
+    (fold append '() load-paths)))
+
 (define (for-each-box fn boxes)
   (define old-load-path %load-path)
   (set! %load-path
-    (append
-      (map
-        (lambda (box-wrapper)
-          (assoc-ref box-wrapper 'module-dir))
-        ;; Filter out guix channel, it is scanned just fine without proper
-        ;; importing.
-        (filter
-          (lambda (box-wrapper)
-            (not (equal? 'guix
-                    (channel-name
-                      (toys-box-channel (assoc-ref box-wrapper 'box))))))
-          boxes))
-      %load-path))
+    (append (boxes-load-paths boxes) %load-path))
 
   (for-each
     (lambda (box-wrapper)
