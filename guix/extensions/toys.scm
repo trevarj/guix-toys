@@ -60,103 +60,115 @@
       (vector->list results))))
 
 (define %db-directory
-  (string-append (cache-directory #:ensure? #t)
-                 "/toys"))
+  (string-append (cache-directory #:ensure? #t) "/toys"))
+
 (when (not (file-exists? %db-directory))
   (mkdir %db-directory))
 
-(define db
-  (sqlite-open
-    (format #f "file:~a/db.sqlite"
-            %db-directory)))
+(define %db-path
+  (format #f "file:~a/db.sqlite" %db-directory))
+
+(define* (with-database fn #:key (read-only? #f))
+  (let ((db (if read-only?
+              (sqlite-open %db-path (logior SQLITE_OPEN_URI
+                                            SQLITE_OPEN_READONLY))
+              (sqlite-open %db-path))))
+    (dynamic-wind noop
+      (lambda () (fn db))
+      (lambda () (sqlite-close db)))))
 
 (define-command (guix-toys . args)
   (category extension)
   (synopsis "Explore packages and services through REST API")
-  (dynamic-wind noop
-    (lambda ()
-      (match args
-        (("init")
-         (init-db db))
 
-        (("pull" file)
-         ;; This approach is kind of stupid and annoying but at the same time
-         ;; is necessary to keep memory consumption of this command
-         ;; (relatively) low. By re-running this command for each channel
-         ;; separately we can avoid keeping already scanned modules in memory.
-         (for-each
-           (lambda (box)
-             (invoke "guix" "toys" "pull" file
-                     (symbol->string (channel-name (toys-box-channel box)))))
-           (primitive-load file)))
+  (match args
+    (("init")
+     (with-database
+       (lambda (db)
+         (init-db db))))
 
-        (("pull" file channel)
-         (pull-data db (fetch-boxes file channel)))
+    (("pull" file)
+     ;; This approach is kind of stupid and annoying but at the same time
+     ;; is necessary to keep memory consumption of this command
+     ;; (relatively) low. By re-running this command for each channel
+     ;; separately we can avoid keeping already scanned modules in memory.
+     (for-each
+       (lambda (box)
+         (invoke "guix" "toys" "pull" file
+                 (symbol->string (channel-name (toys-box-channel box)))))
+       (primitive-load file)))
 
-        (("serve")
+    (("pull" file channel)
+     (with-database
+       (lambda (db)
+         (pull-data db (fetch-boxes file channel)))))
+
+    (("serve")
+     (with-database
+       (lambda (db)
          (debug "Listening on :8080")
-         (run-server toys-api))
+         (run-server
+           (lambda (request request-body)
+             (handle-request db request request-body))))
+       #:read-only? #t))
 
-        (("package" "search" query)
-         (define-values (res err) (search-packages query))
-         (when err (error err))
-         (print-paginated-results print-package res))
+    (("package" "search" query)
+     (define-values (res err) (search-packages query))
+     (when err (error err))
+     (print-paginated-results print-package res))
 
-        (("package" "show" query)
-         (define-values (res err) (show-packages query))
-         (when err (error err))
-         (print-paginated-results print-package res))
+    (("package" "show" query)
+     (define-values (res err) (show-packages query))
+     (when err (error err))
+     (print-paginated-results print-package res))
 
-        ((or ("package" "install" . packages)
-            ("install" . packages))
-         (if (< 0 (length packages))
-           (for-each install-package packages)
-           (show-help)))
+    ((or ("package" "install" . packages)
+        ("install" . packages))
+     (if (< 0 (length packages))
+       (for-each install-package packages)
+       (show-help)))
 
-        (("package" "clone" name . rest)
-         (define packages (show-packages name))
-         (when (< 0 (vector-length packages))
-           (let* ((package (vector-ref packages 0))
-                   (origin (deserialize-origin (assoc-ref package "origin")))
-                   (directory (if (null? rest) name (car rest))))
-             (clone-origin origin (or directory name)))))
+    (("package" "clone" name . rest)
+     (define packages (show-packages name))
+     (when (< 0 (vector-length packages))
+       (let* ((package (vector-ref packages 0))
+               (origin (deserialize-origin (assoc-ref package "origin")))
+               (directory (if (null? rest) name (car rest))))
+         (clone-origin origin (or directory name)))))
 
-        (("service" "search" query)
-         (define-values (res err) (search-services query))
-         (when err (error err))
-         (print-paginated-results print-service res))
+    (("service" "search" query)
+     (define-values (res err) (search-services query))
+     (when err (error err))
+     (print-paginated-results print-service res))
 
-        (("service" "show" query)
-         (define-values (res err) (show-services query))
-         (when err (error err))
-         (print-paginated-results print-service res))
+    (("service" "show" query)
+     (define-values (res err) (show-services query))
+     (when err (error err))
+     (print-paginated-results print-service res))
 
-        (("channel" "search" query)
-         (define-values (res err) (search-channels query))
-         (when err (error err))
-         (print-paginated-results print-channel res))
+    (("channel" "search" query)
+     (define-values (res err) (search-channels query))
+     (when err (error err))
+     (print-paginated-results print-channel res))
 
-        (("channel" "show" query)
-         (define-values (res err) (show-channels query))
-         (when err (error err))
-         (print-paginated-results print-channel res))
+    (("channel" "show" query)
+     (define-values (res err) (show-channels query))
+     (when err (error err))
+     (print-paginated-results print-channel res))
 
-        (("symbol" "search" query)
-         (define-values (res err) (search-public-symbols query))
-         (when err (error err))
-         (print-paginated-results print-public-symbol res))
+    (("symbol" "search" query)
+     (define-values (res err) (search-public-symbols query))
+     (when err (error err))
+     (print-paginated-results print-public-symbol res))
 
-        (("symbol" "show" query)
-         (define-values (res err) (show-public-symbols query))
-         (when err (error err))
-         (print-paginated-results print-public-symbol res))
+    (("symbol" "show" query)
+     (define-values (res err) (show-public-symbols query))
+     (when err (error err))
+     (print-paginated-results print-public-symbol res))
 
-        (_
-         (show-help)
-         (exit 1))))
-
-    (lambda ()
-      (sqlite-close db))))
+    (_
+     (show-help)
+     (exit 1))))
 
 (define (show-help)
   (display "Usage: guix toys [OPTION] ACTION [ARGS]
@@ -207,19 +219,18 @@ The valid values for ACTION are:
   "Prints the debug MSG to stdout."
   (display (string-append "% " msg "\n")))
 
-(define (db-execute-stmt stmt data)
- "Binds DATA to the STMT and then executes it."
- (apply sqlite-bind-arguments
-        (cons stmt data))
- (sqlite-fold cons '() stmt))
+(define (db-execute-stmt stmt args)
+ "Binds ARGS to the STMT and then executes it."
+ (apply sqlite-bind-arguments (cons stmt args))
+ (define result (sqlite-fold cons '() stmt))
+ (sqlite-finalize stmt)
+ result)
 
 (define (init-db db)
   "Initializes database schema."
   (sqlite-exec
     db
-    "PRAGMA foreign_keys=ON;
-     PRAGMA journal_mode=WAL;
-     PRAGMA synchronous=NORMAL;
+    "PRAGMA journal_mode=WAL;
 
      DROP TABLE IF EXISTS search;
      CREATE VIRTUAL TABLE search USING fts5(name, description, fk, channel, `table`);
@@ -288,8 +299,7 @@ from BOXES into it."
       (define _channel-name (symbol->string (channel-name channel)))
 
       (format #t "Scanning ~a...\n" _channel-name)
-
-      (sqlite-exec db "BEGIN IMMEDIATE;")
+      (sqlite-exec db "BEGIN")
 
       (with-exception-handler
         (lambda (exception)
@@ -490,16 +500,12 @@ from BOXES into it."
          (search-stmt
            (sqlite-prepare
              db
-             "INSERT INTO search
-              (name, description, fk, channel, `table`)
+             "INSERT INTO search (name, description, fk, channel, `table`)
               VALUES (?,?,?,?,?)"
              #:cache? #t))
          (data
            (serialize-public-symbol variable module box symbol box-wrapper)))
-    (define id
-      (vector-ref
-        (car (db-execute-stmt stmt data))
-        0))
+    (define id (vector-ref (car (db-execute-stmt stmt data)) 0))
     (db-execute-stmt
       search-stmt
       (list (symbol->string symbol) "" id
@@ -553,10 +559,7 @@ into the DB."
              #:cache? #t))
          (data
            (serialize-service-type service-type box module box-wrapper)))
-    (define id
-      (vector-ref
-        (car (db-execute-stmt stmt data))
-        0))
+    (define id (vector-ref (car (db-execute-stmt stmt data)) 0))
     (db-execute-stmt
       search-stmt
       (list (symbol->string (service-type-name service-type))
@@ -579,8 +582,7 @@ into the DB."
          (file (module-name->file-name (module-name module)))
          (location (package-location package))
          (url (location->url box-wrapper file (location-line location)))
-         (homepage
-           (package-home-page package))
+         (homepage (package-home-page package))
          (licenses
            (string-join
              (serialize-license (package-license package))
@@ -609,19 +611,8 @@ into the DB."
                        (serialize-origin (package-source package))))
                     "")
                    "")))
-    (list name
-          channel-name
-          mod-name
-          file
-          url
-          version
-          homepage
-          licenses
-          synopsis
-          inputs
-          propagated-inputs
-          description
-          origin)))
+    (list name channel-name mod-name file url version homepage licenses
+          synopsis inputs propagated-inputs description origin)))
 
 (define (insert-package package db box module box-wrapper)
   "Serializes and inserts PACKAGE and corresponding search row into the DB."
@@ -648,16 +639,12 @@ into the DB."
          (search-stmt
            (sqlite-prepare
              db
-             "INSERT INTO search
-              (name, description, fk, channel, `table`)
+             "INSERT INTO search (name, description, fk, channel, `table`)
               VALUES (?,?,?,?,?)"
              #:cache? #t))
          (data
            (serialize-package package box module box-wrapper)))
-    (define id
-      (vector-ref
-        (car (db-execute-stmt stmt data))
-        0))
+    (define id (vector-ref (car (db-execute-stmt stmt data)) 0))
     (db-execute-stmt
       search-stmt
       (list (package-name package)
@@ -676,7 +663,7 @@ returned."
     '()
     columns))
 
-(define (all-symbols select from limit page)
+(define (all-symbols db select from limit page)
   "Queries SELECT fields from all symbols in the FROM table.  Use `j.` prefix
 for selecting fields."
   (let*
@@ -685,12 +672,14 @@ for selecting fields."
          (format #f "SELECT ~a FROM ~a j LIMIT ? OFFSET ?" select from)))
      (columns (sqlite-column-names stmt)))
     (sqlite-bind-arguments stmt limit (* (- page 1) limit))
-    (sqlite-map
-      (lambda (row)
-        (gather-row row columns))
-      stmt)))
+    (define result
+      (sqlite-map
+        (lambda (row) (gather-row row columns))
+        stmt))
+    (sqlite-finalize stmt)
+    result))
 
-(define (count-symbols from query)
+(define (count-symbols db from query)
   "Counts results for the given QUERY and FROM table.  If QUERY is #f, count
 all symbols from FROM table."
   (if (and query (string? query) (not (string-null? query)))
@@ -704,7 +693,9 @@ all symbols from FROM table."
                  from)))
           (wildcard (format #f "\"~a\" *" (string-delete #\" query))))
       (sqlite-bind-arguments stmt from wildcard)
-      (vector-ref (sqlite-step stmt) 0))
+      (define result (vector-ref (sqlite-step stmt) 0))
+      (sqlite-finalize stmt)
+      result)
     (let ((stmt
             (sqlite-prepare db
               (format #f
@@ -713,9 +704,11 @@ all symbols from FROM table."
                  WHERE s.`table` = ?"
                  from))))
       (sqlite-bind-arguments stmt from)
-      (vector-ref (sqlite-step stmt) 0))))
+      (define result (vector-ref (sqlite-step stmt) 0))
+      (sqlite-finalize stmt)
+      result)))
 
-(define (show-symbols select from name limit page)
+(define (show-symbols db select from name limit page)
   "Queries SELECT fields from the FROM table with records *exactly* matching
 NAME string.  Use `j.` prefix for selecting fields."
   (let*
@@ -737,12 +730,15 @@ NAME string.  Use `j.` prefix for selecting fields."
                   select from))))
      (columns (sqlite-column-names stmt)))
     (sqlite-bind-arguments stmt name limit (* (- page 1) limit))
-    (sqlite-map
-      (lambda (row)
-        (gather-row row columns))
-      stmt)))
+    (define result
+      (sqlite-map
+        (lambda (row)
+          (gather-row row columns))
+        stmt))
+    (sqlite-finalize stmt)
+    result))
 
-(define (search-symbols select from query limit page)
+(define (search-symbols db select from query limit page)
   "Queries SELECT fields from the FROM table with records matching QUERY
 string.  Use `j.` prefix for selecting fields."
   (let*
@@ -758,8 +754,11 @@ string.  Use `j.` prefix for selecting fields."
      (columns (sqlite-column-names stmt))
      (wildcard (format #f "\"~a\" *" (string-delete #\" query))))
     (sqlite-bind-arguments stmt from wildcard limit (* (- page 1) limit))
-    (sqlite-map (lambda (row) (gather-row row columns))
-                stmt)))
+    (define result
+      (sqlite-map (lambda (row) (gather-row row columns))
+                  stmt))
+    (sqlite-finalize stmt)
+    result))
 
 (define (denormalize-api-rows rows)
   "Denormalizes ROWS received from the database.  Explodes strings back to
@@ -817,7 +816,7 @@ lists and etc."
 ;;; API
 ;;;
 
-(define (handle-api-search request select from)
+(define (handle-api-search db request select from)
   "Handles generic API request for RECORDS with pagination and search
 functionality."
   (let* ((search-query (request-query-parameter request "search"))
@@ -828,64 +827,66 @@ functionality."
                  (min 1000
                   (string->number
                    (or (request-query-parameter request "limit") "24")))))
-         (total (count-symbols from query))
+         (total (count-symbols db from query))
          (pages (floor (/ total limit)))
          (page (max 1
                 (min pages
                  (string->number
                   (or (request-query-parameter request "page") "1")))))
          (results (if query
-                    (searcher select from query limit page)
-                    (all-symbols select from limit page))))
+                    (searcher db select from query limit page)
+                    (all-symbols db select from limit page))))
     (values `((content-type . (application/json))
               (pagination-total . ,(number->string total))
               (pagination-pages . ,(number->string pages)))
             (scm->json-string
               (list->vector (denormalize-api-rows results))))))
 
-(define (handle-api-packages-search request)
+(define (handle-api-packages-search db request)
   "Returns the list of packages whose name contains a value from \"search\"
 query parameter."
   (handle-api-search
-    request
+    db request
     "j.name, j.channel, j.module, j.file, j.url, j.version, j.homepage,
      j.licenses, j.synopsis, j.inputs, j.propagated_inputs AS propagatedInputs,
      j.origin, j.description"
     "packages"))
 
-(define (handle-api-services-search request)
+(define (handle-api-services-search db request)
   "Returns the list of services whose name contains a value from \"search\"
 query parameter."
   (handle-api-search
-    request "j.name, j.channel, j.module, j.file, j.url, j.description"
+    db request
+    "j.name, j.channel, j.module, j.file, j.url, j.description"
     "service_types"))
 
-(define (handle-api-channels-list request)
+(define (handle-api-channels-list db request)
   "Returns the list of channels defined in channels.scm."
   (handle-api-search
-    request
+    db request
     "j.id AS name, j.branch, j.`commit`, j.url,
      (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packagesCount`,
      (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `servicesCount`,
      j.subscription_snippet AS `subscriptionSnippet`"
      "boxes"))
 
-(define (handle-api-symbols-list request)
+(define (handle-api-symbols-list db request)
   "Returns the list of all public (exported) symbols defined in
 %package-module-path."
   (handle-api-search
-    request "j.name, j.channel, j.module, j.file, j.url, j.doc, j.signature"
+    db request
+    "j.name, j.channel, j.module, j.file, j.url, j.doc, j.signature"
     "public_symbols"))
 
 ;;;
 ;;; HTML pages
 ;;;
 
-(define (handle-search-page request select from template)
+(define (handle-search-page db request select from template)
   "Handles generic search page request for RECORDS using TEMPLATE."
   (let* ((search-query (request-query-parameter request "search"))
          ;; when search query is wrapped into double quotes (e.g. "emacs")
-         ;; consider it a show query instead requiring exact match
+         ;; consider it a "show" query instead requiring exact match
          (quoted-search-query
            (string-match "\"([^\"']+)\""
                          (string-trim-both (or search-query ""))))
@@ -904,16 +905,18 @@ query parameter."
                 (template
                   (if query
                     (denormalize-rows
-                      (searcher select from (string-trim-both query #\") 24 page))
+                      (searcher db select from (string-trim-both query #\")
+                                24 page))
                     '())
                   query
                   page
-                  (count-symbols from query))
+                  (count-symbols db from query))
                 port)))))
 
-(define (handle-index-page request)
+(define (handle-index-page db request)
   "Returns the index page."
   (handle-search-page
+    db
     request
     "j.name, j.channel, j.module, j.file, j.url, j.version, j.homepage,
      j.licenses, j.synopsis, j.inputs,
@@ -921,15 +924,16 @@ query parameter."
     "packages"
     packages-template))
 
-(define (handle-services-page request)
+(define (handle-services-page db request)
   "Returns the services search page."
   (handle-search-page
+    db
     request
     "j.name, j.channel, j.module, j.file, j.url, j.description"
     "service_types"
     services-template))
 
-(define (handle-channels-page request)
+(define (handle-channels-page db request)
   "Returns the channels search page."
   (let ((query (or (request-query-parameter request "search") ""))
         (fields
@@ -947,43 +951,30 @@ query parameter."
               (sxml->xml
                 (channels-template
                   (if (not (string-null? query))
-                    (search-symbols fields "boxes" query 24 page)
-                    (all-symbols fields "boxes" 24 page))
+                    (search-symbols db fields "boxes" query 24 page)
+                    (all-symbols db fields "boxes" 24 page))
                   query
                   page
-                  (count-symbols "boxes" query))
+                  (count-symbols db "boxes" query))
                 port)))))
 
-(define (handle-symbols-page request)
+(define (handle-symbols-page db request)
   "Returns the symbols search page."
-  (handle-search-page request
-                      "j.name,
-                       j.channel,
-                       j.module,
-                       j.file,
-                       j.url,
-                       j.doc,
-                       j.signature"
-                      "public_symbols"
-                      symbols-template))
+  (handle-search-page
+    db request
+    "j.name, j.channel, j.module, j.file, j.url, j.doc, j.signature"
+    "public_symbols"
+    symbols-template))
 
-(define (toys-api request request-body)
+(define (handle-request db request request-body)
   "Routes and handles incoming HTTP requests."
-  (match (request-path-components request)
-    (("api" "packages")
-     (handle-api-packages-search request))
-    (("api" "services")
-     (handle-api-services-search request))
-    (("api" "channels")
-     (handle-api-channels-list request))
-    (("api" "symbols")
-     (handle-api-symbols-list request))
-    (()
-     (handle-index-page request))
-    (("services")
-     (handle-services-page request))
-    (("channels")
-     (handle-channels-page request))
-    (("symbols")
-     (handle-symbols-page request))
-    (_ (handle-not-found))))
+   (match (request-path-components request)
+     (("api" "packages") (handle-api-packages-search db request))
+     (("api" "services") (handle-api-services-search db request))
+     (("api" "channels") (handle-api-channels-list db request))
+     (("api" "symbols") (handle-api-symbols-list db request))
+     (() (handle-index-page db request))
+     (("services") (handle-services-page db request))
+     (("channels") (handle-channels-page db request))
+     (("symbols") (handle-symbols-page db request))
+     (_ (handle-not-found))))
