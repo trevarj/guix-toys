@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;;
-;;; Copyright © 2023 unwox <me@unwox.com>
+;;; Copyright © 2023, 2025 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -43,8 +43,7 @@
     (if (equal? code 200)
       (values result #f)
       (values #f (format #f "toys instance responded with ~d: ~a"
-                         code
-                         (scm->json-string result))))))
+                         code (scm->json-string result))))))
 
 (define (search-packages query)
   (request "packages" `(("search" . ,query))))

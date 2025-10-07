@@ -28,7 +28,6 @@
             request-path-components
             request-query-parameters
             request-query-parameter
-            paginated-response
             build-query-string))
 
 (define (handle-not-found)
@@ -59,38 +58,10 @@ given REQUEST."
 (define (request-query-parameter request param)
   "Returns value of the given query PARAM.  If there is no such value,
 returns #f."
-  (let ((value
-          (assoc-ref (request-query-parameters request)
-                     param)))
-    (if (and value
-             (not (string-null? value)))
+  (let ((value (assoc-ref (request-query-parameters request) param)))
+    (if (and value (not (string-null? value)))
       value
       #f)))
-
-(define (paginated-response request items)
-  "Returns paginated response for the given REQUEST with ITEMS vector splitted
-(according to \"page\" and \"limit\" query parameters) and encoded to JSON."
-  (let* ((total (vector-length items))
-         (limit (min 1000 (or (string->number
-                                (or (request-query-parameter request "limit")
-                                    ""))
-                              100)))
-         (pages (max 1 (ceiling (/ total limit))))
-         (page (min pages
-                    (or (string->number
-                          (or (request-query-parameter request "page")
-                              ""))
-                        1)))
-         (start (* (- page 1) limit))
-         (end (max start
-                   (min (+ start limit) total)))
-         (result (vector-copy items start end)))
-    (values `((content-type . (application/json))
-              (paginator-page . ,(number->string page))
-              (paginator-limit . ,(number->string limit))
-              (paginator-pages . ,(number->string pages))
-              (paginator-total . ,(number->string total)))
-            (scm->json-string result))))
 
 (define (build-query-string args)
   "Return an formatted and encoded query string for given ARGS which is an

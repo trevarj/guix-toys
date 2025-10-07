@@ -417,7 +417,7 @@ Goblins and Hoot")
                (url "https://codeberg.org/fishinthecalculator/mobilizon-reshare-guix")
                (branch "main"))))
 
-  #;(toys-box
+  (toys-box
    (forge "github")
    (channel (channel
                (name 'th)
@@ -624,7 +624,7 @@ Goblins and Hoot")
                (openpgp-fingerprint
                 "66E6 01AC 1756 020B 759B  E34B 7B65 F79C 3247 8510"))))))
 
-  #;(toys-box
+  (toys-box
    (forge "sourcehut")
    (channel (channel
              (name 'hitwright)

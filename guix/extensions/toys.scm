@@ -77,83 +77,83 @@
     (lambda ()
       (match args
         (("init")
-        (init-db db))
+         (init-db db))
 
         (("pull" file)
-        ;; This approach is kind of stupid and annoying but at the same time is
-        ;; necessary to keep memory consumption of this command (relatively) low.
-        ;; By re-running this command for each channel separately we can avoid
-        ;; keeping already scanned modules in memory.
-        (for-each
-          (lambda (box)
-            (invoke "guix" "toys" "pull" file
-                    (symbol->string (channel-name (toys-box-channel box)))))
-          (primitive-load file)))
+         ;; This approach is kind of stupid and annoying but at the same time
+         ;; is necessary to keep memory consumption of this command
+         ;; (relatively) low. By re-running this command for each channel
+         ;; separately we can avoid keeping already scanned modules in memory.
+         (for-each
+           (lambda (box)
+             (invoke "guix" "toys" "pull" file
+                     (symbol->string (channel-name (toys-box-channel box)))))
+           (primitive-load file)))
 
         (("pull" file channel)
-        (pull-data db (fetch-boxes file channel)))
+         (pull-data db (fetch-boxes file channel)))
 
         (("serve")
-        (debug "Listening on :8080")
-        (run-server toys-api))
+         (debug "Listening on :8080")
+         (run-server toys-api))
 
         (("package" "search" query)
-        (define-values (res err) (search-packages query))
-        (when err (error err))
-        (print-paginated-results print-package res))
+         (define-values (res err) (search-packages query))
+         (when err (error err))
+         (print-paginated-results print-package res))
 
         (("package" "show" query)
-        (define-values (res err) (show-packages query))
-        (when err (error err))
-        (print-paginated-results print-package res))
+         (define-values (res err) (show-packages query))
+         (when err (error err))
+         (print-paginated-results print-package res))
 
         ((or ("package" "install" . packages)
             ("install" . packages))
-        (if (< 0 (length packages))
-          (for-each install-package packages)
-          (show-help)))
+         (if (< 0 (length packages))
+           (for-each install-package packages)
+           (show-help)))
 
         (("package" "clone" name . rest)
-        (define packages (show-packages name))
-        (when (< 0 (vector-length packages))
-          (let* ((package (vector-ref packages 0))
-                  (origin (deserialize-origin (assoc-ref package "origin")))
-                  (directory (if (null? rest) name (car rest))))
-            (clone-origin origin (or directory name)))))
+         (define packages (show-packages name))
+         (when (< 0 (vector-length packages))
+           (let* ((package (vector-ref packages 0))
+                   (origin (deserialize-origin (assoc-ref package "origin")))
+                   (directory (if (null? rest) name (car rest))))
+             (clone-origin origin (or directory name)))))
 
         (("service" "search" query)
-        (define-values (res err) (search-services query))
-        (when err (error err))
-        (print-paginated-results print-service res))
+         (define-values (res err) (search-services query))
+         (when err (error err))
+         (print-paginated-results print-service res))
 
         (("service" "show" query)
-        (define-values (res err) (show-services query))
-        (when err (error err))
-        (print-paginated-results print-service res))
+         (define-values (res err) (show-services query))
+         (when err (error err))
+         (print-paginated-results print-service res))
 
         (("channel" "search" query)
-        (define-values (res err) (search-channels query))
-        (when err (error err))
-        (print-paginated-results print-channel res))
+         (define-values (res err) (search-channels query))
+         (when err (error err))
+         (print-paginated-results print-channel res))
 
         (("channel" "show" query)
-        (define-values (res err) (show-channels query))
-        (when err (error err))
-        (print-paginated-results print-channel res))
+         (define-values (res err) (show-channels query))
+         (when err (error err))
+         (print-paginated-results print-channel res))
 
         (("symbol" "search" query)
-        (define-values (res err) (search-public-symbols query))
-        (when err (error err))
-        (print-paginated-results print-public-symbol res))
+         (define-values (res err) (search-public-symbols query))
+         (when err (error err))
+         (print-paginated-results print-public-symbol res))
 
         (("symbol" "show" query)
-        (define-values (res err) (show-public-symbols query))
-        (when err (error err))
-        (print-paginated-results print-public-symbol res))
+         (define-values (res err) (show-public-symbols query))
+         (when err (error err))
+         (print-paginated-results print-public-symbol res))
 
         (_
-          (show-help)
-          (exit 1))))
+         (show-help)
+         (exit 1))))
 
     (lambda ()
       (sqlite-close db))))
@@ -206,9 +206,6 @@ The valid values for ACTION are:
 (define (debug msg)
   "Prints the debug MSG to stdout."
   (display (string-append "% " msg "\n")))
-
-(define %last-updated-at
-  (date->string (current-date 0) "~4"))
 
 (define (db-execute-stmt stmt data)
  "Binds DATA to the STMT and then executes it."
@@ -750,27 +747,19 @@ NAME string.  Use `j.` prefix for selecting fields."
 string.  Use `j.` prefix for selecting fields."
   (let*
     ((stmt
-       (sqlite-prepare
-         db
+       (sqlite-prepare db
          (format #f
                  "SELECT ~a FROM search s
                   INNER JOIN ~a j ON s.fk = j.id
-                  WHERE s.`table` = ?
-                  AND s.name MATCH ?
+                  WHERE s.`table` = ? AND s.name MATCH ?
                   ORDER BY LENGTH(s.name), rank
-                  LIMIT ?
-                  OFFSET ?"
-                  select
-                  from)))
-     (columns
-       (sqlite-column-names stmt))
-     (wildcard
-       (format #f "\"~a\" *"
-               (string-delete #\" query))))
+                  LIMIT ? OFFSET ?"
+                  select from)))
+     (columns (sqlite-column-names stmt))
+     (wildcard (format #f "\"~a\" *" (string-delete #\" query))))
     (sqlite-bind-arguments stmt from wildcard limit (* (- page 1) limit))
-    (sqlite-map
-      (lambda (row) (gather-row row columns))
-      stmt)))
+    (sqlite-map (lambda (row) (gather-row row columns))
+                stmt)))
 
 (define (denormalize-api-rows rows)
   "Denormalizes ROWS received from the database.  Explodes strings back to
@@ -786,10 +775,8 @@ lists and etc."
            (else `(,key . ,value)))))
      (denormalize-row
        (lambda (row)
-         (map
-           (lambda (pair)
-             (denormalize-pair (car pair) (cdr pair)))
-           row))))
+         (map (lambda (pair) (denormalize-pair (car pair) (cdr pair)))
+              row))))
     (map denormalize-row rows)))
 
 (define (denormalize-rows rows)
@@ -822,10 +809,8 @@ lists and etc."
            (else `(,key . ,value)))))
      (denormalize-row
        (lambda (row)
-         (map
-           (lambda (pair)
-             (denormalize-pair (car pair) (cdr pair)))
-           row))))
+         (map (lambda (pair) (denormalize-pair (car pair) (cdr pair)))
+              row))))
     (map denormalize-row rows)))
 
 ;;;
@@ -861,58 +846,36 @@ functionality."
 (define (handle-api-packages-search request)
   "Returns the list of packages whose name contains a value from \"search\"
 query parameter."
-  (handle-api-search request
-                     "j.name,
-                      j.channel,
-                      j.module,
-                      j.file,
-                      j.url,
-                      j.version,
-                      j.homepage,
-                      j.licenses,
-                      j.synopsis,
-                      j.inputs,
-                      j.propagated_inputs AS propagatedInputs,
-                      j.origin,
-                      j.description"
-                     "packages"))
+  (handle-api-search
+    request
+    "j.name, j.channel, j.module, j.file, j.url, j.version, j.homepage,
+     j.licenses, j.synopsis, j.inputs, j.propagated_inputs AS propagatedInputs,
+     j.origin, j.description"
+    "packages"))
 
 (define (handle-api-services-search request)
   "Returns the list of services whose name contains a value from \"search\"
 query parameter."
-  (handle-api-search request
-                     "j.name,
-                      j.channel,
-                      j.module,
-                      j.file,
-                      j.url,
-                      j.description"
-                     "service_types"))
+  (handle-api-search
+    request "j.name, j.channel, j.module, j.file, j.url, j.description"
+    "service_types"))
 
 (define (handle-api-channels-list request)
   "Returns the list of channels defined in channels.scm."
-  (handle-api-search request
-                     "j.id AS name,
-                      j.branch,
-                      j.`commit`,
-                      j.url,
-                      (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packagesCount`,
-                      (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `servicesCount`,
-                      j.subscription_snippet AS `subscriptionSnippet`"
-                      "boxes"))
+  (handle-api-search
+    request
+    "j.id AS name, j.branch, j.`commit`, j.url,
+     (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packagesCount`,
+     (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `servicesCount`,
+     j.subscription_snippet AS `subscriptionSnippet`"
+     "boxes"))
 
 (define (handle-api-symbols-list request)
   "Returns the list of all public (exported) symbols defined in
 %package-module-path."
-  (handle-api-search request
-                     "j.name,
-                      j.channel,
-                      j.module,
-                      j.file,
-                      j.url,
-                      j.doc,
-                      j.signature"
-                     "public_symbols"))
+  (handle-api-search
+    request "j.name, j.channel, j.module, j.file, j.url, j.doc, j.signature"
+    "public_symbols"))
 
 ;;;
 ;;; HTML pages
@@ -928,8 +891,8 @@ query parameter."
                          (string-trim-both (or search-query ""))))
          (show-query
            (if quoted-search-query
-            search-query
-            (request-query-parameter request "show")))
+             search-query
+             (request-query-parameter request "show")))
          (searcher (if show-query show-symbols search-symbols))
          (query (or show-query search-query ""))
          (page (max 1
@@ -950,33 +913,21 @@ query parameter."
 
 (define (handle-index-page request)
   "Returns the index page."
-  (handle-search-page request
-                      "j.name,
-                       j.channel,
-                       j.module,
-                       j.file,
-                       j.url,
-                       j.version,
-                       j.homepage,
-                       j.licenses,
-                       j.synopsis,
-                       j.inputs,
-                       j.propagated_inputs as `propagated-inputs`,
-                       j.description"
-                      "packages"
-                      packages-template))
+  (handle-search-page
+    request
+    "j.name, j.channel, j.module, j.file, j.url, j.version, j.homepage,
+     j.licenses, j.synopsis, j.inputs,
+     j.propagated_inputs as `propagated-inputs`, j.description"
+    "packages"
+    packages-template))
 
 (define (handle-services-page request)
   "Returns the services search page."
-  (handle-search-page request
-                      "j.name,
-                       j.channel,
-                       j.module,
-                       j.file,
-                       j.url,
-                       j.description"
-                      "service_types"
-                      services-template))
+  (handle-search-page
+    request
+    "j.name, j.channel, j.module, j.file, j.url, j.description"
+    "service_types"
+    services-template))
 
 (define (handle-channels-page request)
   "Returns the channels search page."
