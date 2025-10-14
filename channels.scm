@@ -982,5 +982,14 @@ of Chicken Scheme eggs")
          "4C7D 43C9 189E FAB5 7D65  4CF6 6A95 D3D7 A344 E88C"))))))
 
   (toys-box
+   (forge "codeberg")
+   (synopsis "Latest MATE Desktop and missing extras for GNU Guix")
+   (channel
+    (channel
+     (name 'guix-mate)
+     (url "https://codeberg.org/guix-mate/guix-mate")
+     (branch "main"))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
