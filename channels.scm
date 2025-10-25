@@ -991,5 +991,18 @@ of Chicken Scheme eggs")
      (branch "main"))))
 
   (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
+     (name 'cast)
+     (url "https://codeberg.org/vnpower/cast")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "fab73647fd9f0f2167d9ef9d42cddd77500fffb3"
+       (openpgp-fingerprint
+        "D430 1F59 A65F 49DA 918A  3C0D 8D4C 3248 29DE D156"))))))
+
+  (toys-box
    (forge "cgit")
    (channel %default-guix-channel)))
