@@ -399,32 +399,33 @@ from BOXES into it."
                      "https://git.savannah.gnu.org/cgit/guix.git"
                      (and channel
                           (channel-url channel)))))
-    (if (and base-url forge)
-      (cond
-        ((equal? forge "cgit")
-         (format #f "~a/tree/~a?id=~a#n~d"
-                 base-url file ref lineno))
-        ((equal? forge "sourcehut")
-         (format #f "~a/tree/~a/item/~a#L~d"
-                 base-url ref file lineno))
-        ((equal? forge "gitlab")
-         (format #f "~a/-/blob/~a/~a#L~d"
-                 base-url ref file lineno))
-        ((equal? forge "github")
-         (format #f "~a/blob/~a/~a#L~d"
-                 base-url ref file lineno))
-        ((equal? forge "gitea")
-         (format #f "~a/src/commit/~a/~a#L~d"
-                 base-url ref file lineno))
-        ((equal? forge "gogs")
-         (format #f "~a/src/~a/~a#L~d"
-                 base-url ref file lineno))
-        ((or (equal? forge "codeberg")
-             (equal? forge "forgejo"))
-         (format #f "~a/src/branch/~a/~a#L~d"
-                 base-url ref file lineno))
-        (else #f))
-      #f)))
+    (and base-url 
+         (match forge
+           ("cgit"
+            (format #f "~a/tree/~a?id=~a#n~d"
+                    base-url file ref lineno))
+           ("stagit"
+            (format #f "~a/file/~a.html#l~d"
+                    base-url file lineno))
+           ("sourcehut"
+            (format #f "~a/tree/~a/item/~a#L~d"
+                    base-url ref file lineno))
+           ("gitlab"
+            (format #f "~a/-/blob/~a/~a#L~d"
+                    base-url ref file lineno))
+           ("github"
+            (format #f "~a/blob/~a/~a#L~d"
+                    base-url ref file lineno))
+           ("gitea"
+            (format #f "~a/src/commit/~a/~a#L~d"
+                    base-url ref file lineno))
+           ("gogs"
+            (format #f "~a/src/~a/~a#L~d"
+                    base-url ref file lineno))
+           ((or "codeberg" "forgejo")
+            (format #f "~a/src/branch/~a/~a#L~d"
+                    base-url ref file lineno))
+           (_ #f)))))
 
 (define (serialize-channel channel)
   "Formats CHANNEL for database storage."
