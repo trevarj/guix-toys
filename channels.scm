@@ -1004,5 +1004,5 @@ of Chicken Scheme eggs")
         "D430 1F59 A65F 49DA 918A  3C0D 8D4C 3248 29DE D156"))))))
 
   (toys-box
-   (forge "cgit")
+   (forge "codeberg")
    (channel %default-guix-channel)))

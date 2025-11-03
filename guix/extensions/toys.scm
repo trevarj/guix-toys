@@ -396,7 +396,7 @@ from BOXES into it."
                      (toys-box-forge box)))
          (base-url (if (equal? (channel-name channel)
                                'guix)
-                     "https://git.savannah.gnu.org/cgit/guix.git"
+                     "https://codeberg.org/guix/guix.git"
                      (and channel
                           (channel-url channel)))))
     (and base-url 
