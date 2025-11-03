@@ -390,8 +390,7 @@ from BOXES into it."
                          directory file)
                  #\/))
          (ref (or (channel-commit channel)
-                  (channel-branch channel)
-                  "master"))
+                  (channel-branch channel)))
          (forge (and channel
                      (toys-box-forge box)))
          (base-url (if (equal? (channel-name channel)
