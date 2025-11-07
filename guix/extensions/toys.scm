@@ -44,6 +44,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-43)
+  #:use-module (srfi srfi-11) ;; for let*-values
   #:use-module (sxml simple)
   #:use-module (web request)
   #:use-module (web server)
@@ -385,10 +386,7 @@ from BOXES into it."
                       (assoc-ref box-wrapper 'dir)
                       #\/))
          (channel (toys-box-channel box))
-         (file (string-trim-both
-                 (format #f "~a/~a"
-                         directory file)
-                 #\/))
+         (file (string-trim-both (format #f "~a/~a" directory file) #\/))
          (ref (or (channel-commit channel)
                   (channel-branch channel)))
          (forge (and channel
@@ -398,7 +396,7 @@ from BOXES into it."
                      "https://codeberg.org/guix/guix.git"
                      (and channel
                           (channel-url channel)))))
-    (and base-url 
+    (and base-url
          (match forge
            ("cgit"
             (format #f "~a/tree/~a?id=~a#n~d"
@@ -663,102 +661,93 @@ returned."
     '()
     columns))
 
-(define (all-symbols db select from limit page)
+(define (search-symbols db select from limit page query channel exact-match?)
   "Queries SELECT fields from all symbols in the FROM table.  Use `j.` prefix
 for selecting fields."
-  (let*
-    ((stmt
-       (sqlite-prepare db
-         (format #f "SELECT ~a FROM ~a j LIMIT ? OFFSET ?" select from)))
-     (columns (sqlite-column-names stmt)))
-    (sqlite-bind-arguments stmt limit (* (- page 1) limit))
-    (define result
-      (sqlite-map
-        (lambda (row) (gather-row row columns))
-        stmt))
-    (sqlite-finalize stmt)
-    result))
+  (set! query (and (string? query) (not (string-null? query))
+                   (string-delete #\" query)))
 
-(define (count-symbols db from query)
-  "Counts results for the given QUERY and FROM table.  If QUERY is #f, count
-all symbols from FROM table."
-  (if (and query (string? query) (not (string-null? query)))
-    (let ((stmt
-            (sqlite-prepare db
-              (format #f
-                "SELECT COUNT(*) FROM search s
-                 INNER JOIN ~a j ON s.fk = j.id
-                 WHERE s.`table` = ?
-                 AND s.name MATCH ?"
-                 from)))
-          (wildcard (format #f "\"~a\" *" (string-delete #\" query))))
-      (sqlite-bind-arguments stmt from wildcard)
-      (define result (vector-ref (sqlite-step stmt) 0))
-      (sqlite-finalize stmt)
-      result)
-    (let ((stmt
-            (sqlite-prepare db
-              (format #f
-                "SELECT COUNT(*) FROM search s
-                 INNER JOIN ~a j ON s.fk = j.id
-                 WHERE s.`table` = ?"
-                 from))))
-      (sqlite-bind-arguments stmt from)
-      (define result (vector-ref (sqlite-step stmt) 0))
-      (sqlite-finalize stmt)
-      result)))
+  ;; add wildcard for search requests
+  (if (and (string? query) (not exact-match?))
+    (set! query (string-append "\"" query "\" *")))
 
-(define (show-symbols db select from name limit page)
-  "Queries SELECT fields from the FROM table with records *exactly* matching
-NAME string.  Use `j.` prefix for selecting fields."
-  (let*
-    ((stmt
-       (sqlite-prepare
-         db
-         ;; unfortunately we have to work around the fact that the boxes table
-         ;; structure is quite different from other tables: it doesn't have
-         ;; a name and a channel fields
-         (if (equal? from "boxes")
-          (format #f "SELECT ~a FROM boxes j
-                      WHERE j.id = ?
-                      LIMIT ? OFFSET ?"
-                  select)
-          (format #f "SELECT ~a FROM ~a j
-                      WHERE j.name = ?
-                      ORDER BY j.channel
-                      LIMIT ? OFFSET ?"
-                  select from))))
-     (columns (sqlite-column-names stmt)))
-    (sqlite-bind-arguments stmt name limit (* (- page 1) limit))
-    (define result
-      (sqlite-map
-        (lambda (row)
-          (gather-row row columns))
-        stmt))
-    (sqlite-finalize stmt)
-    result))
+  (set! channel (and (string? channel) (string-trim-both channel #\")))
 
-(define (search-symbols db select from query limit page)
-  "Queries SELECT fields from the FROM table with records matching QUERY
-string.  Use `j.` prefix for selecting fields."
-  (let*
-    ((stmt
-       (sqlite-prepare db
-         (format #f
-                 "SELECT ~a FROM search s
-                  INNER JOIN ~a j ON s.fk = j.id
-                  WHERE s.`table` = ? AND s.name MATCH ?
-                  ORDER BY LENGTH(s.name), rank
-                  LIMIT ? OFFSET ?"
-                  select from)))
-     (columns (sqlite-column-names stmt))
-     (wildcard (format #f "\"~a\" *" (string-delete #\" query))))
-    (sqlite-bind-arguments stmt from wildcard limit (* (- page 1) limit))
-    (define result
-      (sqlite-map (lambda (row) (gather-row row columns))
-                  stmt))
-    (sqlite-finalize stmt)
-    result))
+  ;; unfortunately we have to work around the fact that the boxes table
+  ;; structure is quite different from other tables: it doesn't have
+  ;; a name and a channel fields. that's a good example of why you have
+  ;; to plan out your table schemas more carefully.
+  (define is-boxes? (equal? from "boxes"))
+
+  ;; build query
+  (define sql (string-append "SELECT " select))
+  (define args (list))
+  (define wheres (list))
+  (define orders (list))
+
+  (if query
+    (set! sql (string-append sql
+                             " FROM search s"
+                             " INNER JOIN " from " j ON s.fk = j.id"))
+    (set! sql (string-append sql " FROM " from " j")))
+
+  ;; where conditions
+  (when query
+    ;; guile question: is there a better way of append an item to a list?
+    ;; i do not welcome so many memory allocations for a trivial string/array
+    ;; building
+    (set! wheres (append wheres (list "s.`table` = ?")))
+    (set! args (append args (list from))))
+  (when query
+    (if exact-match?
+      (set! wheres (append wheres (list "s.name = ?")))
+      (set! wheres (append wheres (list "s.name MATCH ?"))))
+    (set! args (append args (list query))))
+  (when channel
+    (set! wheres (append wheres (list "j.channel = ?")))
+    (set! args (append args (list channel))))
+
+  ;; order conditions
+  (when (and query (not is-boxes?))
+    (set! orders (append orders (list "LENGTH(s.name) ASC, rank ASC"))))
+  (when (and query (not is-boxes?))
+    (set! orders (append orders (list "j.channel ASC"))))
+
+  (when (< 0 (length wheres))
+    (set! sql (string-append sql " WHERE " (string-join wheres " AND "))))
+
+  ;; count the results
+  (define count-sql (string-append "SELECT COUNT(*) FROM (" sql ")"))
+  (define count-stmt (sqlite-prepare db count-sql))
+  (if (< 0 (length args))
+    (apply sqlite-bind-arguments (cons count-stmt args)))
+  (define count (vector-ref (sqlite-step count-stmt) 0))
+  (sqlite-finalize count-stmt)
+
+  ;; fetch rows
+  (when (< 0 (length orders))
+    (set! sql (string-append sql " ORDER BY " (string-join orders ", "))))
+
+  (set! sql (string-append sql " LIMIT ? OFFSET ?"))
+  (set! args (append args (list limit)))
+  (set! args (append args (list (* (- page 1) limit))))
+
+  (define stmt (sqlite-prepare db sql))
+  (define columns (sqlite-column-names stmt))
+  (apply sqlite-bind-arguments (cons stmt args))
+  (define results
+    (sqlite-map
+      (lambda (row) (gather-row row columns))
+      stmt))
+  (sqlite-finalize stmt)
+
+  (values results count))
+
+(define (all-channels db)
+  (define stmt (sqlite-prepare db "SELECT id FROM boxes"))
+  (define results (sqlite-map (lambda (item) (vector-ref item 0)) stmt))
+  (sqlite-finalize stmt)
+  results)
 
 (define (denormalize-api-rows rows)
   "Denormalizes ROWS received from the database.  Explodes strings back to
@@ -819,28 +808,27 @@ lists and etc."
 (define (handle-api-search db request select from)
   "Handles generic API request for RECORDS with pagination and search
 functionality."
-  (let* ((search-query (request-query-parameter request "search"))
-         (show-query (request-query-parameter request "show"))
-         (searcher (if show-query show-symbols search-symbols))
-         (query (or show-query search-query))
-         (limit (max 1
+  (define search-query (request-query-parameter request "search"))
+  (define show-query (request-query-parameter request "show"))
+  (define query (or show-query search-query))
+  (define channel (request-query-parameter request "channel"))
+  (define limit (max 1
                  (min 1000
-                  (string->number
-                   (or (request-query-parameter request "limit") "24")))))
-         (total (count-symbols db from query))
-         (pages (floor (/ total limit)))
-         (page (max 1
-                (min pages
+                   (string->number
+                     (or (request-query-parameter request "limit") "24")))))
+  (define page (max 1
                  (string->number
-                  (or (request-query-parameter request "page") "1")))))
-         (results (if query
-                    (searcher db select from query limit page)
-                    (all-symbols db select from limit page))))
-    (values `((content-type . (application/json))
-              (pagination-total . ,(number->string total))
-              (pagination-pages . ,(number->string pages)))
-            (scm->json-string
-              (list->vector (denormalize-api-rows results))))))
+                  (or (request-query-parameter request "page") "1"))))
+  (define-values (results count)
+    (search-symbols db select from limit page query channel
+                    (string? show-query)))
+  (define pages (floor (/ count limit)))
+
+  (values `((content-type . (application/json))
+            (pagination-total . ,(number->string count))
+            (pagination-pages . ,(number->string pages)))
+          (scm->json-string
+            (list->vector (denormalize-api-rows results)))))
 
 (define (handle-api-packages-search db request)
   "Returns the list of packages whose name contains a value from \"search\"
@@ -884,34 +872,30 @@ query parameter."
 
 (define (handle-search-page db request select from template)
   "Handles generic search page request for RECORDS using TEMPLATE."
-  (let* ((search-query (request-query-parameter request "search"))
-         ;; when search query is wrapped into double quotes (e.g. "emacs")
-         ;; consider it a "show" query instead requiring exact match
-         (quoted-search-query
-           (string-match "\"([^\"']+)\""
-                         (string-trim-both (or search-query ""))))
-         (show-query
-           (if quoted-search-query
-             search-query
-             (request-query-parameter request "show")))
-         (searcher (if show-query show-symbols search-symbols))
-         (query (or show-query search-query ""))
-         (page (max 1
-                (string->number
-                 (or (request-query-parameter request "page") "1")))))
-    (values '((content-type . (text/html)))
-            (lambda (port)
-              (sxml->xml
-                (template
-                  (if query
-                    (denormalize-rows
-                      (searcher db select from (string-trim-both query #\")
-                                24 page))
-                    '())
-                  query
-                  page
-                  (count-symbols db from query))
-                port)))))
+  ;; when search query is wrapped into double quotes (e.g. "emacs")
+  ;; consider it a "show" query instead requiring exact match
+  (define search-query (request-query-parameter request "search"))
+  (define quoted-search-query?
+     (and (string? search-query)
+          (string-match "^\"([^\"']+)\"$"
+                        (string-trim-both search-query))))
+  (define show-query
+            (if quoted-search-query?
+              (vector-ref quoted-search-query? 0)
+              (request-query-parameter request "show")))
+  (define query (or show-query search-query ""))
+  (define channel (request-query-parameter request "channel"))
+  (define page (max 1 (string->number
+                        (or (request-query-parameter request "page") "1"))))
+  (define-values (results count)
+    (search-symbols db select from 24 page query channel (string? show-query)))
+
+  (values '((content-type . (text/html)))
+          (lambda (port)
+            (sxml->xml
+              (template (denormalize-rows results) query page count
+                        (all-channels db) channel)
+              port))))
 
 (define (handle-index-page db request)
   "Returns the index page."
@@ -935,28 +919,29 @@ query parameter."
 
 (define (handle-channels-page db request)
   "Returns the channels search page."
-  (let ((query (or (request-query-parameter request "search") ""))
-        (fields
-          "j.id AS name,
-           j.branch,
-           j.`commit`,
-           (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages-count`,
-           (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services-count`,
-           j.url,
-           j.synopsis,
-           j.subscription_snippet AS `subscription-snippet`")
-        (page (string->number (or (request-query-parameter request "page") "1"))))
-    (values '((content-type . (text/html)))
-            (lambda (port)
-              (sxml->xml
-                (channels-template
-                  (if (not (string-null? query))
-                    (search-symbols db fields "boxes" query 24 page)
-                    (all-symbols db fields "boxes" 24 page))
-                  query
-                  page
-                  (count-symbols db "boxes" query))
-                port)))))
+  (define search-query (request-query-parameter request "search"))
+  (define show-query (request-query-parameter request "show"))
+  (define query (or show-query search-query))
+  (define fields
+    "j.id AS name,
+    j.branch,
+    j.`commit`,
+    (SELECT COUNT(*) FROM packages AS p WHERE p.channel = j.id) AS `packages-count`,
+    (SELECT COUNT(*) FROM service_types AS s WHERE s.channel = j.id) AS `services-count`,
+    j.url,
+    j.synopsis,
+    j.subscription_snippet AS `subscription-snippet`")
+  (define page (max 1
+                (string->number
+                  (or (request-query-parameter request "page") "1"))))
+  (define-values (results count)
+    (search-symbols db fields "boxes" 24 page query #f (string? show-query)))
+
+  (values '((content-type . (text/html)))
+          (lambda (port)
+            (sxml->xml
+              (channels-template results query page count)
+              port))))
 
 (define (handle-symbols-page db request)
   "Returns the symbols search page."

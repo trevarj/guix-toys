@@ -21,6 +21,7 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-43)
   #:use-module (texinfo)
+  #:use-module (ice-9 pretty-print)
   #:use-module (texinfo html)
 
   #:export (packages-template
@@ -101,6 +102,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 
   form {
     display: flex;
+    gap: 0.5rem;
   }
 
   form input {
@@ -128,10 +130,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     display: block;
     overflow-x: auto;
     padding: 0.5rem;
-  }
-
-  button {
-    margin-left: 0.25rem;
   }
 
   .item strong {
@@ -212,7 +210,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
   }
 ")
 
-(define (base-template body current query page total)
+(define (base-template body current query page total channels channel)
   `(html
      (@ (lang "en"))
      (head
@@ -235,6 +233,18 @@ ________________________,--._(___Y___)_,--._______________________ hjw
                      (name "search")
                      (value ,(or query ""))
                      (placeholder "Enter query")))
+          ,(if (< 0 (length channels))
+            `(select (@ (name "channel"))
+              (option (@ (value "")) "All channels")
+              ,@(map
+                  (lambda (item)
+                   `(option ,(if (equal? item channel)
+                              `(@ (value ,item)
+                                  (selected "selected"))
+                              `(@ (value ,item)))
+                            ,item))
+                  channels))
+             "")
            (button (@ (type "submit")) "Search"))
          (main ,@body)))))
 
@@ -252,30 +262,24 @@ ________________________,--._(___Y___)_,--._______________________ hjw
               ,(assoc-ref item 'name)))
          pages)))
 
-(define (base-items-template path items query normalizer placeholder page total)
+(define (base-items-template path items query normalizer placeholder
+                             page total channels channel)
   "Returns base template for search pages."
   (base-template
-    (if (and (or (not (string? query))
-                 (= (string-length query) 0))
-             (= (length items) 0))
-      placeholder
-      (if (and (string? query)
-              (> (string-length query) 0)
-              (= (length items) 0))
+    `(,(if (and (or (not (string? query))
+                    (string-null? query)))
+         placeholder
+         "")
+      ,(if (and (string? query)
+                (not (string-null? query))
+                (= (length items) 0))
         `("Nothing found, try another query!"
           (div (@ (class "not-found"))
               (pre ,%empty-results-art)
-              (small (@ (class "muted"))
-                      "Art by Hayley Jane Wakenshaw")))
-        `(,(map
-            (lambda (item)
-              (normalizer item))
-            items)
+              (small (@ (class "muted")) "Art by Hayley Jane Wakenshaw")))
+        `(,(map (lambda (item) (normalizer item)) items)
           ,(paginator-template query page 24 total))))
-    path
-    query
-    page
-    total))
+    path query page total channels channel))
 
 (define (placeholder-template method)
  `((p "Enter the query into the form above. "
@@ -296,48 +300,34 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       " is a number of items on a single page. "
       "Pagination information (such as a number of pages and etc) is returned
        in response headers. ")
-   "If you'd like to join our channel webring send a patch to "
-   (a (@ (href "mailto:~whereiseveryone/toys@lists.sr.ht"))
-      "~whereiseveryone/toys@lists.sr.ht")
-   " adding your channel as an entry in "
-   (a (@ (href "https://git.sr.ht/~whereiseveryone/toys/tree/master/item/channels.scm"))
-      "channels.scm") "."))
+   (p
+     "If you'd like to join our channel webring send a patch to "
+     (a (@ (href "mailto:~whereiseveryone/toys@lists.sr.ht"))
+        "~whereiseveryone/toys@lists.sr.ht")
+     " adding your channel as an entry in "
+     (a (@ (href "https://git.sr.ht/~whereiseveryone/toys/tree/master/item/channels.scm"))
+        "channels.scm") ".")
+   (hr (@ (style "margin: 2rem 0; opacity: 0.3;")))))
 
-(define (packages-template items query page total)
-  (base-items-template "/"
-                       items
-                       query
-                       package-template
+(define (packages-template items query page total channels channel)
+  (base-items-template "/" items query package-template
                        (placeholder-template "/api/packages")
-                       page
-                       total))
+                       page total channels channel))
 
-(define (services-template items query page total)
-  (base-items-template "/services"
-                       items
-                       query
-                       service-template
+(define (services-template items query page total channels channel)
+  (base-items-template "/services" items query service-template
                        (placeholder-template "/api/services")
-                       page
-                       total))
+                       page total channels channel))
 
 (define (channels-template items query page total)
-  (base-items-template "/channels"
-                       items
-                       query
-                       channel-template
+  (base-items-template "/channels" items query channel-template
                        (placeholder-template "/api/channels")
-                       page
-                       total))
+                       page total '() #f))
 
-(define (symbols-template items query page total)
-  (base-items-template "/symbols"
-                       items
-                       query
-                       symbol-template
+(define (symbols-template items query page total channels channel)
+  (base-items-template "/symbols" items query symbol-template
                        (placeholder-template "/api/symbols")
-                       page
-                       total))
+                       page total channels channel))
 
 (define (package-template package)
   `(div (@ (class "item"))
@@ -410,10 +400,13 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        ,(assoc-ref channel "commit"))
      (div
        (span (@ (class "muted")) "Packages: ")
-       ,(assoc-ref channel "packages-count"))
+       (a (@ (href ,(string-append "/?channel=" (assoc-ref channel "name"))))
+        ,(assoc-ref channel "packages-count")))
      (div
        (span (@ (class "muted")) "Services: ")
-       ,(assoc-ref channel "services-count"))
+       (a (@ (href ,(string-append "/services?channel="
+                                   (assoc-ref channel "name"))))
+        ,(assoc-ref channel "services-count")))
      (details
        (summary (@ (class "muted")) "Subscription snippet: ")
        (pre
@@ -459,8 +452,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (symbol-channel channel)
   `(div
     (span (@ (class "muted")) "Channel: ")
-    (a (@ (href ,(string-append "/channels?search="
-                                channel))
+    (a (@ (href ,(string-append "/channels?show=" channel))
           (rel "nofollow"))
        ,channel)))
 
@@ -491,6 +483,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
     ""))
 
 (define (paginator-template query page limit total)
+  (set! query (or query ""))
   (define last-page (ceiling (/ total limit)))
   (define (numbers-template query current-page last-page)
    (fold-right
