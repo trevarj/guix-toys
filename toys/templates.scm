@@ -278,7 +278,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
               (pre ,%empty-results-art)
               (small (@ (class "muted")) "Art by Hayley Jane Wakenshaw")))
         `(,(map (lambda (item) (normalizer item)) items)
-          ,(paginator-template query page 24 total))))
+          ,(paginator-template query channel page 24 total))))
     path query page total channels channel))
 
 (define (placeholder-template method)
@@ -482,15 +482,17 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       texi)
     ""))
 
-(define (paginator-template query page limit total)
+(define (paginator-template query channel page limit total)
   (set! query (or query ""))
+  (set! channel (or channel ""))
   (define last-page (ceiling (/ total limit)))
   (define (numbers-template query current-page last-page)
    (fold-right
     (lambda (i result)
      (cons
       `(a (@ (href ,(string-append "?page=" (number->string (+ 1 i))
-                                   "&search=" query))
+                                   "&search=" query
+                                   "&channel=" channel))
              (class ,(if (= page (+ 1 i)) "paginator-active" "")))
         ,(number->string (+ 1 i)))
       result))
