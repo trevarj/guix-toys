@@ -1005,4 +1005,13 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Personal Guix channel of Untrusem")
+   (channel
+    (channel
+     (name 'rain-and-roses)
+     (url "https://codeberg.org/untrusem/Rain-and-Roses")
+     (branch "trunk"))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
