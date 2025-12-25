@@ -695,6 +695,19 @@ Goblins and Hoot")
     (forge "codeberg")
     (channel
       (channel
+        (name 'radix)
+        (url "https://codeberg.org/anemofilia/radix.git")
+        (branch "main")
+        (introduction
+          (make-channel-introduction
+            "f9130e11e35d2c147c6764ef85542dc58dc09c4f"
+            (openpgp-fingerprint
+              "F164 709E 5FC7 B32B AEC7  9F37 1F2E 76AC E3F5 31C8"))))))
+
+  (toys-box
+    (forge "codeberg")
+    (channel
+      (channel
         (name 'saayix)
         (url "https://codeberg.org/look/saayix")
         (branch "main")
