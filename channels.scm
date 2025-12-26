@@ -696,7 +696,7 @@ Goblins and Hoot")
     (channel
       (channel
         (name 'radix)
-        (url "https://codeberg.org/anemofilia/radix.git")
+        (url "https://codeberg.org/anemofilia/radix")
         (branch "main")
         (introduction
           (make-channel-introduction
