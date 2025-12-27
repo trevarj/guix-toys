@@ -1026,5 +1026,18 @@ of Chicken Scheme eggs")
      (branch "trunk"))))
 
   (toys-box
+   (forge "sourcehut")
+   (channel
+    (channel
+     (name 'remuix)
+     (url "https://git.sr.ht/~rwv/remuix")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "68bf2c87a65cf485f73bca5ba331332af639c268"
+       (openpgp-fingerprint
+        "D5B5 DFE0 11B4 E68E 7C4F  1317 7793 AB55 3642 5254"))))))
+
+  (toys-box
    (forge "codeberg")
    (channel %default-guix-channel)))
