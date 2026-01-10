@@ -1040,4 +1040,17 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (channel
+    (channel
+     (name 'panther)
+     (url "https://codeberg.org/gofranz/panther")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "54b4056ac571611892c743b65f4c47dc298c49da"
+       (openpgp-fingerprint
+        "A36A D41E ECC7 A871 1003  5D24 524F EB1A 9D33 C9CB"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
