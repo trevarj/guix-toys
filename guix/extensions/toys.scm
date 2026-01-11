@@ -2,7 +2,7 @@
 ;;;
 ;;; Copyright © 2022 Charles Jackson <charles.b.jackson@protonmail.com>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
-;;; Copyright © 2022-2025 unwox <me@unwox.com>
+;;; Copyright © 2022-2026 unwox <me@unwox.com>
 ;;;
 ;;; This file is not part of GNU Guix.
 ;;;
@@ -29,6 +29,7 @@
   #:use-module (toys ui)
   #:use-module (gnu services)
   #:use-module (guix build utils)
+  #:use-module (guix build-system)
   #:use-module (guix channels)
   #:use-module (guix licenses)
   #:use-module (guix modules)
@@ -282,7 +283,8 @@ The valid values for ACTION are:
        inputs TEXT,
        propagated_inputs TEXT,
        description TEXT,
-       origin TEXT NOT NULL
+       origin TEXT NOT NULL,
+       build_system TEXT NOT NULL
      );
 
      CREATE INDEX packages_channel_idx ON packages (channel);
@@ -577,6 +579,8 @@ into the DB."
                symbol->string
                (module-name module))
              " "))
+         (build-system (symbol->string
+                         (build-system-name (package-build-system package))))
          (file (module-name->file-name (module-name module)))
          (location (package-location package))
          (url (location->url box-wrapper file (location-line location)))
@@ -610,7 +614,7 @@ into the DB."
                     "")
                    "")))
     (list name channel-name mod-name file url version homepage licenses
-          synopsis inputs propagated-inputs description origin)))
+          synopsis inputs propagated-inputs description origin build-system)))
 
 (define (insert-package package db box module box-wrapper)
   "Serializes and inserts PACKAGE and corresponding search row into the DB."
@@ -630,8 +634,9 @@ into the DB."
                inputs,
                propagated_inputs,
                description,
-               origin)
-              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+               origin,
+               build_system)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
               RETURNING id"
              #:cache? #t))
          (search-stmt
@@ -640,8 +645,7 @@ into the DB."
              "INSERT INTO search (name, description, fk, channel, `table`)
               VALUES (?,?,?,?,?)"
              #:cache? #t))
-         (data
-           (serialize-package package box module box-wrapper)))
+         (data (serialize-package package box module box-wrapper)))
     (define id (vector-ref (car (db-execute-stmt stmt data)) 0))
     (db-execute-stmt
       search-stmt
@@ -661,7 +665,8 @@ returned."
     '()
     columns))
 
-(define (search-symbols db select from limit page query channel exact-match?)
+(define* (search-symbols db select from limit page query channel exact-match?
+                         #:key (extra-wheres '()))
   "Queries SELECT fields from all symbols in the FROM table.  Use `j.` prefix
 for selecting fields."
   (set! query (and (string? query) (not (string-null? query))
@@ -685,6 +690,12 @@ for selecting fields."
   (define wheres (list))
   (define orders (list))
 
+  (for-each
+    (lambda (v)
+      (set! wheres (append wheres (list (first v))))
+      (set! args (append args (list (last v)))))
+    extra-wheres)
+
   (if query
     (set! sql (string-append sql
                              " FROM search s"
@@ -693,7 +704,7 @@ for selecting fields."
 
   ;; where conditions
   (when query
-    ;; guile question: is there a better way of append an item to a list?
+    ;; guile question: is there a better way to append an item to a list?
     ;; i do not welcome so many memory allocations for a trivial string/array
     ;; building
     (set! wheres (append wheres (list "s.`table` = ?")))
@@ -837,7 +848,7 @@ query parameter."
     db request
     "j.name, j.channel, j.module, j.file, j.url, j.version, j.homepage,
      j.licenses, j.synopsis, j.inputs, j.propagated_inputs AS propagatedInputs,
-     j.origin, j.description"
+     j.origin, j.description, j.build_system AS buildSystem"
     "packages"))
 
 (define (handle-api-services-search db request)
@@ -885,10 +896,15 @@ query parameter."
               (request-query-parameter request "show")))
   (define query (or show-query search-query ""))
   (define channel (request-query-parameter request "channel"))
+  (define build-system (request-query-parameter request "build-system"))
   (define page (max 1 (string->number
                         (or (request-query-parameter request "page") "1"))))
   (define-values (results count)
-    (search-symbols db select from 24 page query channel (string? show-query)))
+    (search-symbols
+      db select from 24 page query channel (string? show-query)
+      #:extra-wheres (if (string? build-system)
+                       `(("build_system = ?" ,build-system))
+                       '())))
 
   (values '((content-type . (text/html)))
           (lambda (port)
@@ -903,8 +919,8 @@ query parameter."
     db
     request
     "j.name, j.channel, j.module, j.file, j.url, j.version, j.homepage,
-     j.licenses, j.synopsis, j.inputs,
-     j.propagated_inputs as `propagated-inputs`, j.description"
+     j.licenses, j.synopsis, j.inputs, j.build_system AS `build-system`,
+     j.propagated_inputs AS `propagated-inputs`, j.description"
     "packages"
     packages-template))
 

@@ -357,6 +357,9 @@ ________________________,--._(___Y___)_,--._______________________ hjw
        (span (@ (class "muted")) "Licenses: ")
        ,@(symbol-licenses (assoc-ref package "licenses")))
      (div
+       (span (@ (class "muted")) "Build system: ")
+       ,(assoc-ref package "build-system"))
+     (div
        (span (@ (class "muted")) "Synopsis: ")
        ,(assoc-ref package "synopsis"))
      ,(if (assoc-ref package "description")
