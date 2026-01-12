@@ -58,10 +58,9 @@ given REQUEST."
 (define (request-query-parameter request param)
   "Returns value of the given query PARAM.  If there is no such value,
 returns #f."
-  (let ((value (assoc-ref (request-query-parameters request) param)))
-    (if (and value (not (string-null? value)))
-      value
-      #f)))
+  (let* ((parameters (request-query-parameters request))
+         (value (assoc-ref parameters param)))
+    (and (string? value) (not (string-null? value)) value)))
 
 (define (build-query-string args)
   "Return an formatted and encoded query string for given ARGS which is an

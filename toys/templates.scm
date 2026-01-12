@@ -263,7 +263,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          pages)))
 
 (define (base-items-template path items query normalizer placeholder
-                             page total channels channel)
+                             page total channels channel request-params)
   "Returns base template for search pages."
   (base-template
     `(,(if (and (or (not (string? query))
@@ -278,7 +278,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
               (pre ,%empty-results-art)
               (small (@ (class "muted")) "Art by Hayley Jane Wakenshaw")))
         `(,(map (lambda (item) (normalizer item)) items)
-          ,(paginator-template query channel page 24 total))))
+          ,(paginator-template request-params page 24 total))))
     path query page total channels channel))
 
 (define (placeholder-template method)
@@ -309,25 +309,25 @@ ________________________,--._(___Y___)_,--._______________________ hjw
         "channels.scm") ".")
    (hr (@ (style "margin: 2rem 0; opacity: 0.3;")))))
 
-(define (packages-template items query page total channels channel)
+(define (packages-template items query page total channels channel request-params)
   (base-items-template "/" items query package-template
                        (placeholder-template "/api/packages")
-                       page total channels channel))
+                       page total channels channel request-params))
 
-(define (services-template items query page total channels channel)
+(define (services-template items query page total channels channel request-params)
   (base-items-template "/services" items query service-template
                        (placeholder-template "/api/services")
-                       page total channels channel))
+                       page total channels channel request-params))
 
-(define (channels-template items query page total)
+(define (channels-template items query page total request-params)
   (base-items-template "/channels" items query channel-template
                        (placeholder-template "/api/channels")
-                       page total '() #f))
+                       page total (list) #f request-params))
 
-(define (symbols-template items query page total channels channel)
+(define (symbols-template items query page total channels channel request-params)
   (base-items-template "/symbols" items query symbol-template
                        (placeholder-template "/api/symbols")
-                       page total channels channel))
+                       page total channels channel request-params))
 
 (define (package-template package)
   `(div (@ (class "item"))
@@ -485,27 +485,35 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       texi)
     ""))
 
-(define (paginator-template query channel page limit total)
-  (set! query (or query ""))
-  (set! channel (or channel ""))
+(define (paginator-template query-params page limit total)
   (define last-page (ceiling (/ total limit)))
-  (define (numbers-template query current-page last-page)
-   (fold-right
-    (lambda (i result)
-     (cons
-      `(a (@ (href ,(string-append "?page=" (number->string (+ 1 i))
-                                   "&search=" query
-                                   "&channel=" channel))
-             (class ,(if (= page (+ 1 i)) "paginator-active" "")))
-        ,(number->string (+ 1 i)))
-      result))
-    '()
-    (iota last-page)))
+
+  (define query-string-without-page "")
+  (for-each
+    (lambda (v)
+      (let ((key (car v))
+            (value (cdr v)))
+        (when (not (equal? key "page"))
+          (set! query-string-without-page
+            (string-append query-string-without-page "&" key "=" value)))))
+    query-params)
+
+  (define (numbers-template current-page last-page)
+    (fold-right
+     (lambda (i result)
+      (cons
+       `(a (@ (href ,(string-append "?page=" (number->string (+ 1 i))
+                                    query-string-without-page))
+              (class ,(if (= page (+ 1 i)) "paginator-active" "")))
+         ,(number->string (+ 1 i)))
+       result))
+     '()
+     (iota last-page)))
 
   (list
     (if (< limit total)
       `(div (@ (class "paginator"))
-            "Page: " ,(numbers-template query page last-page))
+            "Page: " ,(numbers-template page last-page))
       "")
     (if (< 0 total)
       `(div "Total results: " (strong ,(number->string total)))

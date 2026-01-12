@@ -906,12 +906,14 @@ query parameter."
                        `(("build_system = ?" ,build-system))
                        '())))
 
+  (define sxml-result
+    (template (denormalize-rows results) query page count
+              (all-channels db) channel
+              (request-query-parameters request)))
+
   (values '((content-type . (text/html)))
           (lambda (port)
-            (sxml->xml
-              (template (denormalize-rows results) query page count
-                        (all-channels db) channel)
-              port))))
+            (sxml->xml sxml-result port))))
 
 (define (handle-index-page db request)
   "Returns the index page."
@@ -953,11 +955,13 @@ query parameter."
   (define-values (results count)
     (search-symbols db fields "boxes" 24 page query #f (string? show-query)))
 
+  (define sxml-result
+    (channels-template results query page count
+                       (request-query-parameters request)))
+
   (values '((content-type . (text/html)))
           (lambda (port)
-            (sxml->xml
-              (channels-template results query page count)
-              port))))
+            (sxml->xml sxml-result port))))
 
 (define (handle-symbols-page db request)
   "Returns the symbols search page."
