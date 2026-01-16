@@ -1052,5 +1052,19 @@ of Chicken Scheme eggs")
         "A36A D41E ECC7 A871 1003  5D24 524F EB1A 9D33 C9CB"))))))
 
   (toys-box
+   (forge "forgejo")
+   (synopsis "A Guix channel containing tools for language learning!")
+   (channel
+    (channel
+     (name 'ajattix)
+     (url "https://git.ajattix.org/hashirama/ajattix.git")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "5f1904f1a514b89b2d614300d8048577aa717617"
+       (openpgp-fingerprint
+        "F164 709E 5FC7 B32B AEC7  9F37 1F2E 76AC E3F5 31C8"))))))
+
+  (toys-box
    (forge "codeberg")
    (channel %default-guix-channel)))
