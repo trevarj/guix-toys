@@ -1057,7 +1057,7 @@ of Chicken Scheme eggs")
    (channel
     (channel
      (name 'ajattix)
-     (url "https://git.ajattix.org/hashirama/ajattix.git")
+     (url "https://git.ajattix.org/hashirama/ajattix")
      (branch "main")
      (introduction
       (make-channel-introduction
