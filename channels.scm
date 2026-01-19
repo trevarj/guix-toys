@@ -1067,4 +1067,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "A Guix channel containing various nonfree packages.")
+   (channel
+    (channel
+     (name 'clocktower)
+     (url "https://codeberg.org/TohsakaTypeclass/clocktower")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "9fb086fa9ee955c7daf755a5b114eedc030de99d"
+       (openpgp-fingerprint
+        "4B1E F810 76ED 1A25 D15C  CB18 4572 A777 FF18 DBCC"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
