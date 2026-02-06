@@ -1081,4 +1081,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Guix channel for the BLUE build system")
+   (channel
+    (channel
+     (name 'bluebox)
+     (url "https://codeberg.org/lapislazuli/bluebox")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "63350484aaacc362aea28fb14236019fced4050f"
+       (openpgp-fingerprint
+        "5132 3571 CEED 988F 52FC 467C 6F98 DBF3 EA7F 4B37"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
