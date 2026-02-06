@@ -970,6 +970,20 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Personal guix channel for kestrelwx")
+   (channel
+    (channel
+     (name 'kestrel)
+     (url "https://codeberg.org/kestrelwx/kestrel")
+     (branch "trunk")
+     (introduction
+      (make-channel-introduction
+       "a77383c6228087757de5961d797eb6196765e239"
+       (openpgp-fingerprint
+        "A858 A335 8B99 1428 8C36  AB50 3496 CF00 2F48 B3BE"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel
     (channel
       (name 'zzkt)
