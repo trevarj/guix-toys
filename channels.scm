@@ -3,6 +3,20 @@
 
 (list
   (toys-box
+   (forge "codeberg")
+   (synopsis "Personal channel of Firefly.  Mostly focussed on services.")
+   (channel
+    (channel
+     (name 'firefly)
+     (url "https://codeberg.org/Firefly707/firefly-channel.git")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "8fd3d165ad053eda93ddb915d5dedc9e880c8fb5"
+       (openpgp-fingerprint
+        "E76F D6F5 4BCF 096F 28BB  C2A0 A026 E5A7 C382 793E"))))))
+ 
+  (toys-box
    (forge "github")
    (channel
     (channel
