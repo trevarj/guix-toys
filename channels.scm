@@ -8,7 +8,7 @@
    (channel
     (channel
      (name 'firefly)
-     (url "https://codeberg.org/Firefly707/firefly-channel.git")
+     (url "https://codeberg.org/Firefly707/firefly-channel")
      (branch "main")
      (introduction
       (make-channel-introduction
