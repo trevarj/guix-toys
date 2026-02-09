@@ -754,6 +754,13 @@ Goblins and Hoot")
    (forge "codeberg")
    (channel
     (channel
+     (name 'guix-ai-cloud)
+     (url "https://codeberg.org/daym/guix-ai-cloud"))))
+
+  (toys-box
+   (forge "codeberg")
+   (channel
+    (channel
      (name 'thgsc)
      (url "https://codeberg.org/tusharhero/thgsc"))))
 
