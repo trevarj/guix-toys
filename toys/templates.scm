@@ -301,7 +301,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       "Pagination information (such as a number of pages and etc) is returned
        in response headers. ")
    (p
-     "If you'd like to join our channel webring send a patch to "
+     "If you'd like to join our channel search send a patch to "
      (a (@ (href "mailto:~whereiseveryone/toys@lists.sr.ht"))
         "~whereiseveryone/toys@lists.sr.ht")
      " adding your channel as an entry in "
