@@ -1130,4 +1130,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Personal guix channel of zlqrvx.")
+   (channel
+    (channel
+     (name 'zlqrvx)
+     (url "https://codeberg.org/zlqrvx/zlqrvx-guix-channel")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "ac84930c1cdddc998c2391c45895e4940ca28f46"
+       (openpgp-fingerprint
+	"AC43 6BE4 41A6 0A27 8BEE 10EE DE19 9D16 7C27 AE23"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
