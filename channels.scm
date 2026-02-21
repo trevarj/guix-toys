@@ -1130,6 +1130,19 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Personal guix channel of rrobin.")
+   (channel
+    (channel
+     (name 'rrobin)
+     (url "https://codeberg.org/rrobin/guix-dev.git")
+     (introduction
+      (make-channel-introduction
+       "901d3eac53540b795c68eb24971bf1bdc8632f7d"
+       (openpgp-fingerprint
+        "F64E 73F4 1001 7051 11A3 5C9B 5321 ABD0 A679 6635"))))))
+
+  (toys-box
+   (forge "codeberg")
    (synopsis "Personal guix channel of zlqrvx.")
    (channel
     (channel
