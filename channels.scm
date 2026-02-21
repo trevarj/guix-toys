@@ -1157,4 +1157,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Personal guix channel of mrh.")
+   (channel
+    (channel
+      (name 'mrh)
+      (url "https://codeberg.org/mrh/guix-channel.git")
+      (branch "trunk")
+      (introduction
+       (make-channel-introduction
+        "2a79d9f12341857c8071e0cfc45489d7587ee596"
+        (openpgp-fingerprint
+         "1F5C 5723 E950 62A7 085E  0757 6C7C 794F 4A82 8B59"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
