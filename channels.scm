@@ -1170,5 +1170,19 @@ of Chicken Scheme eggs")
          "1F5C 5723 E950 62A7 085E  0757 6C7C 794F 4A82 8B59"))))))
 
   (toys-box
+    (forge "codeberg")
+    (synopsis "Personal guix channel of charlesroelli.")
+    (channel
+      (channel
+        (name 'charlesroelli)
+        (branch "main")
+        (url "https://codeberg.org/charlesroelli/channel")
+        (introduction
+          (make-channel-introduction
+            "ffc27e1f5f8306faf47098e8cf8e06c610a315de"
+            (openpgp-fingerprint
+              "59B6 65CB 5FC8 1C50 8144  5049 3EEC E33F 63F9 8864"))))))
+
+  (toys-box
    (forge "codeberg")
    (channel %default-guix-channel)))
