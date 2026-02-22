@@ -1134,7 +1134,7 @@ of Chicken Scheme eggs")
    (channel
     (channel
      (name 'rrobin)
-     (url "https://codeberg.org/rrobin/guix-dev.git")
+     (url "https://codeberg.org/rrobin/guix-dev")
      (introduction
       (make-channel-introduction
        "901d3eac53540b795c68eb24971bf1bdc8632f7d"
@@ -1161,7 +1161,7 @@ of Chicken Scheme eggs")
    (channel
     (channel
       (name 'mrh)
-      (url "https://codeberg.org/mrh/guix-channel.git")
+      (url "https://codeberg.org/mrh/guix-channel")
       (branch "trunk")
       (introduction
        (make-channel-introduction
