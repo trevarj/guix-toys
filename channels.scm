@@ -1199,4 +1199,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Personal guix channel of ch4og.")
+   (channel
+    (channel
+     (name 'shikanox)
+     (url "https://codeberg.org/ch4og/shikanox")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "fe3b5f72aa676c69f4d43507bdd18fb051906917"
+       (openpgp-fingerprint
+        "7C9E 7EBA 828C 58DF DACE  5BED 4DCC 7AB7 FC75 319B"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
