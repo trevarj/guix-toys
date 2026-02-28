@@ -1185,4 +1185,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Run an-anime-team launchers on Guix!")
+   (channel
+    (channel
+     (name 'aagl)
+     (url "https://codeberg.org/ch4og/aagl-guix")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "1055d880e124d69a2aef85cac98a813d442a55fa"
+       (openpgp-fingerprint
+        "7C9E 7EBA 828C 58DF DACE  5BED 4DCC 7AB7 FC75 319B"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
