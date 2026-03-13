@@ -1213,4 +1213,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Electronic design automation (EDA). Includes pinned versions for specific purposes.")
+   (channel
+    (channel
+     (name 'fsi)
+     (url "https://codeberg.org/fsi/guix-eda")
+     (branch "master")
+     (introduction
+       (make-channel-introduction
+         "d631743c859d0e9ec2d37a5e13ae315b8b67716b"
+         (openpgp-fingerprint
+           "D746 C446 4F97 F289 70F3  5ECE 22D1 8397 0492 C574"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
