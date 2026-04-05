@@ -71,6 +71,20 @@ Goblins and Hoot")
         "973D E54C 08E4 ECBB A7AE  2912 8EDC 92AC 17DE 7691"))))))
 
   (toys-box
+   (forge "gitlab")
+   (synopsis "a small channel primarily focused around wayland and common lisp")
+   (channel
+    (channel
+     (name 'bugchan)
+     (url "https://gitlab.com/bigbookofbug/bugchan")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "c2ed428f3a41c1fce149b245253f9f5382f42efd"
+       (openpgp-fingerprint
+        "ACF7 CA25 C886 9B8A 1669 67D7 7350 3372 E2C6 3BCF"))))))
+
+  (toys-box
    (forge "sourcehut")
    (synopsis "Guix Common Lisp channel")
    (channel (channel
