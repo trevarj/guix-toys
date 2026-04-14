@@ -1241,4 +1241,18 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "A collection of astrophysics-adjacent codes which are not yet included upstream.")
+   (channel
+    (channel
+     (name 'vga)
+     (url "https://codeberg.org/vleugelcomplement/guix-astro")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "1529aa04ac7e0c42459276b536b74a515c5ac76a"
+       (openpgp-fingerprint
+        "6711 5E90 F31C 91FA 53EB  0968 83A2 6B4A 9E1D 2283"))))))
+
+  (toys-box
+   (forge "codeberg")
    (channel %default-guix-channel)))
