@@ -1226,6 +1226,16 @@ of Chicken Scheme eggs")
         "7C9E 7EBA 828C 58DF DACE  5BED 4DCC 7AB7 FC75 319B"))))))
 
   (toys-box
+   (forge "github")
+   (synopsis "grigory.tech personal guix channel. Mostly focused
+around clojure, modern web [deno, etc] and russian specific packages
+for internet censorship bypass")
+   (channel
+    (channel
+     (name 'x-files)
+     (url "https://github.com/shegeley/x-files"))))
+
+  (toys-box
    (forge "codeberg")
    (synopsis "Electronic design automation (EDA). Includes pinned versions for specific purposes.")
    (channel
