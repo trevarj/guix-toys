@@ -263,7 +263,8 @@ ________________________,--._(___Y___)_,--._______________________ hjw
          pages)))
 
 (define (base-items-template path items query normalizer placeholder
-                             page total channels channel request-params)
+                             page total channels channel request-params
+                             api-surface)
   "Returns base template for search pages."
   (base-template
     `(,(if (and (or (not (string? query))
@@ -278,7 +279,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
               (pre ,%empty-results-art)
               (small (@ (class "muted")) "Art by Hayley Jane Wakenshaw")))
         `(,(map (lambda (item) (normalizer item)) items)
-          ,(paginator-template request-params page 24 total))))
+          ,(paginator-template request-params page 24 total api-surface))))
     path query page total channels channel))
 
 (define (placeholder-template method)
@@ -312,22 +313,26 @@ ________________________,--._(___Y___)_,--._______________________ hjw
 (define (packages-template items query page total channels channel request-params)
   (base-items-template "/" items query package-template
                        (placeholder-template "/api/packages")
-                       page total channels channel request-params))
+                       page total channels channel request-params
+                       "packages"))
 
 (define (services-template items query page total channels channel request-params)
   (base-items-template "/services" items query service-template
                        (placeholder-template "/api/services")
-                       page total channels channel request-params))
+                       page total channels channel request-params
+                       "services"))
 
 (define (channels-template items query page total request-params)
   (base-items-template "/channels" items query channel-template
                        (placeholder-template "/api/channels")
-                       page total (list) #f request-params))
+                       page total (list) #f request-params
+                       "channels"))
 
 (define (symbols-template items query page total channels channel request-params)
   (base-items-template "/symbols" items query symbol-template
                        (placeholder-template "/api/symbols")
-                       page total channels channel request-params))
+                       page total channels channel request-params
+                       "public symbols"))
 
 (define (package-template package)
   `(div (@ (class "item"))
@@ -485,7 +490,7 @@ ________________________,--._(___Y___)_,--._______________________ hjw
       texi)
     ""))
 
-(define (paginator-template query-params page limit total)
+(define (paginator-template query-params page limit total api-surface)
   (define last-page (ceiling (/ total limit)))
 
   (define query-string-without-page "")
@@ -516,5 +521,6 @@ ________________________,--._(___Y___)_,--._______________________ hjw
             "Page: " ,(numbers-template page last-page))
       "")
     (if (< 0 total)
-      `(div "Total results: " (strong ,(number->string total)))
+      `(div ,(string-append "Total " api-surface ": ")
+            (strong ,(number->string total)))
       "")))
