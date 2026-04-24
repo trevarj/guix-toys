@@ -503,17 +503,29 @@ ________________________,--._(___Y___)_,--._______________________ hjw
             (string-append query-string-without-page "&" key "=" value)))))
     query-params)
 
+  (define (page-link n)
+    `(a (@ (href ,(string-append "?page=" (number->string n)
+                                 query-string-without-page))
+           (class ,(if (= page n) "paginator-active" "")))
+      ,(number->string n)))
+
   (define (numbers-template current-page last-page)
-    (fold-right
-     (lambda (i result)
-      (cons
-       `(a (@ (href ,(string-append "?page=" (number->string (+ 1 i))
-                                    query-string-without-page))
-              (class ,(if (= page (+ 1 i)) "paginator-active" "")))
-         ,(number->string (+ 1 i)))
-       result))
-     '()
-     (iota last-page)))
+    (let* ((window 2)
+           (start (max 1 (- current-page window)))
+           (end (min last-page (+ current-page window)))
+           (ellipsis '(span (@ (class "paginator-ellipsis")) "…"))
+           (head (cond
+                   ((<= start 1) '())
+                   ((= start 2) (list (page-link 1)))
+                   (else (list (page-link 1) ellipsis))))
+           (middle (if (<= start end)
+                     (map page-link (iota (- end start -1) start))
+                     '()))
+           (tail (cond
+                   ((>= end last-page) '())
+                   ((= end (- last-page 1)) (list (page-link last-page)))
+                   (else (list ellipsis (page-link last-page))))))
+      (append head middle tail)))
 
   (list
     (if (< limit total)
