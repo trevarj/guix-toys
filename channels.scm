@@ -1197,7 +1197,7 @@ of Chicken Scheme eggs")
       (channel
         (name 'charlesroelli)
         (branch "main")
-        (url "https://codeberg.org/charlesroelli/channel")
+        (url "https://cgit.adnoto.dev/git/channel.git")
         (introduction
           (make-channel-introduction
             "ffc27e1f5f8306faf47098e8cf8e06c610a315de"
