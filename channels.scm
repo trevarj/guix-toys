@@ -1191,13 +1191,13 @@ of Chicken Scheme eggs")
          "1F5C 5723 E950 62A7 085E  0757 6C7C 794F 4A82 8B59"))))))
 
   (toys-box
-    (forge "codeberg")
+    (forge "cgit")
     (synopsis "Personal guix channel of charlesroelli.")
     (channel
       (channel
         (name 'charlesroelli)
         (branch "main")
-        (url "https://cgit.adnoto.dev/git/channel.git")
+        (url "https://cgit.adnoto.dev/git/channel")
         (introduction
           (make-channel-introduction
             "ffc27e1f5f8306faf47098e8cf8e06c610a315de"
