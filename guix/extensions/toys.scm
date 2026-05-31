@@ -355,7 +355,9 @@ from BOXES into it."
                     ((service-type? var)
                       (insert-service-type var db box module box-wrapper))
                     ((package? var)
-                      (insert-package var db box module box-wrapper))))))
+                     (unless (or (hidden-package? var)
+                                 (package-superseded var))
+                       (insert-package var db box module box-wrapper)))))))
             box-wrapper)
 
           (sqlite-exec db "COMMIT"))))
