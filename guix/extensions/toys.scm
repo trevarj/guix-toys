@@ -392,8 +392,7 @@ from BOXES into it."
                       #\/))
          (channel (toys-box-channel box))
          (file (string-trim-both (format #f "~a/~a" directory file) #\/))
-         (ref (or (channel-commit channel)
-                  (channel-branch channel)))
+         (ref (assoc-ref box-wrapper 'commit))
          (forge (and channel
                      (toys-box-forge box)))
          (base-url (if (equal? (channel-name channel)
@@ -418,14 +417,11 @@ from BOXES into it."
            ("github"
             (format #f "~a/blob/~a/~a#L~d"
                     base-url ref file lineno))
-           ("gitea"
+           ((or "codeberg" "forgejo" "gitea")
             (format #f "~a/src/commit/~a/~a#L~d"
                     base-url ref file lineno))
            ("gogs"
             (format #f "~a/src/~a/~a#L~d"
-                    base-url ref file lineno))
-           ((or "codeberg" "forgejo")
-            (format #f "~a/src/branch/~a/~a#L~d"
                     base-url ref file lineno))
            (_ #f)))))
 
