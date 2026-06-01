@@ -366,10 +366,10 @@ Goblins and Hoot")
                 "46DB B5B2 61F5 36CD 37DE E3E7 1BE8 0027 F12B 9C29"))))))
 
   (toys-box
-    (forge "github")
+    (forge "codeberg")
     (channel (channel
                (name 'rosenthal)
-               (url "https://github.com/rakino/rosenthal")
+               (url "https://codeberg.org/hako/rosenthal")
                (branch "trunk")
                (introduction
                  (make-channel-introduction
