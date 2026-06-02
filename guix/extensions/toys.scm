@@ -104,6 +104,9 @@
     (("pull" file channel)
      (with-database
        (lambda (db)
+         (unless (database-initialized? db)
+           (debug "Database not initialized: creating schema")
+           (init-db db))
          (pull-data db (fetch-boxes file channel)))))
 
     (("serve")
@@ -112,7 +115,7 @@
      (with-database
        (lambda (db)
          (unless (database-initialized? db)
-           (debug "Database not initialized; creating schema")
+           (debug "Database not initialized: creating schema")
            (init-db db))))
      (with-database
        (lambda (db)
