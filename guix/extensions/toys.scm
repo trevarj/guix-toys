@@ -107,6 +107,13 @@
          (pull-data db (fetch-boxes file channel)))))
 
     (("serve")
+     ;; "serve" opens the database read-only, so first make sure it exists and
+     ;; its schema is present; otherwise it fails on a fresh system.
+     (with-database
+       (lambda (db)
+         (unless (database-initialized? db)
+           (debug "Database not initialized; creating schema")
+           (init-db db))))
      (with-database
        (lambda (db)
          (debug "Listening on :8080")
@@ -228,6 +235,13 @@ The valid values for ACTION are:
  (define result (sqlite-fold cons '() stmt))
  (sqlite-finalize stmt)
  result)
+
+(define (database-initialized? db)
+  "Return #t if the toys schema has already been created in DB."
+  (let ((stmt (sqlite-prepare
+               db
+               "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'boxes'")))
+    (not (null? (db-execute-stmt stmt '())))))
 
 (define (init-db db)
   "Initializes database schema."
