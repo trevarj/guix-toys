@@ -1,0 +1,172 @@
+name: Build & Deploy
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      channels_file:
+        description: 'Channels file to index (use channels-test.scm for smoke runs)'
+        required: false
+        default: 'channels.scm'
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Skip the duplicate run triggered by the channels-sync commit we push ourselves.
+    if: "${{ github.event_name != 'push' || !startsWith(github.event.head_commit.message, 'channels: Sync') }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Sync channels.scm from upstream
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          curl -fsSL https://git.sr.ht/~whereiseveryone/toys/blob/master/channels.scm -o channels.scm
+          if git diff --quiet channels.scm; then
+            echo "channels.scm is up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add channels.scm
+            git commit -m "channels: Sync from upstream"
+            git push origin main
+          fi
+
+      - name: Install Guix
+        uses: PromyLOPh/guix-install-action@v1.6
+        with:
+          pullAfterInstall: false
+
+      - name: Cache Guix checkouts
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/guix/checkouts
+          key: guix-checkouts-${{ hashFiles('channels.scm') }}
+          restore-keys: |
+            guix-checkouts-
+
+      - name: Index channels
+        run: |
+          set -uo pipefail
+          FILE="${{ inputs.channels_file || 'channels.scm' }}"
+          echo "Indexing channels from $FILE"
+
+          guix shell -m manifest.scm -- ./dev init
+
+          channels=$(grep -oP "\(name '\K[a-zA-Z0-9*+_-]+" "$FILE" | sort -u)
+          total=$(echo "$channels" | wc -l)
+          echo "Found $total channels"
+
+          i=0
+          for ch in $channels; do
+            i=$((i + 1))
+            start=$(date +%s)
+            echo "::group::[$i/$total] $ch"
+            if ! timeout 20m guix shell -m manifest.scm -- ./dev pull "$FILE" "$ch"; then
+              echo "::warning::channel $ch failed"
+            fi
+            echo "[$i/$total] $ch took $(( $(date +%s) - start ))s"
+            echo "::endgroup::"
+          done
+
+      - name: Post-process DB
+        run: |
+          set -euo pipefail
+          DB="$HOME/.cache/guix/toys/db.sqlite"
+          sql() { guix shell sqlite -- sqlite3 "$DB" "$@"; }
+
+          sql "INSERT INTO search(search) VALUES('optimize');"
+          sql "PRAGMA journal_mode=DELETE; PRAGMA page_size=16384; VACUUM;"
+
+          check=$(sql "PRAGMA integrity_check;")
+          if [ "$check" != "ok" ]; then
+            echo "::error::integrity_check failed: $check"
+            exit 1
+          fi
+
+          # Schema tripwire: assert the tables/columns the frontend depends on.
+          assert_columns() {
+            table="$1"; shift
+            cols=$(sql "SELECT name FROM pragma_table_info('$table');")
+            if [ -z "$cols" ]; then
+              echo "::error::table $table is missing"
+              exit 1
+            fi
+            for col in "$@"; do
+              if ! echo "$cols" | grep -qx "$col"; then
+                echo "::error::table $table is missing column $col"
+                exit 1
+              fi
+            done
+          }
+          assert_columns packages name channel module file url version homepage \
+            licenses synopsis inputs propagated_inputs origin description build_system
+          assert_columns service_types name channel module file url description
+          assert_columns public_symbols name channel module file url doc signature
+          assert_columns boxes id branch commit url synopsis subscription_snippet
+          if [ "$(sql "SELECT count(*) FROM sqlite_master WHERE name='search';")" = "0" ]; then
+            echo "::error::FTS table 'search' is missing"
+            exit 1
+          fi
+
+          size=$(stat -c%s "$DB")
+          echo "DB size: $size bytes"
+          if [ "$size" -le 100000 ]; then
+            echo "::error::DB is suspiciously small ($size bytes)"
+            exit 1
+          fi
+
+      - name: Assemble Pages artifact
+        run: |
+          set -euo pipefail
+          STAMP=$(date +%Y%m%d)
+          rm -rf site/db
+          mkdir -p site/db
+          cp "$HOME/.cache/guix/toys/db.sqlite" "site/db/db-$STAMP.sqlite"
+          cat > site/db/config.json <<EOF
+          {
+            "from": "inline",
+            "config": {
+              "serverMode": "full",
+              "url": "db-$STAMP.sqlite",
+              "requestChunkSize": 16384
+            }
+          }
+          EOF
+          touch site/.nojekyll
+          ls -lR site/db
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

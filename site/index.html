@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>guix toys — channel search</title>
+  <meta name="description" content="Search packages, services and symbols across Guix channels. Fully static, searches run in your browser.">
+  <link rel="icon" href="img/mascot.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#/">
+      <img class="mascot" src="img/mascot.svg" alt="" width="44" height="44">
+      <span class="wordmark"><span class="wm-guix">GUIX</span><span class="wm-toys">TOYS</span></span>
+    </a>
+    <nav class="menu">
+      <a href="#/?type=packages">packages</a>
+      <a href="#/?type=services">services</a>
+      <a href="#/?type=symbols">symbols</a>
+      <a href="#/?type=channels">channels</a>
+      <a href="https://github.com/trevarj/guix-toys" rel="noopener">source</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <form id="search-form" class="searchbar" autocomplete="off" onsubmit="return false">
+      <input id="omnibox" type="search" spellcheck="false"
+             placeholder="search packages, services, symbols, channels…"
+             aria-label="Search">
+      <kbd class="kbd-hint">/</kbd>
+    </form>
+
+    <div class="filters">
+      <div id="type-chips" class="chips" role="tablist" aria-label="Result type">
+        <button class="chip" data-type="all">all</button>
+        <button class="chip" data-type="packages">packages</button>
+        <button class="chip" data-type="services">services</button>
+        <button class="chip" data-type="symbols">symbols</button>
+        <button class="chip" data-type="channels">channels</button>
+      </div>
+      <select id="channel-filter" aria-label="Filter by channel">
+        <option value="">every channel</option>
+      </select>
+    </div>
+
+    <div id="status" class="status" role="status"></div>
+    <div id="results" class="results"></div>
+    <div id="sentinel"></div>
+    <button id="load-more" class="load-more" hidden>more</button>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      data indexed from <a href="https://git.sr.ht/~whereiseveryone/toys">~whereiseveryone/toys</a> channels —
+      search runs entirely in your browser (sqlite over http range requests).
+    </p>
+  </footer>
+
+  <script src="vendor/sql.js-httpvfs/index.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
