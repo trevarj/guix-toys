@@ -22,8 +22,11 @@ function originText(origin) {
   const u = origin?.uri;
   const url = Array.isArray(u) ? u[0] : (u?.url ?? u);
   if (typeof url !== "string") return "";
-  const commit = !Array.isArray(u) && u?.commit ? ` @ ${u.commit}` : "";
-  return `<code>${esc(url + commit)}</code>`;
+  const link = /^https?:\/\//.test(url)
+    ? `<a href="${esc(url)}" rel="noopener">${esc(url)}</a>`
+    : `<code>${esc(url)}</code>`;
+  const commit = !Array.isArray(u) && u?.commit ? ` <code>${esc(u.commit)}</code>` : "";
+  return link + commit;
 }
 
 function licenseLinks(licenses) {

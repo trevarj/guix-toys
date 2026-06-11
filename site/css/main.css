@@ -376,8 +376,11 @@ a.tag-channel:hover { background: var(--blood); color: #fff; text-decoration: no
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
   column-gap: 1.4rem;
 }
-.d-grid .d-row { flex-direction: column; gap: 0.1rem; }
+/* min-width: 0 lets long unbroken values (origin URLs) wrap instead of
+   blowing out the grid column */
+.d-grid .d-row { flex-direction: column; gap: 0.1rem; min-width: 0; }
 .d-grid .d-label { flex-basis: auto; padding-top: 0; }
+.d-value code { overflow-wrap: anywhere; }
 
 .copyblock {
   display: flex;
