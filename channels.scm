@@ -347,10 +347,10 @@ Goblins and Hoot")
                   "50F3 3E2E 5B0C 3D90 0424  ABE8 9BDC F497 A4BB CC7F"))))))
 
   (toys-box
-    (forge "sourcehut")
+    (forge "codeberg")
     (channel (channel
                (name 'trevdev)
-               (url "https://git.sr.ht/~trevdev/guix-channel")
+               (url "https://codeberg.org/trevdev/guix-channel")
                (branch "main"))))
 
   (toys-box
