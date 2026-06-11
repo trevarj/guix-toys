@@ -10,6 +10,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Rubik+Mono+One&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
+  <!-- shave serial round-trips off worker boot -->
+  <link rel="preload" href="db/config.json" as="fetch">
+  <link rel="preload" href="db/channels.json" as="fetch">
+  <link rel="preload" href="vendor/sql.js-httpvfs/sqlite.worker.js" as="worker">
+  <link rel="modulepreload" href="js/app.js">
+  <link rel="modulepreload" href="js/db.js">
+  <link rel="modulepreload" href="js/queries.js">
+  <link rel="modulepreload" href="js/router.js">
+  <link rel="modulepreload" href="js/render.js">
+  <link rel="modulepreload" href="js/util.js">
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
@@ -24,23 +34,26 @@
     </a>
   </header>
 
+  <div id="progress" class="progress" role="progressbar" aria-label="loading"></div>
+
   <main class="container">
     <form id="search-form" class="searchbar" autocomplete="off" onsubmit="return false">
-      <input id="omnibox" type="search" spellcheck="false"
-             placeholder="search packages, services, symbols, channels…"
+      <input id="omnibox" type="search" spellcheck="false" disabled
+             placeholder="loading database…"
+             data-placeholder="search packages, services, symbols, channels…"
              aria-label="Search">
       <kbd class="kbd-hint">/</kbd>
     </form>
 
     <div class="filters">
       <div id="type-chips" class="chips" role="tablist" aria-label="Result type">
-        <button class="chip" data-type="all">all</button>
-        <button class="chip" data-type="packages">packages</button>
-        <button class="chip" data-type="services">services</button>
-        <button class="chip" data-type="symbols">symbols</button>
-        <button class="chip" data-type="channels">channels</button>
+        <button class="chip" data-type="all" disabled>all</button>
+        <button class="chip" data-type="packages" disabled>packages</button>
+        <button class="chip" data-type="services" disabled>services</button>
+        <button class="chip" data-type="symbols" disabled>symbols</button>
+        <button class="chip" data-type="channels" disabled>channels</button>
       </div>
-      <select id="channel-filter" aria-label="Filter by channel">
+      <select id="channel-filter" aria-label="Filter by channel" disabled>
         <option value="">every channel</option>
       </select>
     </div>

@@ -204,6 +204,10 @@ jobs:
           # applies Range requests to the *compressed* object, corrupting
           # httpvfs reads), but never compresses image types.
           cp "$HOME/.cache/guix/toys/db.sqlite" "site/db/db-$STAMP.sqlite.png"
+          # static channel list so the UI is interactive before the DB boots
+          guix shell sqlite -- sqlite3 -json "site/db/db-$STAMP.sqlite.png" \
+            "SELECT id FROM boxes ORDER BY id" | \
+            guix shell jq -- jq -c 'map(.id)' > site/db/channels.json
           cat > site/db/config.json <<EOF
           {
             "from": "inline",

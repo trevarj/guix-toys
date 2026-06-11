@@ -39,6 +39,9 @@ jobs:
           DB_URL=$(grep -oP '"url":\s*"\K[^"]+' site/db/config.json)
           echo "Reusing live database $DB_URL"
           curl -fsSL "$BASE/$DB_URL" -o "site/db/$DB_URL"
+          # regenerate the static channel list from the reused DB
+          sqlite3 -json "site/db/$DB_URL" "SELECT id FROM boxes ORDER BY id" | \
+            jq -c 'map(.id)' > site/db/channels.json
           ls -l site/db
           touch site/.nojekyll
 

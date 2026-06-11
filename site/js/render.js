@@ -175,7 +175,7 @@ export function groupSection(type, label, rows, count, state) {
   const moreHash = searchHash({ ...state, type });
   const shownCount = count ?? `${rows.length}+`;
   const hasMore = count == null ? true : count > rows.length;
-  return `<section class="group">
+  return `<section class="group" data-group="${type}">
     <h2 class="group-title">${esc(label)} <span class="group-count">${shownCount}</span>
       ${hasMore ? `<a class="group-more" href="${moreHash}">all ${shownCount} →</a>` : ""}
     </h2>

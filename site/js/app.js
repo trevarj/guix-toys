@@ -1,5 +1,6 @@
 import { debounce } from "./util.js";
-import { search, lookup, allChannels, TYPES } from "./queries.js";
+import { getWorker } from "./db.js";
+import { search, searchCounts, lookup, allChannels, TYPES } from "./queries.js";
 import { parseRoute, onRoute, setSearchUrl } from "./router.js";
 import { card, detail, expandBody, groupSection, emptyState } from "./render.js";
 
@@ -13,6 +14,7 @@ const $status = document.getElementById("status");
 const $results = document.getElementById("results");
 const $loadMore = document.getElementById("load-more");
 const $sentinel = document.getElementById("sentinel");
+const $progress = document.getElementById("progress");
 
 const state = { q: "", type: "all", channel: "", page: 1, count: 0 };
 let queryToken = 0; // discard stale async results
@@ -20,6 +22,9 @@ let queryToken = 0; // discard stale async results
 function setStatus(text) {
   $status.textContent = text;
 }
+
+const showProgress = () => ($progress.hidden = false);
+const hideProgress = () => ($progress.hidden = true);
 
 function syncControls() {
   if ($omnibox.value !== state.q) $omnibox.value = state.q;
@@ -59,31 +64,71 @@ async function doSearch({ append = false } = {}) {
     state.page = 1;
     setStatus("searching…");
   }
+  // surface slow searches (cold caches): show the bar after 300 ms
+  const progressTimer = setTimeout(showProgress, 300);
 
   try {
     if (state.type === "all") {
-      const types = Object.keys(TYPES);
-      const settled = await Promise.all(
-        types.map((t) =>
-          search(t, { q: state.q, channel: state.channel, limit: GROUP_SIZE, page: 1 })
-        )
+      // searching inside a channel: listing channels makes no sense
+      const types = Object.keys(TYPES).filter(
+        (t) => !(state.channel && t === "channels")
       );
-      if (token !== queryToken) return;
-      // count can be null on DBs without toys_counts — fall back to row counts
-      const total = settled.reduce((n, r) => n + (r.count ?? r.rows.length), 0);
+      const browsing = !state.q.trim().replaceAll('"', "");
+      // Progressive: the worker serializes queries anyway, so render each
+      // group as it lands instead of waiting for all four (Promise.all
+      // would make first paint = sum of all queries — seconds, live).
       $loadMore.hidden = true;
-      if (!total) {
+      let cleared = false;
+      const knowns = {};
+      for (const t of types) {
+        const { rows, count } = await search(t, {
+          q: state.q,
+          channel: state.channel,
+          limit: GROUP_SIZE,
+          page: 1,
+          noCount: !browsing, // browse counts are one cached toys_counts page
+        });
+        if (token !== queryToken) return;
+        if (!cleared) {
+          $results.innerHTML = "";
+          cleared = true;
+        }
+        if (!rows.length) {
+          knowns[t] = 0;
+          continue;
+        }
+        knowns[t] = count ?? (rows.length < GROUP_SIZE ? rows.length : null);
+        $results.insertAdjacentHTML(
+          "beforeend",
+          groupSection(t, TYPES[t].label, rows, knowns[t], state)
+        );
+        setStatus("searching…");
+      }
+      if (Object.values(knowns).every((n) => n === 0)) {
         $results.innerHTML = emptyState(state.q);
         setStatus("");
         return;
       }
-      $results.innerHTML = types
-        .map((t, i) =>
-          settled[i].rows.length
-            ? groupSection(t, TYPES[t].label, settled[i].rows, settled[i].count, state)
-            : ""
-        )
-        .join("");
+      // exact totals arrive after the rows are already on screen — one
+      // GROUP BY over the doclist the rows queries just warmed
+      if (Object.values(knowns).some((n) => n === null)) {
+        const counts = await searchCounts(state.q, state.channel);
+        if (token !== queryToken) return;
+        if (counts) {
+          for (const t of types) {
+            if (knowns[t] === null) knowns[t] = counts[t];
+            const sec = $results.querySelector(`[data-group="${t}"]`);
+            if (!sec) continue;
+            sec.querySelector(".group-count").textContent = knowns[t];
+            const more = sec.querySelector(".group-more");
+            if (more) {
+              if (knowns[t] > GROUP_SIZE) more.textContent = `all ${knowns[t]} →`;
+              else more.remove();
+            }
+          }
+        }
+      }
+      const total = Object.values(knowns).reduce((a, n) => a + (n ?? 0), 0);
       setStatus(`${total} results`);
     } else {
       const { rows, count } = await search(state.type, {
@@ -105,6 +150,9 @@ async function doSearch({ append = false } = {}) {
     if (token !== queryToken) return;
     setStatus(`search failed: ${err.message ?? err}`);
     console.error(err);
+  } finally {
+    clearTimeout(progressTimer);
+    hideProgress();
   }
 }
 
@@ -257,18 +305,36 @@ onRoute(applyRoute);
 
 (async () => {
   setStatus("loading database…");
+  getWorker(); // fire and forget: the DB boots while we set up the UI
   try {
-    const channels = await allChannels();
-    for (const { id } of channels) {
+    // channel list is baked to static JSON at deploy time so the controls
+    // come alive without waiting for the database
+    let ids;
+    try {
+      const res = await fetch("db/channels.json");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      ids = await res.json();
+    } catch {
+      ids = (await allChannels()).map(({ id }) => id);
+    }
+    for (const id of ids) {
       const opt = document.createElement("option");
       opt.value = id;
       opt.textContent = id;
       $channel.appendChild(opt);
     }
   } catch (err) {
+    hideProgress();
     setStatus(`database failed to load: ${err.message ?? err}`);
     console.error(err);
-    return;
+    return; // controls stay disabled
   }
+  hideProgress();
+  setStatus("");
+  $omnibox.disabled = false;
+  $omnibox.placeholder = $omnibox.dataset.placeholder;
+  for (const btn of $chips.querySelectorAll(".chip")) btn.disabled = false;
+  $channel.disabled = false;
+  $omnibox.focus();
   applyRoute(parseRoute());
 })();
