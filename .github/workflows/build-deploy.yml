@@ -195,7 +195,9 @@ jobs:
       - name: Assemble Pages artifact
         run: |
           set -euo pipefail
-          STAMP=$(date +%Y%m%d)
+          # minute resolution: same-day redeploys must not reuse a filename
+          # (the CDN would mix ranges of old and new bytes)
+          STAMP=$(date +%Y%m%d%H%M)
           rm -rf site/db
           mkdir -p site/db
           # The .png extension is load-bearing: Pages gzips octet-stream (and

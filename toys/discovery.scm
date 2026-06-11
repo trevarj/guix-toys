@@ -128,6 +128,7 @@ checkouts are cached."
               `((box . ,box)
                 (dir . ,dir)
                 (commit . ,commit)
+                (checkout-dir . ,checkout-dir)
                 (module-dir . ,(string-append checkout-dir dir)))))
           #:unwind? #t))
       toy-boxes))
@@ -141,11 +142,41 @@ checkouts are cached."
      ;; FIXME: this leaks memory, there should be a way to remove modules
      ;; after they are resolve-interface'd and scanned.
      (modules (scheme-modules dir #:warn warn-about-load-error)))
-    (fold-module-public-variables*
-      (lambda (module symbol variable result)
-        (apply fn (list box module symbol variable box-wrapper)))
-      '()
+    (for-each
+      (lambda (module)
+        ;; Walk public interfaces one module at a time: a single module
+        ;; with a broken interface (e.g. a re-export of an unbound
+        ;; variable) must skip that module, not abort the whole channel.
+        (with-exception-handler
+          (lambda (exception)
+            (format (current-error-port)
+              "guix toys: warning: skipping module ~s: ~s\n"
+              (module-name module) exception)
+            #f)
+          (lambda ()
+            (fold-module-public-variables*
+              (lambda (module symbol variable result)
+                (apply fn (list box module symbol variable box-wrapper)))
+              '()
+              (list module)))
+          #:unwind? #t))
       modules)))
+
+(define (dependency-load-paths dependency)
+  "Load paths contributed by DEPENDENCY's cached checkout (honoring its
+module directory) and, recursively, by its own dependencies."
+  (with-exception-handler
+    (lambda (exception) '())
+    (lambda ()
+      (let* ((dir (url-cache-directory
+                    (channel-url dependency)
+                    (%repository-cache-directory)))
+             (metadata (read-channel-metadata-from-source dir))
+             (subdir (channel-metadata-directory metadata))
+             (dependencies (channel-metadata-dependencies metadata)))
+        (cons (string-append dir subdir)
+              (append-map dependency-load-paths dependencies))))
+    #:unwind? #t))
 
 (define (boxes-load-paths boxes)
   (let* ((boxes-without-guix
@@ -158,17 +189,21 @@ checkouts are cached."
          (load-paths
            (map
              (lambda (box-wrapper)
+               ;; .guix-channel lives at the checkout root, not in the
+               ;; channel's (directory ...) subdir — reading metadata from
+               ;; module-dir loses all dependencies for channels that set a
+               ;; directory (e.g. x-files).
                (let* ((module-dir (assoc-ref box-wrapper 'module-dir))
-                      (metadata (read-channel-metadata-from-source module-dir))
+                      (checkout-dir (or (assoc-ref box-wrapper 'checkout-dir)
+                                        module-dir))
+                      (metadata (read-channel-metadata-from-source checkout-dir))
                       (dependencies (channel-metadata-dependencies metadata)))
-                 (cons*
+                 ;; Dependencies must be walked transitively: a channel
+                 ;; depending on rde gets nonguix through it, and modules
+                 ;; importing (nonguix ...) fail to load otherwise.
+                 (cons
                    module-dir
-                   (map
-                     (lambda (dependency)
-                       (url-cache-directory
-                         (channel-url dependency)
-                         (%repository-cache-directory)))
-                     dependencies))))
+                   (append-map dependency-load-paths dependencies))))
              boxes-without-guix)))
     (fold append '() load-paths)))
 
