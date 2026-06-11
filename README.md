@@ -18,6 +18,11 @@ channels-test.scm`, post-process it to `page_size=16384`, copy it to `site/db/`
 with a matching `config.json`, then serve `site/` with any server that supports
 range requests (e.g. `darkhttpd site` — not `python -m http.server`).
 
+In production the database is deployed with a `.png` extension: GitHub Pages
+gzips `application/octet-stream` responses and serves range requests from the
+*compressed* object, which breaks sql.js-httpvfs, but it never compresses
+image content types.
+
 ## development
 
 Start a development environment:

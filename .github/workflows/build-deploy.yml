@@ -138,13 +138,16 @@ jobs:
           STAMP=$(date +%Y%m%d)
           rm -rf site/db
           mkdir -p site/db
-          cp "$HOME/.cache/guix/toys/db.sqlite" "site/db/db-$STAMP.sqlite"
+          # The .png extension is load-bearing: Pages gzips octet-stream (and
+          # applies Range requests to the *compressed* object, corrupting
+          # httpvfs reads), but never compresses image types.
+          cp "$HOME/.cache/guix/toys/db.sqlite" "site/db/db-$STAMP.sqlite.png"
           cat > site/db/config.json <<EOF
           {
             "from": "inline",
             "config": {
               "serverMode": "full",
-              "url": "db-$STAMP.sqlite",
+              "url": "db-$STAMP.sqlite.png",
               "requestChunkSize": 16384
             }
           }
