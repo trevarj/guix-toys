@@ -64,7 +64,7 @@
   ;; Channel definitions go stale: a pinned branch may no longer exist
   ;; (e.g. renamed default branches). Fall back to the remote HEAD rather
   ;; than losing the channel entirely.
-  (define checkout-dir
+  (define (checkout-with-fallback)
     (with-exception-handler
       (lambda (exception)
         (format (current-error-port)
@@ -72,6 +72,17 @@
           ref url)
         (update-cached-checkout url))
       (lambda () (update-cached-checkout url #:ref `(branch . ,ref)))
+      #:unwind? #t))
+  ;; Large clones hit transient network errors in CI; retry once before
+  ;; giving up on the channel.
+  (define checkout-dir
+    (with-exception-handler
+      (lambda (exception)
+        (format (current-error-port)
+          "guix toys: warning: fetch of ~a failed, retrying once\n" url)
+        (sleep 5)
+        (checkout-with-fallback))
+      (lambda () (checkout-with-fallback))
       #:unwind? #t))
   (when introduction
    (format #t "Authenticating ~a...\n" url)
