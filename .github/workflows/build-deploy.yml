@@ -11,6 +11,10 @@ on:
         default: 'channels.scm'
   push:
     branches: [main]
+    # site/-only changes are handled by the fast deploy-site.yml instead.
+    paths-ignore:
+      - 'site/**'
+      - 'README.md'
 
 permissions:
   contents: write

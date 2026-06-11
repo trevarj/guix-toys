@@ -10,6 +10,8 @@ requests).
 - `site/` — the static frontend (vanilla JS, no build step)
 - `.github/workflows/build-deploy.yml` — weekly CI: syncs `channels.scm` from
   upstream, rebuilds the database with the upstream Guix indexer, deploys to Pages
+- `.github/workflows/deploy-site.yml` — fast path for frontend changes: pushes
+  touching only `site/**` redeploy in ~1 min, reusing the live database
 - `channels-test.scm` — trimmed channel list for smoke runs
   (`gh workflow run build-deploy.yml -f channels_file=channels-test.scm`)
 

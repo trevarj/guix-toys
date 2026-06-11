@@ -1,0 +1,52 @@
+name: Deploy Site Only
+
+# Fast frontend iteration: reuse the database already deployed on the live
+# site instead of re-indexing (which takes ~40 min in build-deploy.yml).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['site/**']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-build
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reuse live database
+        run: |
+          set -euo pipefail
+          BASE=https://trevs.site/guix-toys/db
+          rm -rf site/db
+          mkdir -p site/db
+          curl -fsSL "$BASE/config.json" -o site/db/config.json
+          DB_URL=$(grep -oP '"url":\s*"\K[^"]+' site/db/config.json)
+          echo "Reusing live database $DB_URL"
+          curl -fsSL "$BASE/$DB_URL" -o "site/db/$DB_URL"
+          ls -l site/db
+          touch site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
