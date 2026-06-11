@@ -30,7 +30,50 @@ export const TYPES = {
   },
 };
 
-// Mirrors upstream search-symbols: returns {rows, count}.
+// Browse-mode totals come from the toys_counts table precomputed in CI;
+// COUNT(*) on the big tables would page the whole DB through range requests.
+const countCache = new Map();
+async function browseCount(table, channel) {
+  const key = `${table}/${channel}`;
+  if (countCache.has(key)) return countCache.get(key);
+  let n = null;
+  try {
+    const rows = await query(
+      "SELECT n FROM toys_counts WHERE tbl = ? AND channel = ?",
+      [table, channel]
+    );
+    n = rows[0]?.n ?? 0;
+  } catch {
+    if (table === "boxes") {
+      n = (await query("SELECT COUNT(*) AS n FROM boxes"))[0].n;
+    }
+    // other tables: unknown (old DB without toys_counts)
+  }
+  countCache.set(key, n);
+  return n;
+}
+
+// Over httpvfs every stray page read is a 16 KB range request, so search
+// must stay inside the FTS index until the final, LIMITed join:
+// - table:/channel: filters live in the MATCH expression (posting-list
+//   intersections; an SQL filter on FTS columns reads one content row per
+//   matched document).
+// - The CI-rebuilt FTS table encodes table, name length and join key into
+//   the FTS rowid (code*1e14 + len*1e11 + fk). FTS iterates doclists in
+//   rowid order, so ORDER BY rowid LIMIT streams upstream's
+//   shortest-name-first order and stops early — no content reads, and no
+//   ORDER BY rank, which wedges this WASM SQLite intermittently.
+// - Exact-name matches use plain table indexes, no FTS at all.
+function ftsMatch(table, needle, channel) {
+  // separators ('_', '-') split tokens, so multi-token values become phrases
+  const phrase = (s) => `"${s.replace(/[^a-zA-Z0-9]+/g, " ").trim()}"`;
+  let m = `table: ${phrase(table)}`;
+  if (needle) m += ` AND name: "${needle}" *`;
+  if (channel) m += ` AND channel: ${phrase(channel)}`;
+  return m;
+}
+
+// Mirrors upstream search-symbols: returns {rows, count} (count may be null).
 export async function search(type, { q = "", channel = "", limit = 24, page = 1 } = {}) {
   const { table, select } = TYPES[type];
   const isBoxes = table === "boxes";
@@ -38,35 +81,53 @@ export async function search(type, { q = "", channel = "", limit = 24, page = 1 
   // upstream strips all double quotes; "foo" (fully quoted) means exact match
   const trimmed = q.trim();
   const exact = /^"[^"']+"$/.test(trimmed);
-  let needle = trimmed.replaceAll('"', "");
-  if (!needle) needle = null;
-  if (needle && !exact) needle = `"${needle}" *`; // quoted phrase + prefix wildcard
+  const needle = trimmed.replaceAll('"', "");
+  const chan = channel && !isBoxes ? channel : "";
 
-  const wheres = [];
-  const args = [];
-  let sql = `SELECT ${select}`;
-  sql += needle
-    ? ` FROM search s INNER JOIN ${table} j ON s.fk = j.id`
-    : ` FROM ${table} j`;
-
-  if (needle) {
-    wheres.push("s.`table` = ?");
-    args.push(table);
-    wheres.push(exact ? "s.name = ?" : "s.name MATCH ?");
-    args.push(needle);
+  if (!needle) {
+    // browse mode: plain table scan of the first pages only
+    const rows = await query(
+      `SELECT ${select} FROM ${table} j${chan ? " WHERE j.channel = ?" : ""} LIMIT ? OFFSET ?`,
+      [...(chan ? [chan] : []), limit, (page - 1) * limit]
+    );
+    return { rows, count: await browseCount(table, chan) };
   }
-  if (channel && !isBoxes) {
-    wheres.push("j.channel = ?");
-    args.push(channel);
+
+  if (exact) {
+    const where = isBoxes ? "j.id = ?" : `j.name = ?${chan ? " AND j.channel = ?" : ""}`;
+    const args = [needle, ...(chan ? [chan] : [])];
+    const rows = await query(
+      `SELECT ${select} FROM ${table} j WHERE ${where} LIMIT ? OFFSET ?`,
+      [...args, limit, (page - 1) * limit]
+    );
+    const [{ n: count }] = await query(`SELECT COUNT(*) AS n FROM ${table} j WHERE ${where}`, args);
+    return { rows, count };
   }
-  if (wheres.length) sql += " WHERE " + wheres.join(" AND ");
 
-  const [{ n: count }] = await query(`SELECT COUNT(*) AS n FROM (${sql})`, args);
+  const match = ftsMatch(table, needle, chan);
+  const [{ n: count }] = await query(
+    "SELECT COUNT(*) AS n FROM search s WHERE search MATCH ?",
+    [match]
+  );
 
-  if (needle && !isBoxes) sql += " ORDER BY LENGTH(s.name) ASC, rank ASC, j.channel ASC";
-  sql += " LIMIT ? OFFSET ?";
-
-  const rows = await query(sql, [...args, limit, (page - 1) * limit]);
+  let rows;
+  if (isBoxes) {
+    // boxes.id is the channel name (text), so no rowid encoding — but the
+    // table has ~100 rows, the fk join is fine
+    rows = await query(
+      `SELECT ${select} FROM search s INNER JOIN boxes j ON j.id = s.fk
+       WHERE search MATCH ? ORDER BY s.rowid LIMIT ? OFFSET ?`,
+      [match, limit, (page - 1) * limit]
+    );
+  } else {
+    rows = await query(
+      `SELECT ${select} FROM (
+         SELECT s.rowid AS rid FROM search s WHERE search MATCH ?
+         ORDER BY s.rowid LIMIT ? OFFSET ?
+       ) m INNER JOIN ${table} j ON j.id = (m.rid % 100000000000) ORDER BY m.rid`,
+      [match, limit, (page - 1) * limit]
+    );
+  }
   return { rows, count };
 }
 

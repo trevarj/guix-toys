@@ -95,7 +95,57 @@ jobs:
           DB="$HOME/.cache/guix/toys/db.sqlite"
           sql() { guix shell sqlite -- sqlite3 "$DB" "$@"; }
 
-          sql "INSERT INTO search(search) VALUES('optimize');"
+          # Rebuild the FTS table for httpvfs: drop the (never-searched)
+          # description column so content rows are tiny, and encode
+          # table/name-length/join-key into the rowid (code*1e14 + len*1e11
+          # + fk) so the frontend can stream shortest-name-first results
+          # straight from the FTS index with no content reads and no ORDER
+          # BY rank (which intermittently wedges the WASM SQLite).
+          # Indexes + toys_counts keep lookups and browse counts off the
+          # big tables. Keep in sync with site/js/queries.js.
+          sql <<'SQL'
+          BEGIN;
+          CREATE VIRTUAL TABLE search_new USING fts5(name, fk, channel, `table`, prefix='1 2 3');
+          INSERT INTO search_new(rowid, name, fk, channel, `table`)
+            SELECT CASE s.`table`
+                     WHEN 'packages'       THEN 100000000000000
+                     WHEN 'service_types'  THEN 200000000000000
+                     WHEN 'public_symbols' THEN 300000000000000
+                     ELSE 400000000000000
+                   END
+                   + MIN(LENGTH(s.name), 999) * 100000000000
+                   + CASE s.`table` WHEN 'boxes' THEN s.rowid ELSE CAST(s.fk AS INTEGER) END,
+                   s.name, s.fk, s.channel, s.`table`
+            FROM search s;
+          DROP TABLE search;
+          ALTER TABLE search_new RENAME TO search;
+
+          CREATE INDEX IF NOT EXISTS idx_packages_channel_name ON packages(channel, name);
+          CREATE INDEX IF NOT EXISTS idx_packages_name ON packages(name);
+          CREATE INDEX IF NOT EXISTS idx_service_types_channel_name ON service_types(channel, name);
+          CREATE INDEX IF NOT EXISTS idx_service_types_name ON service_types(name);
+          CREATE INDEX IF NOT EXISTS idx_public_symbols_channel_name ON public_symbols(channel, name);
+          CREATE INDEX IF NOT EXISTS idx_public_symbols_name ON public_symbols(name);
+
+          DROP TABLE IF EXISTS toys_counts;
+          CREATE TABLE toys_counts (
+            tbl TEXT NOT NULL,
+            channel TEXT NOT NULL DEFAULT '',
+            n INTEGER NOT NULL,
+            PRIMARY KEY (tbl, channel)
+          ) WITHOUT ROWID;
+          INSERT INTO toys_counts
+            SELECT 'packages', channel, COUNT(*) FROM packages GROUP BY channel
+            UNION ALL SELECT 'packages', '', COUNT(*) FROM packages
+            UNION ALL SELECT 'service_types', channel, COUNT(*) FROM service_types GROUP BY channel
+            UNION ALL SELECT 'service_types', '', COUNT(*) FROM service_types
+            UNION ALL SELECT 'public_symbols', channel, COUNT(*) FROM public_symbols GROUP BY channel
+            UNION ALL SELECT 'public_symbols', '', COUNT(*) FROM public_symbols
+            UNION ALL SELECT 'boxes', '', COUNT(*) FROM boxes;
+          COMMIT;
+          SQL
+
+          sql "INSERT INTO search(search) VALUES('optimize'); ANALYZE;"
           sql "PRAGMA journal_mode=DELETE; PRAGMA page_size=16384; VACUUM;"
 
           check=$(sql "PRAGMA integrity_check;")
@@ -126,6 +176,12 @@ jobs:
           assert_columns boxes id branch commit url synopsis subscription_snippet
           if [ "$(sql "SELECT count(*) FROM sqlite_master WHERE name='search';")" = "0" ]; then
             echo "::error::FTS table 'search' is missing"
+            exit 1
+          fi
+          # functional probe of the encoded-rowid join the frontend relies on
+          probe=$(sql 'SELECT j.name FROM (SELECT rowid AS rid FROM search WHERE search MATCH '"'"'table: "packages" AND name: "a" *'"'"' ORDER BY rowid LIMIT 1) m JOIN packages j ON j.id = (m.rid % 100000000000);')
+          if [ -z "$probe" ]; then
+            echo "::error::encoded-rowid FTS join probe returned nothing"
             exit 1
           fi
 

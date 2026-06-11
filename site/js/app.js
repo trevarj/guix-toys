@@ -1,7 +1,7 @@
 import { debounce } from "./util.js";
 import { search, lookup, allChannels, TYPES } from "./queries.js";
 import { parseRoute, onRoute, setSearchUrl } from "./router.js";
-import { card, detail, groupSection, emptyState } from "./render.js";
+import { card, detail, expandBody, groupSection, emptyState } from "./render.js";
 
 const PAGE_SIZE = 24;
 const GROUP_SIZE = 8;
@@ -31,7 +31,29 @@ function syncControls() {
 
 // --- search rendering -------------------------------------------------------
 
-async function runSearch({ append = false } = {}) {
+// The worker can't cancel a running query, so only one search runs at a
+// time; while one is in flight, later requests collapse into the latest.
+let inFlight = false;
+let queued = null;
+async function runSearch(opts = {}) {
+  if (inFlight) {
+    queued = opts;
+    return;
+  }
+  inFlight = true;
+  try {
+    await doSearch(opts);
+  } finally {
+    inFlight = false;
+    if (queued) {
+      const next = queued;
+      queued = null;
+      runSearch(next);
+    }
+  }
+}
+
+async function doSearch({ append = false } = {}) {
   const token = ++queryToken;
   if (!append) {
     state.page = 1;
@@ -47,7 +69,8 @@ async function runSearch({ append = false } = {}) {
         )
       );
       if (token !== queryToken) return;
-      const total = settled.reduce((n, r) => n + r.count, 0);
+      // count can be null on DBs without toys_counts — fall back to row counts
+      const total = settled.reduce((n, r) => n + (r.count ?? r.rows.length), 0);
       $loadMore.hidden = true;
       if (!total) {
         $results.innerHTML = emptyState(state.q);
@@ -56,7 +79,7 @@ async function runSearch({ append = false } = {}) {
       }
       $results.innerHTML = types
         .map((t, i) =>
-          settled[i].count
+          settled[i].rows.length
             ? groupSection(t, TYPES[t].label, settled[i].rows, settled[i].count, state)
             : ""
         )
@@ -73,10 +96,10 @@ async function runSearch({ append = false } = {}) {
       state.count = count;
       const html = rows.map((r) => card(state.type, r)).join("");
       if (append) $results.insertAdjacentHTML("beforeend", html);
-      else $results.innerHTML = count ? html : emptyState(state.q);
+      else $results.innerHTML = rows.length ? html : emptyState(state.q);
       const shown = $results.querySelectorAll(".item").length;
-      $loadMore.hidden = shown >= count;
-      setStatus(count ? `${shown} of ${count}` : "");
+      $loadMore.hidden = count == null ? rows.length < PAGE_SIZE : shown >= count;
+      setStatus(count == null ? `${shown} shown` : count ? `${shown} of ${count}` : "");
     }
   } catch (err) {
     if (token !== queryToken) return;
@@ -100,21 +123,41 @@ async function showDetail(route) {
     const rows = await lookup(route.type, route.channel, route.name);
     $results.innerHTML = detail(route.type, rows);
     setStatus("");
-    wireCopyButtons();
   } catch (err) {
     setStatus(`failed: ${err.message ?? err}`);
   }
 }
 
-function wireCopyButtons() {
-  for (const btn of $results.querySelectorAll("[data-copy-btn]")) {
-    btn.addEventListener("click", () => {
-      const pre = btn.parentElement.querySelector("[data-copy]");
-      navigator.clipboard.writeText(pre.textContent).then(() => {
-        btn.textContent = "copied.";
-        setTimeout(() => (btn.textContent = "copy snippet"), 1500);
-      });
-    });
+function copyFrom(btn) {
+  const pre = btn.closest(".copyblock").querySelector("[data-copy]");
+  navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+    const label = btn.textContent;
+    btn.textContent = "copied.";
+    setTimeout(() => (btn.textContent = label), 1500);
+  });
+}
+
+async function toggleExpand(item) {
+  const open = item.querySelector(".item-expand");
+  if (open) {
+    open.remove();
+    item.classList.remove("expanded");
+    return;
+  }
+  const { type, channel, name } = item.dataset;
+  item.classList.add("expanded");
+  const box = document.createElement("div");
+  box.className = "item-expand";
+  box.innerHTML = `<span class="status">loading…</span>`;
+  item.appendChild(box);
+  try {
+    const rows = await lookup(type, channel, name);
+    if (!item.contains(box)) return; // collapsed while loading
+    box.innerHTML = rows.length
+      ? rows.map((r) => expandBody(type, r)).join("<hr>")
+      : "nothing found.";
+  } catch (err) {
+    box.innerHTML = `failed: ${err.message ?? err}`;
   }
 }
 
@@ -192,15 +235,20 @@ document.addEventListener("keydown", (e) => {
     highlight(-1);
   } else if (e.key === "Enter" && !typing) {
     const active = $results.querySelector(".item.kb-active");
-    if (active?.dataset.href) location.hash = active.dataset.href.slice(1);
+    if (active) toggleExpand(active);
   }
 });
 
 $results.addEventListener("click", (e) => {
-  // make whole cards clickable, but let real links win
+  const copyBtn = e.target.closest("[data-copy-btn]");
+  if (copyBtn) {
+    copyFrom(copyBtn);
+    return;
+  }
+  // cards expand in place on click; real links (name, channel, chips) win
   if (e.target.closest("a")) return;
-  const item = e.target.closest(".item[data-href]");
-  if (item) location.hash = item.dataset.href.slice(1);
+  const item = e.target.closest(".item[data-name]");
+  if (item && !e.target.closest(".item-expand")) toggleExpand(item);
 });
 
 // --- boot -------------------------------------------------------------------

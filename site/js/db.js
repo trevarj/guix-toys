@@ -26,5 +26,13 @@ export function getWorker() {
 
 export async function query(sql, params = []) {
   const worker = await getWorker();
-  return worker.db.query(sql, params);
+  const t = performance.now();
+  try {
+    return await worker.db.query(sql, params);
+  } finally {
+    const ms = performance.now() - t;
+    if (ms > 500) {
+      console.warn(`[slow query ${Math.round(ms)}ms]`, sql.replace(/\s+/g, " ").slice(0, 120), params);
+    }
+  }
 }
