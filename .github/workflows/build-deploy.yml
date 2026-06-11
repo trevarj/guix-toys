@@ -52,13 +52,6 @@ jobs:
             git push origin main
           fi
 
-      - name: Apply local channels.scm fixes
-        # Post-sync, uncommitted: survives the weekly upstream sync. Drop
-        # each line once the corresponding patch lands upstream.
-        run: |
-          # trevdev moved to Codeberg (sr.ht repo is a tombstone README)
-          sed -i 's|https://git.sr.ht/~trevdev/guix-channel|https://codeberg.org/trevdev/guix-channel|' channels.scm
-
       - name: Install Guix
         uses: PromyLOPh/guix-install-action@v1.6
         with:

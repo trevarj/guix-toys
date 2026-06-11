@@ -73,7 +73,8 @@ Our own code lives in `site/` and `.github/workflows/`.
 7. The indexer loop in CI calls `./dev pull <file> <channel>` per channel
    with `timeout 20m` and warns on failure — upstream's all-channels driver
    would abort everything on one hard crash. Some channels always fail
-   (e.g. trevdev has no `main` branch); that's expected, fail-soft.
+   (e.g. repo moved and now 404s); that's expected, fail-soft — a
+   dead/404'd channel URL is skipped, not patched.
 
 ## Local development
 
