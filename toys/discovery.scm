@@ -61,7 +61,18 @@
 
 (define* (fetch-channel url ref #:optional (introduction #f))
   (format #t "Fetching ~a...\n" url)
-  (define checkout-dir (update-cached-checkout url #:ref `(branch . ,ref)))
+  ;; Channel definitions go stale: a pinned branch may no longer exist
+  ;; (e.g. renamed default branches). Fall back to the remote HEAD rather
+  ;; than losing the channel entirely.
+  (define checkout-dir
+    (with-exception-handler
+      (lambda (exception)
+        (format (current-error-port)
+          "guix toys: warning: ref ~s not found in ~a, trying default branch\n"
+          ref url)
+        (update-cached-checkout url))
+      (lambda () (update-cached-checkout url #:ref `(branch . ,ref)))
+      #:unwind? #t))
   (when introduction
    (format #t "Authenticating ~a...\n" url)
    (with-repository checkout-dir repository
