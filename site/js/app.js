@@ -305,10 +305,10 @@ onRoute(applyRoute);
 
 (async () => {
   setStatus("loading database…");
-  getWorker(); // fire and forget: the DB boots while we set up the UI
+  const workerReady = getWorker(); // boots in parallel with the channel list
   try {
-    // channel list is baked to static JSON at deploy time so the controls
-    // come alive without waiting for the database
+    // channel list is baked to static JSON at deploy time so filling the
+    // dropdown needs no DB queries
     let ids;
     try {
       const res = await fetch("db/channels.json");
@@ -323,6 +323,8 @@ onRoute(applyRoute);
       opt.textContent = id;
       $channel.appendChild(opt);
     }
+    // controls stay disabled until the database can actually answer
+    await workerReady;
   } catch (err) {
     hideProgress();
     setStatus(`database failed to load: ${err.message ?? err}`);
