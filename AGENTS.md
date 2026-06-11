@@ -6,9 +6,12 @@ a **fully static** search frontend on GitHub Pages. Search runs in the
 browser: sql.js-httpvfs (SQLite WASM in a worker) reads the database over
 HTTP range requests, 16 KB at a time. Live at https://trevs.site/guix-toys/.
 
-The upstream Scheme tree (`guix/`, `dev`, `manifest.scm`) is intentionally
-untouched so `git merge upstream/master` stays clean. Our code lives in
-`site/` and `.github/workflows/`.
+The upstream Scheme tree (`guix/`, `toys/`, `dev`, `manifest.scm`) is kept
+as close to upstream as possible so `git merge upstream/master` stays easy.
+Exception: `toys/discovery.scm` carries local fixes (per-module fail-soft
+symbol scanning, transitive dependency load paths, metadata read from the
+checkout root) — candidates for upstreaming; watch for conflicts on merge.
+Our own code lives in `site/` and `.github/workflows/`.
 
 ## Architecture
 
