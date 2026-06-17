@@ -1,8 +1,8 @@
-import { debounce } from "./util.js";
-import { getWorker } from "./db.js";
+import { debounce, esc } from "./util.js";
+import { getWorker, getIndexDate } from "./db.js";
 import { search, searchCounts, lookup, allChannels, TYPES } from "./queries.js";
 import { parseRoute, onRoute, setSearchUrl } from "./router.js";
-import { card, detail, expandBody, groupSection, emptyState } from "./render.js";
+import { card, detail, expandBody, groupSection, emptyState, skeletonCards } from "./render.js";
 
 const PAGE_SIZE = 24;
 const GROUP_SIZE = 8;
@@ -15,6 +15,9 @@ const $results = document.getElementById("results");
 const $loadMore = document.getElementById("load-more");
 const $sentinel = document.getElementById("sentinel");
 const $progress = document.getElementById("progress");
+const $recent = document.getElementById("recent");
+const $help = document.getElementById("help-btn");
+const $helpPop = document.getElementById("help-popover");
 
 const state = { q: "", type: "all", channel: "", page: 1, count: 0 };
 let queryToken = 0; // discard stale async results
@@ -32,6 +35,61 @@ function syncControls() {
     btn.classList.toggle("active", btn.dataset.type === state.type);
   }
   $channel.value = state.channel;
+}
+
+// --- chip count badges -----------------------------------------------------
+
+function fmt(n) {
+  if (n == null) return "";
+  return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "")}k` : String(n);
+}
+function setChipCount(type, n) {
+  const btn = $chips.querySelector(`.chip[data-type="${type}"]`);
+  const c = btn?.querySelector(".chip-count");
+  if (!c) return;
+  if (!n) { c.hidden = true; c.textContent = ""; }
+  else { c.hidden = false; c.textContent = fmt(n); }
+}
+function clearChipCounts() {
+  for (const btn of $chips.querySelectorAll(".chip")) setChipCount(btn.dataset.type, null);
+}
+function updateChipCounts(knowns) {
+  const total = Object.values(knowns).reduce((a, n) => a + (n ?? 0), 0);
+  setChipCount("all", total || null);
+  setChipCount("packages", knowns.packages);
+  setChipCount("services", knowns.services);
+  setChipCount("symbols", knowns.symbols);
+  setChipCount("channels", knowns.channels);
+}
+
+// --- recent searches (localStorage) ----------------------------------------
+
+const RECENT_KEY = "guix-toys:recent";
+function getRecent() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveRecent(q) {
+  const t = q.trim();
+  if (!t) return;
+  let rec = getRecent().filter((r) => r !== t);
+  rec.unshift(t);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(rec.slice(0, 8))); } catch {}
+}
+function renderRecent() {
+  const rec = getRecent();
+  if (!rec.length || $omnibox.value) { $recent.hidden = true; return; }
+  $recent.hidden = false;
+  $recent.innerHTML = `<span class="recent-label">recent</span>` +
+    rec.map((r) => `<button class="chip recent-chip" data-recent="${esc(r)}">${esc(r)}</button>`).join("");
+}
+
+// --- help popover ----------------------------------------------------------
+
+function toggleHelp(force) {
+  const open = force ?? $helpPop.hidden;
+  $helpPop.hidden = !open;
+  if ($help) $help.setAttribute("aria-expanded", String(open));
 }
 
 // --- search rendering -------------------------------------------------------
@@ -63,6 +121,8 @@ async function doSearch({ append = false } = {}) {
   if (!append) {
     state.page = 1;
     setStatus("searching…");
+    clearChipCounts();
+    $results.innerHTML = skeletonCards(3);
   }
   // surface slow searches (cold caches): show the bar after 300 ms
   const progressTimer = setTimeout(showProgress, 300);
@@ -128,6 +188,7 @@ async function doSearch({ append = false } = {}) {
           }
         }
       }
+      updateChipCounts(knowns);
       const total = Object.values(knowns).reduce((a, n) => a + (n ?? 0), 0);
       setStatus(`${total} results`);
     } else {
@@ -139,6 +200,7 @@ async function doSearch({ append = false } = {}) {
       });
       if (token !== queryToken) return;
       state.count = count;
+      setChipCount(state.type, count);
       const html = rows.map((r) => card(state.type, r)).join("");
       if (append) $results.insertAdjacentHTML("beforeend", html);
       else $results.innerHTML = rows.length ? html : emptyState(state.q);
@@ -148,6 +210,7 @@ async function doSearch({ append = false } = {}) {
     }
   } catch (err) {
     if (token !== queryToken) return;
+    if (!append) $results.innerHTML = "";
     setStatus(`search failed: ${err.message ?? err}`);
     console.error(err);
   } finally {
@@ -178,11 +241,18 @@ async function showDetail(route) {
 
 function copyFrom(btn) {
   const pre = btn.closest(".copyblock").querySelector("[data-copy]");
-  navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
-    const label = btn.textContent;
-    btn.textContent = "copied.";
-    setTimeout(() => (btn.textContent = label), 1500);
-  });
+  if (!btn.dataset.label) btn.dataset.label = btn.textContent.trim();
+  const label = btn.dataset.label;
+  navigator.clipboard.writeText(pre.textContent.trim())
+    .then(() => {
+      btn.textContent = "✓ copied";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = label; btn.classList.remove("copied"); }, 1500);
+    })
+    .catch(() => {
+      btn.textContent = "copy failed";
+      setTimeout(() => (btn.textContent = label), 1500);
+    });
 }
 
 async function toggleExpand(item) {
@@ -251,6 +321,31 @@ new IntersectionObserver((entries) => {
   if (entries.some((e) => e.isIntersecting)) loadMore();
 }).observe($sentinel);
 
+// --- recent searches + help popover wiring --------------------------------
+
+$recent.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-recent]");
+  if (!btn) return;
+  $omnibox.value = btn.dataset.recent;
+  state.q = $omnibox.value;
+  $recent.hidden = true;
+  setSearchUrl(state);
+  $omnibox.focus();
+  runSearch();
+});
+
+$omnibox.addEventListener("focus", () => { if (!$omnibox.value) renderRecent(); });
+$omnibox.addEventListener("blur", () => { setTimeout(() => { $recent.hidden = true; }, 150); });
+$omnibox.addEventListener("input", () => { if ($omnibox.value) $recent.hidden = true; });
+
+if ($help && $helpPop) {
+  $help.addEventListener("click", (e) => { e.preventDefault(); toggleHelp(); });
+  document.addEventListener("click", (e) => {
+    if ($helpPop.hidden) return;
+    if (!e.target.closest("#help-popover") && !e.target.closest("#help-btn")) toggleHelp(false);
+  });
+}
+
 // keyboard: / focus, ↑↓ move highlight, Enter open, Esc clear
 let activeIndex = -1;
 function highlight(delta) {
@@ -263,6 +358,23 @@ function highlight(delta) {
 
 document.addEventListener("keydown", (e) => {
   const typing = e.target === $omnibox;
+
+  // Esc closes the help popover before it clears the search.
+  if (e.key === "Escape" && $helpPop && !$helpPop.hidden) {
+    toggleHelp(false);
+    return;
+  }
+
+  // 1-5 switch result type (skip while typing, focused on the select, or
+  // with a modifier so browser shortcuts like Ctrl+1 are left alone).
+  const inField = typing || e.target === $channel;
+  if (!inField && !e.ctrlKey && !e.metaKey && !e.altKey && /^[1-5]$/.test(e.key)) {
+    const t = ["all", "packages", "services", "symbols", "channels"][Number(e.key) - 1];
+    const btn = $chips.querySelector(`.chip[data-type="${t}"]`);
+    if (btn && !btn.disabled) { e.preventDefault(); btn.click(); }
+    return;
+  }
+
   if (e.key === "/" && !typing) {
     e.preventDefault();
     $omnibox.focus();
@@ -274,6 +386,9 @@ document.addEventListener("keydown", (e) => {
     }
     $omnibox.blur();
     activeIndex = -1;
+  } else if (e.key === "Enter" && typing) {
+    // commit the current query to recent searches
+    if ($omnibox.value.trim()) saveRecent($omnibox.value);
   } else if (e.key === "ArrowDown") {
     e.preventDefault();
     if (typing) $omnibox.blur();
@@ -294,7 +409,7 @@ $results.addEventListener("click", (e) => {
     return;
   }
   // cards expand in place on click; real links (name, channel, chips) win
-  if (e.target.closest("a")) return;
+  if (e.target.closest("a")) { saveRecent(state.q); return; }
   const item = e.target.closest(".item[data-name]");
   if (item && !e.target.closest(".item-expand")) toggleExpand(item);
 });
@@ -325,6 +440,9 @@ onRoute(applyRoute);
     }
     // controls stay disabled until the database can actually answer
     await workerReady;
+    const idx = getIndexDate();
+    const $idx = document.getElementById("index-date");
+    if ($idx && idx) { $idx.textContent = `indexed ${idx}`; $idx.hidden = false; }
   } catch (err) {
     hideProgress();
     setStatus(`database failed to load: ${err.message ?? err}`);

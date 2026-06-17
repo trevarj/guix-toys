@@ -1,6 +1,8 @@
 // sql.js-httpvfs is loaded as a UMD script in index.html and attaches
 // createDbWorker to window.
+import { indexDateFromConfigUrl } from "./util.js";
 let workerPromise = null;
+let indexDate = null; // "YYYY-MM-DD" parsed from the DB filename, once boot ran
 
 async function boot() {
   const res = await fetch("db/config.json");
@@ -12,6 +14,7 @@ async function boot() {
   if (config.from === "inline" && !/^(https?:)?\//.test(config.config.url)) {
     config.config.url = new URL(`db/${config.config.url}`, document.baseURI).href;
   }
+  indexDate = indexDateFromConfigUrl(config.config?.url ?? config.url);
   return window.createDbWorker(
     [config],
     new URL("vendor/sql.js-httpvfs/sqlite.worker.js", document.baseURI).href,
@@ -22,6 +25,12 @@ async function boot() {
 export function getWorker() {
   workerPromise ??= boot();
   return workerPromise;
+}
+
+// "YYYY-MM-DD" of the deployed DB, or null before/after a failed boot. Sourced
+// from the dated filename (db-YYYYMMDD…sqlite.png), so no extra fetch.
+export function getIndexDate() {
+  return indexDate;
 }
 
 export async function query(sql, params = []) {

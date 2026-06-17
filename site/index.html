@@ -37,25 +37,40 @@
   <div id="progress" class="progress" role="progressbar" aria-label="loading"></div>
 
   <main class="container">
-    <form id="search-form" class="searchbar" autocomplete="off" onsubmit="return false">
-      <input id="omnibox" type="search" spellcheck="false" disabled
-             placeholder="loading database…"
-             data-placeholder="search packages, services, symbols, channels…"
-             aria-label="Search">
-      <kbd class="kbd-hint">/</kbd>
-    </form>
+    <div class="search-sticky">
+      <form id="search-form" class="searchbar" autocomplete="off" onsubmit="return false">
+        <input id="omnibox" type="search" spellcheck="false" disabled
+               placeholder="loading database…"
+               data-placeholder="search packages, services, symbols, channels…"
+               aria-label="Search">
+        <kbd class="kbd-hint">/</kbd>
+      </form>
 
-    <div class="filters">
-      <div id="type-chips" class="chips" role="tablist" aria-label="Result type">
-        <button class="chip" data-type="all" disabled>all</button>
-        <button class="chip" data-type="packages" disabled>packages</button>
-        <button class="chip" data-type="services" disabled>services</button>
-        <button class="chip" data-type="symbols" disabled>symbols</button>
-        <button class="chip" data-type="channels" disabled>channels</button>
+      <div id="recent" class="recent" hidden></div>
+
+      <div class="filters">
+        <div id="type-chips" class="chips" role="tablist" aria-label="Result type">
+          <button class="chip" data-type="all" disabled>all<span class="chip-count" hidden></span></button>
+          <button class="chip" data-type="packages" disabled>packages<span class="chip-count" hidden></span></button>
+          <button class="chip" data-type="services" disabled>services<span class="chip-count" hidden></span></button>
+          <button class="chip" data-type="symbols" disabled>symbols<span class="chip-count" hidden></span></button>
+          <button class="chip" data-type="channels" disabled>channels<span class="chip-count" hidden></span></button>
+        </div>
+        <div class="filter-right">
+          <select id="channel-filter" aria-label="Filter by channel" disabled>
+            <option value="">every channel</option>
+          </select>
+          <button id="help-btn" class="help-btn" type="button" aria-haspopup="true"
+                  aria-expanded="false" aria-label="Search syntax help" title="Search syntax">?</button>
+          <div id="help-popover" class="help-popover" hidden>
+            <p><b>"foo"</b> — exact name match</p>
+            <p><b>foo</b> — prefix on a name token (spaces form a phrase)</p>
+            <p><b>leave blank</b> — browse all of a type</p>
+            <p>narrow with the channel dropdown; pick a type with <kbd>1</kbd>–<kbd>5</kbd>.</p>
+            <p class="help-keys"><kbd>/</kbd> focus · <kbd>↑</kbd><kbd>↓</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> clear</p>
+          </div>
+        </div>
       </div>
-      <select id="channel-filter" aria-label="Filter by channel" disabled>
-        <option value="">every channel</option>
-      </select>
     </div>
 
     <div id="status" class="status" role="status"></div>
@@ -65,6 +80,7 @@
   </main>
 
   <footer class="site-footer">
+    <p><span id="index-date" class="index-date" hidden></span></p>
     <p>
       data indexed from <a href="https://git.sr.ht/~whereiseveryone/toys">~whereiseveryone/toys</a> channels —
       search runs entirely in your browser (sqlite over http range requests) —

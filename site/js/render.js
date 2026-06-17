@@ -1,4 +1,4 @@
-import { esc, splitField, parseLicenses, parseOrigin } from "./util.js";
+import { esc, splitField, parseLicenses, parseOrigin, highlightScheme } from "./util.js";
 import { detailHash, searchHash } from "./router.js";
 
 function tag(text, cls = "") {
@@ -7,6 +7,23 @@ function tag(text, cls = "") {
 
 function channelTag(channel) {
   return `<a class="tag tag-channel" href="${detailHash("channels", "", channel)}">${esc(channel)}</a>`;
+}
+
+// Corner type stamp on cards/detail heads — skate-sticker vibe, also a
+// scannable type marker. Pushed to the row end via margin-left:auto.
+const STAMP = { packages: "PKG", services: "SVC", symbols: "SYM", channels: "CHN" };
+function stamp(type) {
+  return `<span class="stamp stamp-${type}" aria-hidden="true">${STAMP[type] ?? ""}</span>`;
+}
+
+// Highlight scheme code, falling back to plain escaped text on any error so
+// a tokenizer hiccup never blanks a block.
+function safeHighlight(code) {
+  try {
+    return highlightScheme(code);
+  } catch {
+    return esc(code);
+  }
 }
 
 function inputChips(names) {
@@ -48,22 +65,22 @@ export function card(type, row) {
   switch (type) {
     case "packages":
       return `<article class="item" ${attrs}>
-        <header>${head}${tag(row.version, "tag-version")}${channelTag(row.channel)}</header>
+        <header>${head}${tag(row.version, "tag-version")}${channelTag(row.channel)}${stamp(type)}</header>
         <p class="item-sub">${esc(row.synopsis || "")}</p>
       </article>`;
     case "services":
       return `<article class="item" ${attrs}>
-        <header>${head}${channelTag(row.channel)}</header>
+        <header>${head}${channelTag(row.channel)}${stamp(type)}</header>
         <p class="item-sub">${esc((row.description || "").slice(0, 200))}</p>
       </article>`;
     case "symbols":
       return `<article class="item" ${attrs}>
-        <header>${head}${channelTag(row.channel)}</header>
+        <header>${head}${channelTag(row.channel)}${stamp(type)}</header>
         <p class="item-sub mono">${esc(row.signature || row.module || "")}</p>
       </article>`;
     case "channels":
       return `<article class="item" ${attrs}>
-        <header>${head}${tag(`${row.packagesCount} pkgs`, "tag-count")}${tag(`${row.servicesCount} svcs`, "tag-count")}</header>
+        <header>${head}${tag(`${row.packagesCount} pkgs`, "tag-count")}${tag(`${row.servicesCount} svcs`, "tag-count")}${stamp(type)}</header>
         <p class="item-sub">${esc(row.synopsis || row.url || "")}</p>
       </article>`;
   }
@@ -86,11 +103,24 @@ export function detail(type, rows) {
   return rows.map((row) => detailOne(type, row)).join("");
 }
 
-function copyBlock(text, label = "copy") {
+function copyBlock(text, label = "copy", { scheme = false } = {}) {
+  const body = scheme ? safeHighlight(text) : esc(text);
   return `<div class="copyblock">
-    <pre class="d-code" data-copy>${esc(text)}</pre>
+    <pre class="d-code" data-copy>${body}</pre>
     <button class="copy-btn" data-copy-btn>${label}</button>
   </div>`;
+}
+
+// Placeholder cards shown while the first real page is in flight, so the
+// layout doesn't pop. `.skel`/`.skel-line` shimmer in main.css (static under
+// prefers-reduced-motion).
+export function skeletonCards(n = 3) {
+  return Array.from({ length: n }, () =>
+    `<article class="item skel" aria-hidden="true">
+      <header><span class="skel-line w40"></span><span class="skel-line w20"></span></header>
+      <span class="skel-line w70"></span>
+      <span class="skel-line w50"></span>
+    </article>`).join("");
 }
 
 function grid(...rows) {
@@ -127,7 +157,7 @@ export function expandBody(type, row, { install = false } = {}) {
           detailRow("source", sourceLink(row))
         )}`;
     case "symbols":
-      return `${row.signature ? `<pre class="d-code">${esc(row.signature)}</pre>` : ""}
+      return `${row.signature ? copyBlock(row.signature, "copy", { scheme: true }) : ""}
         ${row.doc ? `<p class="d-desc">${esc(row.doc)}</p>` : ""}
         ${grid(
           detailRow("module", row.module ? `<code>${esc(row.module)}</code>` : ""),
@@ -142,7 +172,7 @@ export function expandBody(type, row, { install = false } = {}) {
         )}
         ${row.subscriptionSnippet ? `
           <div class="d-row d-row-wide"><span class="d-label">subscribe</span></div>
-          ${copyBlock(row.subscriptionSnippet, "copy snippet")}` : ""}`;
+          ${copyBlock(row.subscriptionSnippet, "copy snippet", { scheme: true })}` : ""}`;
   }
 }
 
@@ -151,7 +181,7 @@ function detailOne(type, row) {
     case "packages":
       return `<article class="detail">
         <header class="d-head">
-          <h1>${esc(row.name)}</h1>${tag(row.version, "tag-version")}${channelTag(row.channel)}
+          <h1>${esc(row.name)}</h1>${tag(row.version, "tag-version")}${channelTag(row.channel)}${stamp(type)}
         </header>
         <p class="d-synopsis">${esc(row.synopsis || "")}</p>
         ${expandBody(type, row, { install: true })}
@@ -159,14 +189,14 @@ function detailOne(type, row) {
     case "services":
     case "symbols":
       return `<article class="detail">
-        <header class="d-head"><h1>${esc(row.name)}</h1>${channelTag(row.channel)}</header>
+        <header class="d-head"><h1>${esc(row.name)}</h1>${channelTag(row.channel)}${stamp(type)}</header>
         ${expandBody(type, row)}
       </article>`;
     case "channels":
       return `<article class="detail">
         <header class="d-head">
           <h1>${esc(row.name)}</h1>
-          ${tag(`${row.packagesCount} packages`, "tag-count")}${tag(`${row.servicesCount} services`, "tag-count")}
+          ${tag(`${row.packagesCount} packages`, "tag-count")}${tag(`${row.servicesCount} services`, "tag-count")}${stamp(type)}
         </header>
         ${row.synopsis ? `<p class="d-synopsis">${esc(row.synopsis)}</p>` : ""}
         ${expandBody(type, row)}
