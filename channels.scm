@@ -1296,5 +1296,23 @@ for internet censorship bypass")
         "A6C2 0D0C 2AD8 38F9 4907  0EA3 A52D 6879 4EBE D758"))))))
 
   (toys-box
+   (forge "forgejo")
+   (synopsis "Hardened security & privacy channel: first-party post-quantum
+tools (evelin, btp, mirim, vaptvupt + Qt GUI), the torando Tor
+transparent-proxy router/service, LibreWolf, Mullvad and a curated pentest
+toolset.  GPG-signed and authenticated (channel introduction pinned, keyring
+branch present); served from the official forge git.securityops.co.")
+   (channel
+    (channel
+     (name 'securityops)
+     (url "https://git.securityops.co/cristiancmoises/securityops-channel")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "4a42b28c6c3b27661392cf93f6755c4d5d0dedad"
+       (openpgp-fingerprint
+        "0CFA 43B9 AA96 42EA AF2B  E983 C4C6 61C9 ECFB 46E8"))))))
+
+  (toys-box
    (forge "codeberg")
    (channel %default-guix-channel)))
