@@ -1050,6 +1050,7 @@ of Chicken Scheme eggs")
 
   (toys-box
    (forge "codeberg")
+   (synopsis "Collection of packages to work with Ancestral Recombination Graphs (ARGs)")
    (channel
     (channel
       (name 'guix-arg)
@@ -1069,6 +1070,20 @@ of Chicken Scheme eggs")
      (name 'guix-mate)
      (url "https://codeberg.org/guix-mate/guix-mate")
      (branch "main"))))
+
+  (toys-box
+   (forge "codeberg")
+   (synopsis "Collection of bioinformatics and biology packages")
+   (channel
+    (channel
+     (name 'alx-bioinfo)
+     (url "https://codeberg.org/alxsim/alx-bioinfo")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "faca221e76565eedff8e497c7d2bb91622d28a14"
+       (openpgp-fingerprint
+        "4C7D 43C9 189E FAB5 7D65  4CF6 6A95 D3D7 A344 E88C"))))))
 
   (toys-box
    (forge "codeberg")
@@ -1309,9 +1324,23 @@ branch present); served from the official forge git.securityops.co.")
      (branch "main")
      (introduction
       (make-channel-introduction
-       "4a42b28c6c3b27661392cf93f6755c4d5d0dedad"
+       "af46f5cce66179f3e53f87c86ca2538c8fc63f98"
        (openpgp-fingerprint
         "0CFA 43B9 AA96 42EA AF2B  E983 C4C6 61C9 ECFB 46E8"))))))
+
+  (toys-box
+   (forge "codeberg")
+   (synopsis "Bitcoin ecosystem channel with nodes, wallets, Lightning, indexers and block explorers.")
+   (channel
+    (channel
+     (name 'bitcoin)
+     (url "https://codeberg.org/trevarj/guix-bitcoin.git")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "747b9cb83c0f88da46a14638165253b3b0d4b3bc"
+       (openpgp-fingerprint
+        "A6C2 0D0C 2AD8 38F9 4907  0EA3 A52D 6879 4EBE D758"))))))
 
   (toys-box
    (forge "codeberg")
