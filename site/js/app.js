@@ -76,12 +76,18 @@ function saveRecent(q) {
   rec.unshift(t);
   try { localStorage.setItem(RECENT_KEY, JSON.stringify(rec.slice(0, 8))); } catch {}
 }
+function clearRecent() {
+  try { localStorage.removeItem(RECENT_KEY); } catch {}
+  $recent.hidden = true;
+  $recent.innerHTML = "";
+}
 function renderRecent() {
   const rec = getRecent();
   if (!rec.length || $omnibox.value) { $recent.hidden = true; return; }
   $recent.hidden = false;
   $recent.innerHTML = `<span class="recent-label">recent</span>` +
-    rec.map((r) => `<button class="chip recent-chip" data-recent="${esc(r)}">${esc(r)}</button>`).join("");
+    rec.map((r) => `<button class="chip recent-chip" type="button" data-recent="${esc(r)}">${esc(r)}</button>`).join("") +
+    `<button class="chip recent-clear" type="button" data-clear-recent aria-label="Clear recent searches">clear</button>`;
 }
 
 // --- help popover ----------------------------------------------------------
@@ -324,6 +330,11 @@ new IntersectionObserver((entries) => {
 // --- recent searches + help popover wiring --------------------------------
 
 $recent.addEventListener("click", (e) => {
+  if (e.target.closest("[data-clear-recent]")) {
+    clearRecent();
+    $omnibox.focus();
+    return;
+  }
   const btn = e.target.closest("[data-recent]");
   if (!btn) return;
   $omnibox.value = btn.dataset.recent;

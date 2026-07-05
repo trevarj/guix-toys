@@ -218,7 +218,7 @@ export function groupSection(type, label, rows, count, state) {
 
 export function emptyState(q) {
   return `<div class="empty">
-    <img src="img/mascot.svg" alt="" class="empty-mascot">
+    <img src="img/mascot.png" alt="" class="empty-mascot">
     <p>NOTHING${q ? ` FOR “${esc(q)}”` : ""}. TRY FEWER LETTERS.</p>
   </div>`;
 }
