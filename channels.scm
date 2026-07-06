@@ -15,6 +15,20 @@
        "8fd3d165ad053eda93ddb915d5dedc9e880c8fb5"
        (openpgp-fingerprint
         "E76F D6F5 4BCF 096F 28BB  C2A0 A026 E5A7 C382 793E"))))))
+
+  (toys-box
+   (forge "cgit")
+   (synopsis "Channel for kaagum, a tiny security-focused AI agent in Guile")
+   (channel
+    (channel
+     (name 'kaagum)
+     (url "https://klaus.systemreboot.net/kaagum/")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "b71c385f8885eb629ec6ad0c47eeb1f3e12be687"
+       (openpgp-fingerprint
+	"7F73 0343 F2F0 9F3C 77BF  79D3 2E25 EE8B 6180 2BB3"))))))
  
   (toys-box
    (forge "github")
@@ -1341,6 +1355,20 @@ branch present); served from the official forge git.securityops.co.")
        "747b9cb83c0f88da46a14638165253b3b0d4b3bc"
        (openpgp-fingerprint
         "A6C2 0D0C 2AD8 38F9 4907  0EA3 A52D 6879 4EBE D758"))))))
+
+  (toys-box
+   (forge "codeberg")
+   (synopsis "Application and desktop themes for Guix")
+   (channel
+    (channel
+     (name 'jasmine)
+     (url "https://codeberg.org/SameExpert/guix-jasmine")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "5fb28530bc29eab1a43f9be57aeea21d43f1f179"
+       (openpgp-fingerprint
+        "EAD1 89E4 799B 5E5E B20A  2A19 CDBC 0BD9 5943 A706"))))))
 
   (toys-box
    (forge "codeberg")
