@@ -3,6 +3,20 @@
 
 (list
   (toys-box
+   (forge "github")
+   (synopsis "Channel providing a package for Discord, and some other Discord related packages")
+   (channel
+    (channel
+     (name 'guix-discord)
+     (url "https://github.com/jack-faller/guix-discord")
+     (branch "master")
+     (introduction
+      (make-channel-introduction
+       "78e9fecec8b671771153505323f3face650d478a"
+       (openpgp-fingerprint
+        "D97A 5464 A392 0366 1ED9  5C07 A043 7B42 9C10 4C61"))))))
+
+  (toys-box
    (forge "codeberg")
    (synopsis "Personal channel of Firefly.  Mostly focussed on services.")
    (channel
