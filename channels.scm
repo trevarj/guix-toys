@@ -2,6 +2,20 @@
              (toys discovery))
 
 (list
+ (toys-box
+  (forge "codeberg")
+  (synopsis "The Renaissance Channel containing various packages the #technicalrenaissance IRC uses")
+  (channel
+   (channel
+    (name 'renaissance)
+    (url "https://codeberg.org/joshuablais/renaissance")
+    (branch "main")
+    (introduction
+     (make-channel-introduction
+      "e010cef398ba706197d8245b6e2a53cdcdb7e43a"
+      (openpgp-fingerprint
+       "F7A0 568B 4ECB CA9B 852B  3B03 3BCE FE7A E837 AFD7"))))))
+
   (toys-box
    (forge "github")
    (synopsis "Channel providing a package for Discord, and some other Discord related packages")
@@ -43,7 +57,7 @@
        "b71c385f8885eb629ec6ad0c47eeb1f3e12be687"
        (openpgp-fingerprint
 	"7F73 0343 F2F0 9F3C 77BF  79D3 2E25 EE8B 6180 2BB3"))))))
- 
+
   (toys-box
    (forge "github")
    (channel
@@ -1383,6 +1397,15 @@ branch present); served from the official forge git.securityops.co.")
        "5fb28530bc29eab1a43f9be57aeea21d43f1f179"
        (openpgp-fingerprint
         "EAD1 89E4 799B 5E5E B20A  2A19 CDBC 0BD9 5943 A706"))))))
+
+  (toys-box
+   (forge "sourcehut")
+   (synopsis "gabber's own (experimental!) guix channel")
+   (channel
+    (channel
+     (name 'gabber)
+     (url "https://git.sr.ht/~gabber/gabber-channel")
+     (branch "trunk"))))
 
   (toys-box
    (forge "codeberg")
