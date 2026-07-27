@@ -59,6 +59,32 @@
 	"7F73 0343 F2F0 9F3C 77BF  79D3 2E25 EE8B 6180 2BB3"))))))
 
   (toys-box
+   (forge "cgit")
+   (synopsis "iCalendar and Atom feeds for meetup.com")
+   (channel
+    (channel
+     (name 'meetfree)
+     (url "https://klaus.systemreboot.net/meetfree/")
+     (branch "main")
+     (introduction
+      (make-channel-introduction
+       "b807c465ec2a9b24a9f522f471d46943d6d7725c"
+       (openpgp-fingerprint
+	"7F73 0343 F2F0 9F3C 77BF  79D3 2E25 EE8B 6180 2BB3"))))))
+
+  (toys-box
+   (forge "cgit")
+   (channel
+     (channel
+       (name 'tanelorn)
+       (url "https://git.operationnull.com/tanelorn")
+       (introduction
+	(make-channel-introduction
+	 "feb72dbc897bcf2db3901ea5b25caba4add860f7"
+	 (openpgp-fingerprint
+	  "5550 5CA6 9DE5 D342 7F31 F9AE 5F86 6C65 2A34 C996"))))))
+
+  (toys-box
    (forge "github")
    (channel
     (channel
